@@ -9,6 +9,6 @@ protected:
 public:
 	virtual void Execute() = 0;
 
-	Exporter();
-	virtual ~Exporter();
+	Exporter() {}
+	virtual ~Exporter() {}
 };
