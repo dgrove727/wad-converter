@@ -20,14 +20,21 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\common.cpp" />
+    <ClCompile Include="..\compress.cpp" />
     <ClCompile Include="..\decompress.cpp" />
+    <ClCompile Include="..\Exporter_32X.cpp" />
+    <ClCompile Include="..\Exporter_Jaguar.cpp" />
     <ClCompile Include="..\Listable.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\WADEntry.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common.h" />
+    <ClInclude Include="..\compress.h" />
     <ClInclude Include="..\decompress.h" />
+    <ClInclude Include="..\Exporter.h" />
+    <ClInclude Include="..\Exporter_32X.h" />
+    <ClInclude Include="..\Exporter_Jaguar.h" />
     <ClInclude Include="..\Listable.h" />
     <ClInclude Include="..\WADEntry.h" />
   </ItemGroup>
