@@ -30,6 +30,7 @@ void *decompress(void *data, size_t outputLen);
 
 int main() {
 	// Read in all the bytes found in SIDEDEFS.LMP.
+
 	FILE *inputFile = fopen("sidedefs.lmp", "rb");
 
 	fseek(inputFile, 0, SEEK_END);
@@ -76,7 +77,7 @@ void *decompress(void *data, size_t outputLen)
 		unsigned char key = compressed[readCursor];
 		readCursor++;
 
-		// Read the key bytes from LSB to MSB.
+		// Read the key bits from LSB to MSB.
 		for (int keyCursor = 0; keyCursor < 8; keyCursor++) {
 			if (key & 1) {
 				// Compressed data.
