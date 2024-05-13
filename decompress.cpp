@@ -5,6 +5,7 @@
 void *decompress(void *data, size_t outputLen)
 {
 	byte *uncompressed = (byte *)malloc(outputLen + 16);	// Add 16 to make sure we have enough room.
+	// TODO: Investigate. Is it really necessary to add 16 bytes to the buffer?
 
 	int readCursor = 0;
 	int writeCursor = 0;
