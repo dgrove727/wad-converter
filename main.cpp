@@ -329,7 +329,8 @@ void PC2Mars()
 	fseek(in_file, 0, SEEK_END);
 	file_size = ftell(in_file);
 	rewind(in_file);
-	
+
+	// Read the file signature to verify the supplied file is an IWAD or PWAD.
 	fread(&label, 4, 1, in_file);
 	if (label == 0x44415749 || label == 0x44415750)
 	{
@@ -342,7 +343,7 @@ void PC2Mars()
 	
 	if (label != 0x44415749 && label != 0x44415750)
 	{
-			// "DAWI" or "DAWP" not found
+		// "DAWI" or "DAWP" not found
 		printf("ERROR: WAD data not found.\n");
 		system("PAUSE");
 		return;
@@ -645,10 +646,12 @@ void Mars2PC()
 	
 	for (i = 0; i < file_size; i += 4)
 	{
+		// Search the ROM for the "IWAD" signature to locate the WAD data.
 		fread(&label, 4, 1, in_file);
-		if (label == 0x44415749 || label == 0x44415750)
+		//if (label == 0x44415749 || label == 0x44415750)  // TODO: Double-check. Pretty sure this was a mistake. Shouldn't look for "PWAD".
+		if (label == 0x44415749)
 		{
-			// "DAWI" or "DAWP" found
+			// "DAWI" found
 			fread(&lump_count, 4, 1, in_file);
 			lump_count = swap_endian(lump_count);
 			if(lump_count > 0 && lump_count <= 2048)
@@ -661,13 +664,14 @@ void Mars2PC()
 					// limit of 4MB based on maximum Genesis ROM size
 					iwad_ptr = i;
 					file_size -= i;
-					i = file_size;
+					break;
 				}
 			}
 		}
 	}
 	
-	if (label != 0x44415749 && label != 0x44415750)
+	//if (label != 0x44415749 && label != 0x44415750)	// TODO: Double-check. Pretty sure this was a mistake. Shouldn't care about "PWAD".
+	if (label != 0x44415749)
 	{
 		// "DAWI" or "DAWP" not found"
 		printf("ERROR: WAD data not found.\n");
