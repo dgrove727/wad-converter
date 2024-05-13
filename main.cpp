@@ -968,6 +968,8 @@ void Mars2PC()
 	return;
 }
 
+// Read the "_32X_" lump to determine conversion behavior. Used to support WAD
+// files converted with previous versions of the software.
 void Read_32X_(int lump)
 {
 	int data_ptr = *(int *)&table[(lump*16)] - 0xC;
@@ -990,6 +992,9 @@ void Read_32X_(int lump)
 	}
 }
 
+// Create the "_32X_" lump to give the software an understanding of what needs
+// to happen when importing it back into the game. Used to ensure
+// compatibility with future versions of the software.
 void Create_32X_()
 {
 	const char *string = "WAD32X";
