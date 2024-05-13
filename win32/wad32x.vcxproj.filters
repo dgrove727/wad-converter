@@ -24,12 +24,24 @@
     <ClCompile Include="..\WADEntry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\decompress.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Listable.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\WADEntry.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\decompress.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
