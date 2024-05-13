@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "WADEntry.h"
 
-
+typedef unsigned char byte;
 
 #define		VERSION			1.10
 #define		WAD_FORMAT		1
@@ -23,9 +24,9 @@
 //#define		IMPORT_MODE_WAD
 
 // Use this define when exporting a Jaguar WAD file (not finished)
-//#define		WADTYPE_JAG
+#define		WADTYPE_JAG
 
-
+WADEntry *wadEntries = NULL;
 
 int label;
 int lump_count;
@@ -33,14 +34,10 @@ int table_ptr;
 int file_size;
 int iwad_ptr;
 
-
-
 // -- dirty fix --
 // corrects lump numbers in command
 // window for PNAMES and lumps after it
 int lump_value_fix = 0;
-
-
 
 int out_file_size = 0xC;
 int out_table_size = 0;
@@ -190,8 +187,6 @@ int main(int argc, char *argv[]){
 		Shutdown();
 	}
 	
-	
-	
 	i = strlen(argv[1]) - 1;
 	
 	while(i > 0){
@@ -199,8 +194,6 @@ int main(int argc, char *argv[]){
 			argv[1][i] += 0x20;
 		i--;
 	}
-	
-	
 	
 	if(strcmp(argv[1], "-export") == 0){
 		in_file = fopen(argv[2], "rb");
@@ -253,7 +246,10 @@ int main(int argc, char *argv[]){
 
 
 
-void Shutdown(){
+void Shutdown()
+{
+	Listable::RemoveAll((Listable **)&wadEntries);
+
 	if(data)
 		free(data);
 	if(table)
@@ -273,10 +269,8 @@ void Shutdown(){
 	if(out_file)
 		fclose(out_file);
 	
-	exit(0);		
+	exit(0);
 }
-
-
 
 void MarsIn(){
 	// Conversion: [32X] <<---- [PC]
@@ -284,8 +278,6 @@ void MarsIn(){
 	int lump;
 	
 	conversion_task = PC_2_MARS;
-	
-	
 	
 	fseek(in_file, 0, SEEK_END);
 	file_size = ftell(in_file);
@@ -307,19 +299,13 @@ void MarsIn(){
 		return;
 	}
 	
-	
-	
-	out_table = (char *)malloc(1);
-	
-	
+	out_table = (byte *)malloc(1);
 	
 	lump_count += 3;	// fix the patch count
 	
-	
-	
-	data = (char *)malloc(table_ptr - 0xC);
+	data = (byte *)malloc(table_ptr - 0xC);
 	fread(data, 1, table_ptr - 0xC, in_file);
-	table = (char *)malloc(lump_count * 16);
+	table = (byte *)malloc(lump_count * 16);
 	for(i=0; i < lump_count; i++){
 		fread(&table[(i*16)], 4, 1, in_file);		// ptr
 		*(int *)&table[(i*16)] = swap_endian(*(int *)&table[(i*16)]);
@@ -401,13 +387,20 @@ void MarsIn(){
 	
 	
 	
-	for(lump=0; lump < lump_count-3; lump++){
-		printf("0x%04X\t%c%c%c%c%c%c%c%c\n", lump + lump_value_fix,
-		 (table[(lump*16)+8] & 0x7F), table[(lump*16)+9], table[(lump*16)+10], table[(lump*16)+11],
-		 table[(lump*16)+12], table[(lump*16)+13], table[(lump*16)+14], table[(lump*16)+15]);
+	for(lump=0; lump < lump_count-3; lump++)
+	{
+		char entryName[9];
+
+		WADEntry *entry = new WADEntry();
+		entry->SetIsCompressed(SetEntryName(entryName, (char *)&table[(lump * 16) + 8]));
+		entry->SetName(entryName);
+		Listable::Add(entry, (Listable **)&wadEntries);
+
+		printf("0x%04X\t%s\n", lump + lump_value_fix, entryName);
 		switch(type){
 			case TYPE_TEXTURE:
-				if(strcmp(&table[(lump*16)+8], "P_END") == 0){
+				if(!strcmp(entryName, "P_END"))
+				{
 					WriteTableEnd(TYPE_TEXTURE);
 					type = 0;
 					if(floor_end_written){
@@ -416,36 +409,21 @@ void MarsIn(){
 						CreateTEXTURE1(lump);
 					}
 				}
-				else if(table[(lump*16)+8] == 'P' && table[(lump*16)+9] == '1'
-				 && table[(lump*16)+10] == '_' && table[(lump*16)+11] == 'S'
-				 && table[(lump*16)+12] == 'T' && table[(lump*16)+13] == 'A'
-				 && table[(lump*16)+14] == 'R' && table[(lump*16)+15] == 'T'){
+				else if (!strcmp(entryName, "P1_START")
+					|| !strcmp(entryName, "P1_END")
+					|| !strcmp(entryName, "P2_START")
+					|| !strcmp(entryName, "P2_END"))
+				{
 					lump_value_fix--;
 				}
-				else if(table[(lump*16)+8] == 'P' && table[(lump*16)+9] == '1'
-				 && table[(lump*16)+10] == '_' && table[(lump*16)+11] == 'E'
-				 && table[(lump*16)+12] == 'N' && table[(lump*16)+13] == 'D'
-				 && table[(lump*16)+14] == 0 && table[(lump*16)+15] == 0){
-					lump_value_fix--;
-				}
-				else if(table[(lump*16)+8] == 'P' && table[(lump*16)+9] == '2'
-				 && table[(lump*16)+10] == '_' && table[(lump*16)+11] == 'S'
-				 && table[(lump*16)+12] == 'T' && table[(lump*16)+13] == 'A'
-				 && table[(lump*16)+14] == 'R' && table[(lump*16)+15] == 'T'){
-					lump_value_fix--;
-				}
-				else if(table[(lump*16)+8] == 'P' && table[(lump*16)+9] == '2'
-				 && table[(lump*16)+10] == '_' && table[(lump*16)+11] == 'E'
-				 && table[(lump*16)+12] == 'N' && table[(lump*16)+13] == 'D'
-				 && table[(lump*16)+14] == 0 && table[(lump*16)+15] == 0){
-					lump_value_fix--;
-				}
-				else{
+				else
+				{
 					ConvertTextureData32X(lump);
 				}
 				break;
 			case TYPE_FLOOR:
-				if(strcmp(&table[(lump*16)+8], "F_END") == 0){
+				if(!strcmp(entryName, "F_END"))
+				{
 					WriteTableEnd(TYPE_FLOOR);
 					type = 0;
 					if(texture_end_written){
@@ -454,55 +432,43 @@ void MarsIn(){
 						CreateTEXTURE1(lump);
 					}
 				}
-				else if(table[(lump*16)+8] == 'F' && table[(lump*16)+9] == '1'
-				 && table[(lump*16)+10] == '_' && table[(lump*16)+11] == 'S'
-				 && table[(lump*16)+12] == 'T' && table[(lump*16)+13] == 'A'
-				 && table[(lump*16)+14] == 'R' && table[(lump*16)+15] == 'T'){
-					lump_value_fix--;
-				}
-				else if(table[(lump*16)+8] == 'F' && table[(lump*16)+9] == '1'
-				 && table[(lump*16)+10] == '_' && table[(lump*16)+11] == 'E'
-				 && table[(lump*16)+12] == 'N' && table[(lump*16)+13] == 'D'
-				 && table[(lump*16)+14] == 0 && table[(lump*16)+15] == 0){
-					lump_value_fix--;
-				}
-				else if(table[(lump*16)+8] == 'F' && table[(lump*16)+9] == '2'
-				 && table[(lump*16)+10] == '_' && table[(lump*16)+11] == 'S'
-				 && table[(lump*16)+12] == 'T' && table[(lump*16)+13] == 'A'
-				 && table[(lump*16)+14] == 'R' && table[(lump*16)+15] == 'T'){
-					lump_value_fix--;
-				}
-				else if(table[(lump*16)+8] == 'F' && table[(lump*16)+9] == '2'
-				 && table[(lump*16)+10] == '_' && table[(lump*16)+11] == 'E'
-				 && table[(lump*16)+12] == 'N' && table[(lump*16)+13] == 'D'
-				 && table[(lump*16)+14] == 0 && table[(lump*16)+15] == 0){
+				else if (!strcmp(entryName, "F1_START")
+					|| !strcmp(entryName, "F1_END")
+					|| !strcmp(entryName, "F2_START")
+					|| !strcmp(entryName, "F2_END"))
+				{
 					lump_value_fix--;
 				}
 				else
 					ConvertFloorData(lump);
 				break;
 			case TYPE_SPRITE:
-				if(strcmp(&table[(lump*16)+8], "S_END") == 0){
+				if(!strcmp(entryName, "S_END"))
+				{
 					//WriteTableEnd(TYPE_SPRITE);
 					lump_value_fix--;
 					type = 0;
 				}
-				else{
+				else
+				{
 					ConvertSpriteData32X(lump);
 					lump_value_fix++;
 					out_lump_count++;
 				}
 				break;
 			default:
-				if(strcmp(&table[(lump*16)+8], "P_START") == 0){
+				if(!strcmp(entryName, "P_START"))
+				{
 					WriteTableStart(TYPE_TEXTURE);
 					type = TYPE_TEXTURE;
 				}
-				else if(strcmp(&table[(lump*16)+8], "F_START") == 0){
+				else if(!strcmp(entryName, "F_START"))
+				{
 					WriteTableStart(TYPE_FLOOR);
 					type = TYPE_FLOOR;
 				}
-				else if(strcmp(&table[(lump*16)+8], "S_START") == 0){
+				else if(!strcmp(entryName, "S_START"))
+				{
 					//WriteTableStart(TYPE_SPRITE);
 					lump_value_fix--;
 					type = TYPE_SPRITE;
@@ -723,7 +689,16 @@ void MarsIn(){
 	return;
 }
 
+int SetEntryName(char *entryName, char *data)
+{
+	strncpy(entryName, data, 8);
+	entryName[8] = '\0';
 
+	int isCompressed = (entryName[0] >> 7) != 0;
+	entryName[0] = entryName[0] & 127;
+
+	return isCompressed;
+}
 
 void MarsOut(){
 	// Conversion: [32X] ---->> [PC]
@@ -765,69 +740,43 @@ void MarsOut(){
 		return;
 	}
 	
-	
-	
-	out_table = (char *)malloc(1);
-	
-	
+	out_table = (byte *)malloc(1);
 	
 	lump_count += 2;	// fix the patch count
 	lump_count++;	// make room for PNAMES
 	
-	
-	
-	data = (char *)malloc(table_ptr - 0xC);
+	data = (byte *)malloc(table_ptr - 0xC);
 	fread(data, 1, table_ptr - 0xC, in_file);
-	table = (char *)malloc(lump_count * 16);
+	table = (byte *)malloc(lump_count * 16);
 	fread(table, 1, lump_count * 16, in_file);
 	for(i=0; i < lump_count; i++){
-		*(int *)&table[i*16] = swap_endian(*(int *)&table[i*16]);
-		*(int *)&table[(i*16)+4] = swap_endian(*(int *)&table[(i*16)+4]);
-		
+		unsigned int firstWord = *(int *)&table[i * 16];
+		unsigned int secondWord = *(int *)&table[(i * 16) + 4];
+		*(int *)&table[i*16] = swap_endian(firstWord);
+		*(int *)&table[(i*16)+4] = swap_endian(secondWord);
+
+		char entryName[9];
+		int isCompressed = SetEntryName(entryName, (char*)&table[(i * 16) + 8]);
+
+		if (isCompressed)
+			printf("%s is compressed.\n", entryName);
+
 		// this part is needed to get size information about textures
-		if(table[(i*16)+8] == 'T'){
-			if(table[(i*16)+9] == 'E'){
-				if(table[(i*16)+10] == 'X'){
-					if(table[(i*16)+11] == 'T'){
-						if(table[(i*16)+12] == 'U'){
-							if(table[(i*16)+13] == 'R'){
-								if(table[(i*16)+14] == 'E'){
-									if(table[(i*16)+15] == '1'){
-										texture1_ptr = *(int *)&table[i*16];
-										texture1_size = *(int *)&table[(i*16)+4];
-										
-										fseek(in_file, iwad_ptr + texture1_ptr, SEEK_SET);
-										texture1 = (char *)malloc(texture1_size);
-										fread(texture1, 1, texture1_size, in_file);
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+		if (!strcmp(entryName, "TEXTURE1"))
+		{
+			texture1_ptr = *(int *)&table[i * 16];
+			texture1_size = *(int *)&table[(i * 16) + 4];
+
+			fseek(in_file, iwad_ptr + texture1_ptr, SEEK_SET);
+			texture1 = (unsigned char *)malloc(texture1_size);
+			fread(texture1, 1, texture1_size, in_file);
 		}
-		else if(table[(i*16)+8] == 'P'){
-			if(table[(i*16)+9] == 'L'){
-				if(table[(i*16)+10] == 'A'){
-					if(table[(i*16)+11] == 'Y'){
-						if(table[(i*16)+12] == 'P'){
-							if(table[(i*16)+13] == 'A'){
-								if(table[(i*16)+14] == 'L'){
-									if(table[(i*16)+15] == 'S'){
-										table[(i*16)+15] = 0;
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+		else if (!strcmp(entryName, "PLAYPALS"))
+		{
+			table[(i * 16) + 15] = 0;
 		}
 	}
 	fclose(in_file);
-	
-	
 	
 	label = 0x44415750;	// make sure we're creating an PWAD
 	fwrite(&label, 4, 1, out_file);
@@ -835,22 +784,22 @@ void MarsOut(){
 	
 	out_lump_count = lump_count;
 	
-	
-	
 	// Put 32X label in WAD file
 	Create_32X_();
 	lump_value_fix++;
 	out_lump_count++;
 	
-	
-	
 	for(lump=0; lump < lump_count-3; lump++){
 		printf("0x%04X\t%c%c%c%c%c%c%c%c\n", lump + lump_value_fix,
 		 (table[(lump*16)+8] & 0x7F), table[(lump*16)+9], table[(lump*16)+10], table[(lump*16)+11],
 		 table[(lump*16)+12], table[(lump*16)+13], table[(lump*16)+14], table[(lump*16)+15]);
+
+		char entryName[9];
+		SetEntryName(entryName, (char*)&table[(lump * 16) + 8]);
+
 		switch(type){
 			case TYPE_TEXTURE:
-				if(strcmp(&table[(lump*16)+8], "T_END") == 0){
+				if(strcmp((char*)&table[(lump*16)+8], "T_END") == 0){
 					WriteTableEnd(TYPE_TEXTURE);
 					type = 0;
 				}
@@ -859,7 +808,7 @@ void MarsOut(){
 				}
 				break;
 			case TYPE_FLOOR:
-				if(strcmp(&table[(lump*16)+8], "F_END") == 0){
+				if(strcmp((char*)&table[(lump*16)+8], "F_END") == 0){
 					WriteTableEnd(TYPE_FLOOR);
 					type = 0;
 				}
@@ -885,7 +834,7 @@ void MarsOut(){
 						lump++;
 						out_lump_count--;
 					}
-					else if(strcmp(&table[(lump*16)+9], "_START") == 0){
+					else if(strcmp((char*)&table[(lump*16)+9], "_START") == 0){
 						if(table[(lump*16)+8] == 'T'){
 							if(!first_floor){
 								WriteTableEnd(TYPE_FLOOR);
@@ -1015,10 +964,8 @@ void MarsOut(){
 						ConvertRawData(lump);
 					}
 				}
-				else if(table[(lump*16)+8] == 'T' && table[(lump*16)+9] == 'E'
-				 && table[(lump*16)+10] == 'X' && table[(lump*16)+11] == 'T'
-				 && table[(lump*16)+12] == 'U' && table[(lump*16)+13] == 'R'
-				 && table[(lump*16)+14] == 'E' && table[(lump*16)+15] == '1'){
+				else if (!memcmp(&table[(lump * 16) + 8], "TEXTURE1", 8))
+				{
 					ConvertRawData(lump);
 					lump_value_fix++;
 					printf("0x%04X\tPNAMES\n", lump + lump_value_fix);
@@ -1187,12 +1134,12 @@ void CreatePNAMES(int lump){
 void CreateTEXTURE1(int lump){
 	// Before writing the data, we sort the textures in ABC order purely for
 	// convention purposes.
-	unsigned long long *texture1_names;
-	unsigned short *texture1_order;
+	unsigned long long *texture1_names = NULL;
+	unsigned short *texture1_order = NULL;
 	
 	if(num_of_textures > 0){
-		texture1_names = (long long *)malloc(num_of_textures<<3);
-		texture1_order = (short *)calloc(num_of_textures, 2);
+		texture1_names = (unsigned long long *)malloc(num_of_textures<<3);
+		texture1_order = (unsigned short *)calloc(num_of_textures, 2);
 	}
 	
 	for(i=0; i < num_of_textures; i++){
@@ -1466,12 +1413,12 @@ void ConvertMapData32X(int lump, char mapfile){
 		case SECTORS:
 			output_size = data_size;	// must be uncompressed size
 			
-			key = (char *)malloc(1);
-			bitfield = (char *)malloc(1);
+			key = (unsigned char *)malloc(1);
+			bitfield = (unsigned char *)malloc(1);
 			
 			table[(lump*16)+8] |= 0x80;
 			
-			uncompressed = (char *)malloc(data_size);
+			uncompressed = (unsigned char *)malloc(data_size);
 			for(i=0; i < data_size; i++){
 				uncompressed[i] = data[data_ptr + i];
 			}
@@ -1510,7 +1457,7 @@ void ConvertMapData32X(int lump, char mapfile){
 			break;
 		case BLOCKMAP:
 			output_size = data_size;
-			output = (char *)malloc(data_size);
+			output = (unsigned char *)malloc(data_size);
 			for(i=0; i < data_size; i += 2){
 				output[i] = data[data_ptr + i+1];
 				output[i+1] = data[data_ptr + i];
@@ -1580,7 +1527,7 @@ void ConvertMapData32X(int lump, char mapfile){
 				// add info to the key
 				
 				key_size += 4;
-				key = (char *)realloc(key, key_size);
+				key = (byte *)realloc(key, key_size);
 				
 				*(unsigned short *)&key[key_size - 4] = i;
 				*(unsigned short *)&key[key_size - 2] = (((i-b)-1)<<4) | (bytes_to_copy-1);
@@ -1592,7 +1539,7 @@ void ConvertMapData32X(int lump, char mapfile){
 		}
 		
 		key_size += 4;
-		key = (char *)realloc(key, key_size);
+		key = (byte *)realloc(key, key_size);
 		
 		*(unsigned short *)&key[key_size - 4] = 0xFFFF;
 		*(unsigned short *)&key[key_size - 2] = 0;
@@ -1602,13 +1549,13 @@ void ConvertMapData32X(int lump, char mapfile){
 		for(i=0; i < output_size; i++){
 			if(i < *(unsigned short *)&key[n]){
 				bitfield_size++;
-				bitfield = (char *)realloc(bitfield, bitfield_size);
+				bitfield = (byte *)realloc(bitfield, bitfield_size);
 				
 				bitfield[bitfield_size-1] = 0;
 			}
 			else{
 				bitfield_size++;
-				bitfield = (char *)realloc(bitfield, bitfield_size);
+				bitfield = (byte *)realloc(bitfield, bitfield_size);
 				
 				bitfield[bitfield_size-1] = 1;
 				
@@ -1619,13 +1566,13 @@ void ConvertMapData32X(int lump, char mapfile){
 		
 		// add terminator to key
 		bitfield_size++;
-		bitfield = (char *)realloc(bitfield, bitfield_size);
+		bitfield = (byte *)realloc(bitfield, bitfield_size);
 		bitfield[bitfield_size-1] = 0xF;
 		
 		// if needed, align the bitfield to the next whole byte (8 bits)
 		while(bitfield_size & 7){
 			bitfield_size++;
-			bitfield = (char *)realloc(bitfield, bitfield_size);
+			bitfield = (byte *)realloc(bitfield, bitfield_size);
 			
 			bitfield[bitfield_size-1] = 0;
 		}
@@ -1732,8 +1679,6 @@ void ConvertMapData32X(int lump, char mapfile){
 		}
 	}
 	
-	
-	
 	if(output)
 		free(output);
 	if(uncompressed)
@@ -1751,7 +1696,7 @@ void ConvertMapData(int lump, char mapfile){
 	int data_size = *(int *)&table[(lump*16)+4];
 	
 	unsigned char *uncompressed;
-	unsigned char *converted;
+	unsigned char *converted = NULL;
 	
 	int ci;
 	int i;
@@ -1762,9 +1707,7 @@ void ConvertMapData(int lump, char mapfile){
 	int key_location;
 	char key_count;
 	
-	
-	
-	uncompressed = (char *)malloc(data_size + 16);	// add 16 to make sure we have enough room
+	uncompressed = (byte *)malloc(data_size + 16);	// add 16 to make sure we have enough room
 	
 	if(table[(lump*16)+8] >> 7){
 		// data must be decompressed
@@ -1821,7 +1764,7 @@ void ConvertMapData(int lump, char mapfile){
 		case REJECT:
 		case BLOCKMAP:
 	#endif
-			converted = (char *)malloc(data_size);
+			converted = (byte *)malloc(data_size);
 			for(i=0; i < data_size; i++){
 				converted[i] = uncompressed[i];
 			}
@@ -1929,8 +1872,6 @@ void ConvertTextureData32X(int lump){
 	
 	WriteTexture1(x_size, y_size, name);
 	
-	
-	
 	offset = *(int *)&data[data_ptr+8] + 3;
 	
 	output = (char *)malloc((x_size * y_size) + 320);
@@ -1994,44 +1935,31 @@ void ConvertTextureData(int lump){
 	int bytes_copied;
 	int byte_count;
 	
-	
-	
-	output = (char *)malloc(1);
-	
-	
+	output = (byte *)malloc(1);
 	
 	for(i=0; i < 8; i++){
 		texture_name[i] = table[(lump*16)+8+i];
 		if(texture_name[i] >= 'A' && texture_name[i] <= 'Z')
 			texture_name[i] += 0x20;
 	}
+
+	// SSN
+	FILE *ssn = fopen("D:\\ssn.txt", "wb");
+	fwrite(texture1, texture1_size, 1, ssn);
+	fclose(ssn);
 	
-	
-	
-	for(i=0; i < texture1_size; i++){
-		if(texture1[i] == texture_name[0]){
-			if(texture1[i+1] == texture_name[1]){
-				if(texture1[i+2] == texture_name[2]){
-					if(texture1[i+3] == texture_name[3]){
-						if(texture1[i+4] == texture_name[4]){
-							if(texture1[i+5] == texture_name[5]){
-								if(texture1[i+6] == texture_name[6]){
-									if(texture1[i+7] == texture_name[7]){
-										// Width
-										x_size = (texture1[i+13] << 8) | texture1[i+12];
-										fwrite(&x_size, 2, 1, out_file);
-										// Height
-										y_size = (texture1[i+15] << 8) | texture1[i+14];
-										fwrite(&y_size, 2, 1, out_file);
-										
-										i = texture1_size;
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+	for (i = 0; i < texture1_size; i++)
+	{
+		if (!memcmp(&texture1[i], texture_name, 8))
+		{
+			// Width
+			x_size = (texture1[i + 13] << 8) | texture1[i + 12];
+			fwrite(&x_size, 2, 1, out_file);
+			// Height
+			y_size = (texture1[i + 15] << 8) | texture1[i + 14];
+			fwrite(&y_size, 2, 1, out_file);
+
+			i = texture1_size;
 		}
 	}
 	// X offset
@@ -2042,7 +1970,7 @@ void ConvertTextureData(int lump){
 	fwrite(&i, 2, 1, out_file);
 	
 	line_lookup_size = x_size << 2;
-	line_lookup = (char *)malloc(line_lookup_size);
+	line_lookup = (byte *)malloc(line_lookup_size);
 	
 	n = line_lookup_size + 8;
 	for(i=0; i < x_size; i++){
@@ -2050,15 +1978,11 @@ void ConvertTextureData(int lump){
 		n += (y_size+5);
 	}
 	
-	
-	
 	offset = 0;
 	
 	for(line=0; line < x_size; line++){
 		fputc(0, out_file);
 		fputc(y_size, out_file);
-		
-		
 		
 		// duplicate byte
 		fputc(data[data_ptr + offset], out_file);
@@ -2068,8 +1992,6 @@ void ConvertTextureData(int lump){
 		// duplicate byte
 		fputc(data[data_ptr + offset + y_size-1], out_file);
 		
-		
-		
 		fputc(0xFF, out_file);
 		
 		offset += y_size;
@@ -2078,8 +2000,6 @@ void ConvertTextureData(int lump){
 	WriteTable(lump, out_file_size, ((y_size+5)*x_size) + 8 + line_lookup_size);
 	
 	out_file_size += (((y_size+5)*x_size) + 8 + line_lookup_size);
-	
-	
 	
 	free(line_lookup);
 	free(output);
@@ -2132,9 +2052,9 @@ void ConvertSpriteData32X(int lump){
 	
 	
 	
-	key_table = (char *)malloc(width<<1);	// 32X table uses shorts as opposed to longs
-	key_data = (char *)malloc(1);
-	raw_data = (char *)malloc(1);
+	key_table = (byte *)malloc(width<<1);	// 32X table uses shorts as opposed to longs
+	key_data = (byte *)malloc(1);
+	raw_data = (byte *)malloc(1);
 	
 	while(line < width){
 		word = data[data_ptr + (width<<2) + 8 + di];
@@ -2162,7 +2082,7 @@ void ConvertSpriteData32X(int lump){
 				di += i;
 				
 				i++;
-				key_data = realloc(key_data, ki + (i<<1));
+				key_data = (byte*)realloc(key_data, ki + (i<<1));
 				while(i > 0){
 					*(short *)&key_data[ki] = 0xFFFF;
 					ki += 2;
@@ -2170,20 +2090,20 @@ void ConvertSpriteData32X(int lump){
 				}
 			}
 			else{
-				key_data = realloc(key_data, ki + 2);
+				key_data = (byte*)realloc(key_data, ki + 2);
 				*(short *)&key_data[ki] = 0xFFFF;
 				ki += 2;
 			}
 		}
 		else{
-			key_data = realloc(key_data, ki+4);
+			key_data = (byte*)realloc(key_data, ki+4);
 			key_data[ki] = word>>8;
 			key_data[ki+1] = word;
 			
 			*(short *)&key_data[ki+2] = swap_endian(bytes_copied+1)>>16;
 			ki += 4;
 			
-			raw_data = realloc(raw_data, ri + (word & 0xFF) + 2);
+			raw_data = (byte*)realloc(raw_data, ri + (word & 0xFF) + 2);
 			byte_count = (word & 0xFF) + 2;
 			for(i=0; i < byte_count; i++){
 				raw_data[ri] = data[data_ptr + (width<<2) + 8 + di];
@@ -2196,7 +2116,7 @@ void ConvertSpriteData32X(int lump){
 	
 	while(ri & 3){
 		ri++;
-		raw_data = realloc(raw_data, ri);
+		raw_data = (byte*)realloc(raw_data, ri);
 		raw_data[ri-1] = 0;
 	}
 	
@@ -2231,8 +2151,6 @@ void ConvertSpriteData32X(int lump){
 	free(raw_data);
 }
 
-
-
 void ConvertSpriteData(int lump){
 	int key_ptr = *(int *)&table[(lump*16)] - 0xC;
 	int key_size = *(int *)&table[(lump*16)+4];
@@ -2256,12 +2174,8 @@ void ConvertSpriteData(int lump){
 	int bytes_copied_data;
 	int byte_count;
 	
-	
-	
-	uncompressed = (char *)malloc(1);
-	written_bytes = (char *)malloc(1);
-	
-	
+	uncompressed = (byte *)malloc(1);
+	written_bytes = (byte *)malloc(1);
 	
 	// Width
 	fputc(data[key_ptr+1], out_file);
@@ -2277,8 +2191,6 @@ void ConvertSpriteData(int lump){
 	fputc(data[key_ptr+6], out_file);
 	
 	i = (data[key_ptr+8]<<8) | data[key_ptr+9];
-	
-	
 	
 	bytes_copied_key = 0;
 	bytes_to_go = key_size - i;
@@ -2304,15 +2216,15 @@ void ConvertSpriteData(int lump){
 		if(word < 0){
 			prev_array_size = array_size;
 			array_size = location+3+bytes_copied_key + ((word >> 16) & 0xFF);
-			uncompressed = (char *)realloc(uncompressed, array_size);
-			written_bytes = (char *)realloc(written_bytes, array_size);
+			uncompressed = (byte *)realloc(uncompressed, array_size);
+			written_bytes = (byte *)realloc(written_bytes, array_size);
 			
 			while(prev_array_size < array_size){
 				written_bytes[prev_array_size] = 0;
 				prev_array_size++;
 			}
 			
-			for(n=0; n <= (unsigned char)((word >> 16) & 0xFF); n++){
+			for(n=0; n <= (byte)((word >> 16) & 0xFF); n++){
 				uncompressed[location + bytes_copied_key+n] = 0xFF;
 				written_bytes[location + bytes_copied_key+n] = 1;
 			}
@@ -2328,8 +2240,8 @@ void ConvertSpriteData(int lump){
 		else{
 			prev_array_size = array_size;
 			array_size = location+2+bytes_copied_key;
-			uncompressed = (char *)realloc(uncompressed, array_size);
-			written_bytes = (char *)realloc(written_bytes, array_size);
+			uncompressed = (byte *)realloc(uncompressed, array_size);
+			written_bytes = (byte *)realloc(written_bytes, array_size);
 			
 			while(prev_array_size < array_size){
 				written_bytes[prev_array_size] = 0;
@@ -2351,8 +2263,8 @@ void ConvertSpriteData(int lump){
 		if((n + bytes_copied_data) >= array_size){
 			array_size++;
 			
-			uncompressed = (char *)realloc(uncompressed, array_size);
-			written_bytes = (char *)realloc(written_bytes, array_size);
+			uncompressed = (byte *)realloc(uncompressed, array_size);
+			written_bytes = (byte *)realloc(written_bytes, array_size);
 			
 			written_bytes[n + bytes_copied_data] = 0;
 		}
@@ -2364,8 +2276,6 @@ void ConvertSpriteData(int lump){
 			uncompressed[n + bytes_copied_data] = data[data_ptr+n];
 	}
 	
-	
-	
 	n = 0;
 	for(i=0; i < array_size; i++){
 		if(uncompressed[i] == 0xFF)
@@ -2373,8 +2283,7 @@ void ConvertSpriteData(int lump){
 	}
 	
 	line_lookup_size = (n+1)<<2;
-	line_lookup = (char *)malloc(line_lookup_size);
-	
+	line_lookup = (byte *)malloc(line_lookup_size);
 	
 	n = 0;
 	*(int *)&line_lookup[0] = line_lookup_size + 8;
@@ -2391,7 +2300,7 @@ void ConvertSpriteData(int lump){
 	
 	i = (*(int *)&line_lookup[n<<2]) + 1 - line_lookup_size - 8;
 	byte_count = uncompressed[i] + 4;
-	uncompressed = (char *)realloc(uncompressed, array_size + 2);
+	uncompressed = (byte *)realloc(uncompressed, array_size + 2);
 	uncompressed[array_size] = 0;
 	uncompressed[array_size+1] = 0;
 	while(uncompressed[i-1] != 0 || uncompressed[i] != 0){
@@ -2403,12 +2312,12 @@ void ConvertSpriteData(int lump){
 	
 	
 	
-	uncompressed = (char *)realloc(uncompressed, array_size);
+	uncompressed = (byte *)realloc(uncompressed, array_size);
 	uncompressed[array_size-1] = 0xFF;
 	
 	while(array_size & 3){
 		array_size++;
-		uncompressed = (char *)realloc(uncompressed, array_size);
+		uncompressed = (byte *)realloc(uncompressed, array_size);
 		uncompressed[array_size-1] = 0;
 	}
 	
@@ -2430,12 +2339,12 @@ void WritePatchName(char *name){
 	
 	if(pnames_table == 0){
 		patches_count = 1;
-		pnames_table = (char *)malloc(12);
+		pnames_table = (byte *)malloc(12);
 		*(int *)&pnames_table[0] = 1;
 	}
 	else{
 		patches_count++;
-		pnames_table = (char *)realloc(pnames_table, 4 + (patches_count<<3));
+		pnames_table = (byte *)realloc(pnames_table, 4 + (patches_count<<3));
 		*(int *)&pnames_table[0] = patches_count;
 	}
 	
@@ -2458,7 +2367,7 @@ void WritePatchName(char *name){
 
 
 void WriteTable(int lump, int ptr, int size){
-	out_table = (char *)realloc(out_table, out_table_size + 16);
+	out_table = (byte *)realloc(out_table, out_table_size + 16);
 	
 #ifndef FORCE_LITTLE_ENDIAN
 	if(conversion_task == PC_2_MARS){
@@ -2483,10 +2392,10 @@ void WriteTable(int lump, int ptr, int size){
 
 
 
-void WriteTableCustom(int ptr, int size, unsigned char *name){
+void WriteTableCustom(int ptr, int size, const char *name){
 	char i;
 	
-	out_table = (char *)realloc(out_table, out_table_size + 16);
+	out_table = (byte *)realloc(out_table, out_table_size + 16);
 	
 #ifndef FORCE_LITTLE_ENDIAN
 	if(conversion_task == PC_2_MARS){
@@ -2514,7 +2423,7 @@ void WriteTableCustom(int ptr, int size, unsigned char *name){
 
 
 void WriteTableStart(char type){
-	out_table = (char *)realloc(out_table, out_table_size + 16);
+	out_table = (byte *)realloc(out_table, out_table_size + 16);
 	
 	*(int *)&out_table[out_table_size] = 0;
 	*(int *)&out_table[out_table_size+4] = 0;
@@ -2547,7 +2456,7 @@ void WriteTableStart(char type){
 
 
 void WriteTableEnd(char type){
-	out_table = (char *)realloc(out_table, out_table_size + 16);
+	out_table = (byte *)realloc(out_table, out_table_size + 16);
 	
 	*(int *)&out_table[out_table_size] = 0;
 	*(int *)&out_table[out_table_size+4] = 0;
@@ -2588,12 +2497,12 @@ void WriteTexture1(short x_size, short y_size, unsigned char *name){
 	num_of_textures++;
 	
 	if(out_texture1_data){
-		out_texture1_data = (char *)realloc(out_texture1_data, num_of_textures << 5);
-		out_texture1_table = (char *)realloc(out_texture1_table, (num_of_textures << 2) + 4);
+		out_texture1_data = (byte *)realloc(out_texture1_data, num_of_textures << 5);
+		out_texture1_table = (byte *)realloc(out_texture1_table, (num_of_textures << 2) + 4);
 	}
 	else{
-		out_texture1_data = (char *)malloc(num_of_textures << 5);
-		out_texture1_table = (char *)malloc((num_of_textures << 2) + 4);
+		out_texture1_data = (byte *)malloc(num_of_textures << 5);
+		out_texture1_table = (byte *)malloc((num_of_textures << 2) + 4);
 	}
 	
 	*(int *)&out_texture1_table[0] = num_of_textures;
@@ -2606,7 +2515,7 @@ void WriteTexture1(short x_size, short y_size, unsigned char *name){
 		if(name[i] >= 'A' && name[i] <= 'Z')
 			name[i] += 0x20;	// we do this just to keep with convention
 	}
-	strcpy(&out_texture1_data[(num_of_textures << 5) - 32], name);
+	strcpy((char*)&out_texture1_data[(num_of_textures << 5) - 32], (const char*)name);
 	*(int *)&out_texture1_data[(num_of_textures << 5) - 24] = 0;
 	*(short *)&out_texture1_data[(num_of_textures << 5) - 20] = x_size;
 	*(short *)&out_texture1_data[(num_of_textures << 5) - 18] = y_size;
