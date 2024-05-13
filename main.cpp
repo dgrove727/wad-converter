@@ -129,7 +129,7 @@ void WriteTable(int lump, int ptr, int size);
 void WriteTableCustom(int ptr, int size, const char *name);
 void WriteTableStart(char type);
 void WriteTableEnd(char type);
-void WriteTexture1(short x_size, short y_size, char *name);
+void WriteTexture1(short x_size, short y_size, const char *name);
 int swap_endian(unsigned int i);
 
 enum
