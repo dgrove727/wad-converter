@@ -18,10 +18,14 @@
 //#define		FORCE_LITTLE_ENDIAN
 
 // Use this define to make importer create a stand-alone 32X WAD
-//#define		IMPORT_MODE_WAD
+#define		IMPORT_MODE_WAD
 
 // Use this define when exporting a Jaguar WAD file (not finished)
 #define		WADTYPE_JAG
+
+// Temporary
+void ReadPC();
+void ReadMars();
 
 // List that holds all of the extracted WAD entries in RAM.
 // The data from a PC or Jag/32X WAD should be extracted into this list first, then
@@ -30,7 +34,6 @@
 // be open at the same time, as well as avoid a lot of crazy pointer management.
 WADEntry *wadEntries = NULL;
 
-int label;
 int lump_count;
 int table_ptr;
 int file_size;
@@ -76,9 +79,6 @@ char sprite_end_written = 0;
 
 int d = 0;
 int t = 0;
-
-int i;
-int n;
 
 byte format = 0;
 
@@ -196,7 +196,7 @@ int main(int argc, char *argv[])
 		Shutdown();
 	}
 	
-	i = strlen(argv[1]) - 1;
+	int i = strlen(argv[1]) - 1;
 	
 	while (i > 0)
 	{
@@ -222,7 +222,8 @@ int main(int argc, char *argv[])
 			Shutdown();		
 		}
 		
-		Mars2PC();						
+		ReadMars();
+//		Mars2PC();						
 	}
 	else if (strcmp(argv[1], "-import") == 0)
 	{
@@ -250,7 +251,8 @@ int main(int argc, char *argv[])
 		}
 #endif
 		
-		PC2Mars();
+		ReadPC();
+//		PC2Mars();
 	}
 	else
 	{
@@ -320,6 +322,128 @@ bool IsInExclusionList(const char *entryName)
 	return false;
 }
 
+void ReadMars()
+{
+	fseek(in_file, 0, SEEK_END);
+	file_size = ftell(in_file);
+	rewind(in_file);
+
+	char label[5];
+	label[4] = '\0';
+
+	// Read the file signature to verify the supplied file is an IWAD or PWAD.
+	fread(label, 4, 1, in_file);
+	if (!strcmp(label, "IWAD") || !strcmp(label, "PWAD"))
+	{
+		// "DAWI" or "DAWP" found
+		fread(&lump_count, 4, 1, in_file);
+		lump_count = swap_endian(lump_count);
+		if (lump_count > 0 && lump_count <= 2048)
+		{
+			// limit based on "MAXLUMPS" in Jaguar source
+			fread(&table_ptr, 4, 1, in_file);
+			table_ptr = swap_endian(table_ptr);
+			if (table_ptr >= 0xC && table_ptr < 0x400000)
+			{
+				// limit of 4MB based on maximum Genesis ROM size
+				iwad_ptr = 4;
+				file_size -= 4;
+			}
+		}
+	}
+	else
+	{
+		// "IWAD" or "PWAD" not found
+		printf("ERROR: WAD data not found.\n");
+		system("PAUSE");
+		return;
+	}
+
+	byte *data = (byte *)malloc(table_ptr - 0xC);
+	fread(data, 1, table_ptr - 0xC, in_file);
+
+	char entryName[9];
+	entryName[8] = '\0';
+	for (int i = 0; i < lump_count; i++)
+	{
+		unsigned int ptr;
+		fread(&ptr, 4, 1, in_file);		// ptr
+		ptr = swap_endian(ptr);
+
+		unsigned int size;
+		fread(&size, 4, 1, in_file);		// size
+		size = swap_endian(size);
+
+		fread(entryName, 1, 8, in_file);		// name
+
+		WADEntry *entry = new WADEntry();
+		entry->SetIsCompressed(SetEntryName(entryName, entryName));
+		entry->SetName(entryName);
+		entry->SetData(&data[ptr - 0xC], size);
+		Listable::Add(entry, (Listable **)&wadEntries);
+	}
+
+	fclose(in_file);
+	free(data);
+}
+
+void ReadPC()
+{
+	fseek(in_file, 0, SEEK_END);
+	file_size = ftell(in_file);
+	rewind(in_file);
+
+	char label[5];
+	label[4] = '\0';
+
+	// Read the file signature to verify the supplied file is an IWAD or PWAD.
+	fread(label, 4, 1, in_file);
+	if (!strcmp(label, "IWAD") || !strcmp(label, "PWAD"))
+	{
+		// "DAWI" or "DAWP" found
+		fread(&lump_count, 4, 1, in_file);
+		fread(&table_ptr, 4, 1, in_file);
+		if (table_ptr < 0xC || table_ptr > file_size)
+		{
+			printf("ERROR: WAD data not found.\n");
+			system("PAUSE");
+			return;
+		}
+	}
+	else
+	{
+		// "IWAD" or "PWAD" not found
+		printf("ERROR: WAD data not found.\n");
+		system("PAUSE");
+		return;
+	}
+
+	byte *data = (byte *)malloc(table_ptr - 0xC);
+	fread(data, 1, table_ptr - 0xC, in_file);
+
+	char entryName[9];
+	entryName[8] = '\0';
+	for (int i = 0; i < lump_count; i++)
+	{
+		unsigned int ptr;
+		fread(&ptr, 4, 1, in_file);		// ptr
+
+		unsigned int size;
+		fread(&size, 4, 1, in_file);		// size
+
+		fread(entryName, 1, 8, in_file);		// name
+
+		WADEntry *entry = new WADEntry();
+		entry->SetIsCompressed(SetEntryName(entryName, entryName));
+		entry->SetName(entryName);
+		entry->SetData(&data[ptr - 0xC], size);
+		Listable::Add(entry, (Listable **)&wadEntries);
+	}
+
+	fclose(in_file);
+	free(data);
+}
+
 void PC2Mars()
 {
 	int lump;
@@ -330,20 +454,26 @@ void PC2Mars()
 	file_size = ftell(in_file);
 	rewind(in_file);
 
+	char label[5];
+	label[4] = '\0';
+
 	// Read the file signature to verify the supplied file is an IWAD or PWAD.
-	fread(&label, 4, 1, in_file);
-	if (label == 0x44415749 || label == 0x44415750)
+	fread(label, 4, 1, in_file);
+	if (!strcmp(label, "IWAD") || !strcmp(label, "PWAD"))
 	{
 		// "DAWI" or "DAWP" found
 		fread(&lump_count, 4, 1, in_file);
 		fread(&table_ptr, 4, 1, in_file);
-		if(table_ptr < 0xC || table_ptr > file_size)
-			label = 0;
+		if (table_ptr < 0xC || table_ptr > file_size)
+		{
+			printf("ERROR: WAD data not found.\n");
+			system("PAUSE");
+			return;
+		}
 	}
-	
-	if (label != 0x44415749 && label != 0x44415750)
+	else
 	{
-		// "DAWI" or "DAWP" not found
+		// "IWAD" or "PWAD" not found
 		printf("ERROR: WAD data not found.\n");
 		system("PAUSE");
 		return;
@@ -356,7 +486,7 @@ void PC2Mars()
 	data = (byte *)malloc(table_ptr - 0xC);
 	fread(data, 1, table_ptr - 0xC, in_file);
 	table = (byte *)malloc(lump_count * 16);
-	for (i = 0; i < lump_count; i++)
+	for (int i = 0; i < lump_count; i++)
 	{
 		fread(&table[(i*16)], 4, 1, in_file);		// ptr
 		*(int *)&table[(i*16)] = swap_endian(*(int *)&table[(i*16)]);
@@ -367,7 +497,7 @@ void PC2Mars()
 		fread(&table[(i*16)+8], 1, 8, in_file);		// name
 	}
 	
-	for (i = 0; i < lump_count; i++)
+	for (int i = 0; i < lump_count; i++)
 	{
 		*(int *)&table[i*16] = swap_endian(*(int *)&table[i*16]);
 		*(int *)&table[(i*16)+4] = swap_endian(*(int *)&table[(i*16)+4]);
@@ -380,7 +510,7 @@ void PC2Mars()
 	fclose(in_file);
 	
 #ifdef IMPORT_MODE_WAD
-	label = 0x44415749;	// make sure we're creating an IWAD
+	strcpy(label, "DAWI"); // make sure we're creating an IWAD
 	fwrite(&label, 4, 1, out_file);
 	fseek(out_file, 8, SEEK_CUR);
 	iwad_ptr = 0;
@@ -389,33 +519,28 @@ void PC2Mars()
 	out_file_size = ftell(out_file);
 	rewind(out_file);
 	
-	for (i = 4; i < out_file_size; i += 4)
+	// Check for "DAWI" marker at start of file	
+	fread(&label, 4, 1, out_file);
+	if (!strcmp(label, "DAWI"))
 	{
-		// I don't know why 'i' has to start as 4. To my logic, it should be 0.		
-		label = 0;
-		fread(&label, 4, 1, out_file);
-		if (label == 0x44415749)
+		// "DAWI" found
+		fread(&out_lump_count, 4, 1, out_file);
+		out_lump_count = swap_endian(out_lump_count);
+		if (out_lump_count > 0 && out_lump_count <= 2048)
 		{
-			// "DAWI" found
-			fread(&out_lump_count, 4, 1, out_file);
-			out_lump_count = swap_endian(out_lump_count);
-			if (out_lump_count > 0 && out_lump_count <= 2048)
+			// limit based on "MAXLUMPS" in Jaguar source
+			fread(&out_table_ptr, 4, 1, out_file);
+			out_table_ptr = swap_endian(out_table_ptr);
+			if (out_table_ptr >= 0xC && out_table_ptr < 0x400000)
 			{
-				// limit based on "MAXLUMPS" in Jaguar source
-				fread(&out_table_ptr, 4, 1, out_file);
-				out_table_ptr = swap_endian(out_table_ptr);
-				if (out_table_ptr >= 0xC && out_table_ptr < 0x400000)
-				{
-					// limit of 4MB based on maximum Genesis ROM size
-					iwad_ptr = i;
-					fseek(out_file, i + 0xC, SEEK_SET);	// required because this is using "r+b"
-					out_file_size = 0;
-				}
+				// limit of 4MB based on maximum Genesis ROM size
+				iwad_ptr = 4; // The position right after DAWI in the file
+				fseek(out_file, 4 + 0xC, SEEK_SET);	// required because this is using "r+b"
+				out_file_size = 0;
 			}
 		}
 	}
-	
-	if (label != 0x44415749)
+	else
 	{
 		// "DAWI" not found"
 		printf("ERROR: WAD data not found.\n");
@@ -576,7 +701,7 @@ void PC2Mars()
 	
 	out_lump_count -= 7;
 #ifndef FORCE_LITTLE_ENDIAN
-	i = swap_endian(ftell(out_file) - iwad_ptr);
+	int i = swap_endian(ftell(out_file) - iwad_ptr);
 	out_lump_count = swap_endian(out_lump_count);
 #else
 	i = ftell(out_file) - iwad_ptr;
@@ -588,7 +713,7 @@ void PC2Mars()
 	printf("\n");
 	
 	// Adjust ROM size
-	n = ftell(out_file);
+	int n = ftell(out_file);
 	printf("ROM size = %i.%iMB\n", n>>20, (int)(((float)((n >> 16) & 0xF) / 16.0f) * 10));
 	while ((n & 0xFFFFF) != 0)
 	{
@@ -634,6 +759,10 @@ void PC2Mars()
 
 void Mars2PC()
 {
+}
+/*
+void Mars2PC()
+{
 	// Conversion: [32X] ---->> [PC]
 	
 	int lump;
@@ -644,7 +773,7 @@ void Mars2PC()
 	file_size = ftell(in_file);
 	rewind(in_file);
 	
-	for (i = 0; i < file_size; i += 4)
+	for (int i = 0; i < file_size; i += 4)
 	{
 		// Search the ROM for the "IWAD" signature to locate the WAD data.
 		fread(&label, 4, 1, in_file);
@@ -966,7 +1095,7 @@ void Mars2PC()
 	printf("\nExport finished!\n");
 	system("PAUSE");	
 	return;
-}
+}*/
 
 // Read the "_32X_" lump to determine conversion behavior. Used to support WAD
 // files converted with previous versions of the software.
@@ -1046,7 +1175,7 @@ void CreateTEXTURE1(int lump)
 		texture1_order = (unsigned short *)calloc(num_of_textures, 2);
 	}
 	
-	for (i = 0; i < num_of_textures; i++)
+	for (int i = 0; i < num_of_textures; i++)
 	{
 		//texture1_names[i] = *(long long *)&out_texture1_data[i<<5];
 		
@@ -1067,9 +1196,9 @@ void CreateTEXTURE1(int lump)
 		texture1_names[i] |= out_texture1_data[(i<<5)+7];
 	}
 	
-	for (i = 0; i < num_of_textures; i++)
+	for (int i = 0; i < num_of_textures; i++)
 	{
-		for (n = 0; n < num_of_textures; n++)
+		for (int n = 0; n < num_of_textures; n++)
 		{
 			if(texture1_names[i] > texture1_names[n])
 				texture1_order[i]++;
@@ -1078,9 +1207,9 @@ void CreateTEXTURE1(int lump)
 	
 	fwrite(out_texture1_table, 1, (num_of_textures<<2) + 4, out_file);
 	
-	for (i = 0; i < num_of_textures; i++)
+	for (int i = 0; i < num_of_textures; i++)
 	{
-		n = 0;
+		int n = 0;
 		while (texture1_order[n] != i)
 			n++;
 		
@@ -1852,13 +1981,13 @@ void ConvertTextureData(int lump)
 	
 	output = (byte *)malloc(1);
 	
-	for (i = 0; i < 8; i++){
+	for (int i = 0; i < 8; i++){
 		texture_name[i] = table[(lump*16)+8+i];
 		if(texture_name[i] >= 'A' && texture_name[i] <= 'Z')
 			texture_name[i] += 0x20; // Set to lowercase
 	}
 	
-	for (i = 0; i < texture1_size; i++)
+	for (int i = 0; i < texture1_size; i++)
 	{
 		if (!memcmp(&texture1[i], texture_name, 8))
 		{
@@ -1874,7 +2003,7 @@ void ConvertTextureData(int lump)
 	}
 
 	// X offset
-	i = (x_size>>1)-1;
+	int i = (x_size>>1)-1;
 	fwrite(&i, 2, 1, out_file);
 	// Y offset
 	i = 0x7B;
@@ -2100,7 +2229,8 @@ void ConvertSpriteData(int lump)
 	fputc(data[key_ptr+7], out_file);
 	fputc(data[key_ptr+6], out_file);
 	
-	i = (data[key_ptr+8]<<8) | data[key_ptr+9];
+	int i = (data[key_ptr+8]<<8) | data[key_ptr+9];
+	int n = 0;
 	
 	bytes_copied_key = 0;
 	bytes_to_go = key_size - i;
@@ -2138,7 +2268,7 @@ void ConvertSpriteData(int lump)
 				prev_array_size++;
 			}
 			
-			for (n=0; n <= (byte)((word >> 16) & 0xFF); n++)
+			for (int n=0; n <= (byte)((word >> 16) & 0xFF); n++)
 			{
 				uncompressed[location + bytes_copied_key+n] = 0xFF;
 				written_bytes[location + bytes_copied_key+n] = 1;
@@ -2196,8 +2326,7 @@ void ConvertSpriteData(int lump)
 			uncompressed[n + bytes_copied_data] = data[data_ptr+n];
 	}
 	
-	n = 0;
-	for (i=0; i < array_size; i++)
+	for (int i=0; i < array_size; i++)
 	{
 		if(uncompressed[i] == 0xFF)
 			n++;
@@ -2208,7 +2337,7 @@ void ConvertSpriteData(int lump)
 	
 	n = 0;
 	*(int *)&line_lookup[0] = line_lookup_size + 8;
-	for (i=0; i < array_size; i++)
+	for (int i=0; i < array_size; i++)
 	{
 		if (uncompressed[i] == 0xFF)
 		{
