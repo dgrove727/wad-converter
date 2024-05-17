@@ -8,29 +8,32 @@ void *compress(void *data, size_t inputLen, size_t *outputLen)
 }
 
 
-// TODO: Continue cleaning up the code below.
 /*
 void old_code() {
+	// TODO: Break up this logic into smaller functions to be used by 'compress()'.
+
 	// Create key data.
-	for (i = 1; i <= outputSize - 3; i++)
+	COMPRESSION_KEY *keys;
+
+	for (currentCursor = 1; currentCursor <= outputSize - 3; currentCursor++)
 	{
 		// Collect the next three bytes.
-		nextThreeBytes = (uncompressed[i]<<16)
-		 | (uncompressed[i+1]<<8)
-		 | uncompressed[i+2];
+		nextThreeBytes = (uncompressed[currentCursor]<<16)
+		 | (uncompressed[currentCursor+1]<<8)
+		 | uncompressed[currentCursor+2];
 
 		// Look for the byte series behind the current offset.
-		for (n = 0; n < i; n++)
+		for (previousCursor = 0; previousCursor < currentCursor; n++)
 		{
 			// The compression format only allows the previous 4KB to be referenced.
-			if (i-n > 0x1000) {
-				n = i - 0x1000;
+			if (currentCursor-previousCursor > 0x1000) {
+				previousCursor = currentCursor - 0x1000;
 			}
 
 			// Collect three previous bytes.
-			previousThreeBytes = (uncompressed[n]<<16)
-			 | (uncompressed[n + (1%(i-n))]<<8)
-			 | uncompressed[n + (2%(i-n))];
+			previousThreeBytes = (uncompressed[previousCursor]<<16)
+			 | (uncompressed[previousCursor + (1%(currentCursor-previousCursor))]<<8)
+			 | uncompressed[previousCursor + (2%(currentCursor-previousCursor))];
 
 			// If the three bytes found before next three bytes are a match, figure out how many more are a match.
 			if (nextThreeBytes == previousThreeBytes)
@@ -39,25 +42,25 @@ void old_code() {
 				{
 					// We have three bytes matching up to this point, so go ahead and record that.
 					highestMatchLength = 3;
-					b = n;
+					matchOffset = previousCursor;
 				}
 
 				// Search for additional bytes in our match set.
 				// The compression format allows a maximum match size of 16.
 				for (int matchLength=3; matchLength <= 16; matchLength++)
 				{
-					if (i+matchLength <= outputSize)
+					if (currentCursor+matchLength <= outputSize)
 					{
 						// We haven't reached the end of the lump size yet.
 						// Continue checking for byte matches.
-						if (uncompressed[i+matchLength] != uncompressed[n + (matchLength%(i-n))])
+						if (uncompressed[currentCursor+matchLength] != uncompressed[previousCursor + (matchLength%(currentCursor-previousCursor))])
 						{
 							// We found a byte mismatch.
 							// If this most recent comparison yielded a larger match, overwrite the quantity we recorded previously.
 							if(matchLength >= highestMatchLength)
 							{
 								highestMatchLength = matchLength;
-								b = n;		// save 'n' for referencing later
+								matchOffset = previousCursor;
 							}
 							break;
 						}
@@ -69,7 +72,7 @@ void old_code() {
 						if (matchLength >= highestMatchLength)
 						{
 							highestMatchLength = matchLength-1;
-							b = n;		// save 'n' for referencing later
+							matchOffset = previousCursor;
 						}
 						break;
 					}
@@ -79,58 +82,61 @@ void old_code() {
 				if (matchLength == 17)
 				{
 					highestMatchLength = 16;
-					b = n;
+					matchOffset = previousCursor;
 				}
 			}
 		}
 
-		// If a match was found, record it in the key.
+		// If a match was found, create a key for it.
 		if (highestMatchLength)
 		{
-			key_size += 4;
-			key = (byte *)realloc(key, key_size);
+			keySize++;
+			keys = (COMPRESSION_KEY *)realloc(keys, keySize * sizeof(COMPRESSION_KEY));
 
-			*(unsigned short *)&key[key_size - 4] = i;
-			*(unsigned short *)&key[key_size - 2] = (((i-b)-1)<<4) | (highestMatchLength-1);
+			keys[keySize-1].destOffset = currentCursor;
+			keys[keySize-1].srcOffset = matchOffset;
+			keys[keySize-1].copyCount = highestMatchLength;
 
-			i += (highestMatchLength-1);
+			currentCursor += (highestMatchLength-1);
 
 			highestMatchLength = 0;
 		}
 	}
 
 	// Terminate the key.
-	keySize += 4;
-	key = (byte *)realloc(key, keySize);
+	keySize++;
+	keys = (COMPRESSION_KEY *)realloc(keys, keySize * sizeof(COMPRESSION_KEY));
 
-	*(unsigned short *)&key[keySize - 4] = 0xFFFF;
-	*(unsigned short *)&key[keySize - 2] = 0;
+	keys[keySize-1].destOffset = -1;
+	keys[keySize-1].copyCount = 0;
 
-	// TODO: Add more commentary beyond this point to give the remaining code more clarity.
-	// TODO: Rename some of these variables.
-
-	// Create key bitfield
-	n = 0;
-	for (i = 0; i < outputSize; i++)
+	// Create key bitfield based on recorded key data.
+	keyCursor = 0;
+	for (int currentOffset = 0; i < outputSize; i++)
 	{
-		if(i < *(unsigned short *)&key[n])
+		if(currentOffset < keys[keyCursor].destOffset)
 		{
-			bitfield_size++;
-			bitfield = (byte *)realloc(bitfield, bitfield_size);
+			// This byte will be marked as uncompressed in the bitfield.
+			bitfieldSize++;
+			bitfield = (byte *)realloc(bitfield, bitfieldSize);
 
-			bitfield[bitfield_size-1] = 0;
+			bitfield[bitfieldSize-1] = 0;
 		}
 		else
 		{
-			bitfield_size++;
-			bitfield = (byte *)realloc(bitfield, bitfield_size);
+			// This byte is referenced by a key, so mark it as compressed in the bitfield.
+			bitfieldSize++;
+			bitfield = (byte *)realloc(bitfield, bitfieldSize);
 
-			bitfield[bitfield_size-1] = 1;
+			bitfield[bitfieldSize-1] = 1;
 
-			i += (*(unsigned short *)&key[n+2] & 0xF);
-			n += 4;
+			currentOffset += keys[keyCursor].copyCount;
+			keyCursor++;
 		}
 	}
+
+	// TODO: Finish me!
+	// TODO: Code beyond this point hasn't been fully updated yet.
 
 	// add terminator to key
 	bitfield_size++;
@@ -187,11 +193,11 @@ void old_code() {
 
 			if (data_comp_1 & 1)
 			{
-				fputc(key[n+3], out_file);
-				fputc(key[n+2], out_file);
+				fputc(keys[n+3], out_file);
+				fputc(keys[n+2], out_file);
 				compressed_size += 2;
 
-				i += (*(unsigned short *)&key[n+2] & 0xF);
+				i += (*(unsigned short *)&keys[n+2] & 0xF);
 				n += 4;
 			}
 			else
@@ -232,4 +238,4 @@ void old_code() {
 
 	out_file_size += compressed_size;
 }
-*/
+//*/
