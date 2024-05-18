@@ -1,21 +1,25 @@
+#include "common.h"
 #include "compress.h"
 #include <stdlib.h>
 
 void *compress(void *data, size_t inputLen, size_t *outputLen)
 {
-	// Magic happens here!
+	//COMPRESSION_KEY *keys = CreateKeys();
+	//byte *keyBits = (byte *)CreateKeyBits(keys);
+	//CreateCompressedData(keys);
+
 	return NULL;
 }
 
 
 /*
-void old_code() {
-	// TODO: Break up this logic into smaller functions to be used by 'compress()'.
-
+COMPRESSION_KEY *CreateKeys()
+{
 	// Create key data.
-	COMPRESSION_KEY *keys;
+	COMPRESSION_KEY *keys = (COMPRESSION_KEY *)malloc(1);
+	int keySize = 0;
 
-	for (currentCursor = 1; currentCursor <= outputSize - 3; currentCursor++)
+	for (int currentCursor = 1; currentCursor <= outputLen - 3; currentCursor++)
 	{
 		// Collect the next three bytes.
 		nextThreeBytes = (uncompressed[currentCursor]<<16)
@@ -49,7 +53,7 @@ void old_code() {
 				// The compression format allows a maximum match size of 16.
 				for (int matchLength=3; matchLength <= 16; matchLength++)
 				{
-					if (currentCursor+matchLength <= outputSize)
+					if (currentCursor+matchLength <= outputLen)
 					{
 						// We haven't reached the end of the lump size yet.
 						// Continue checking for byte matches.
@@ -103,16 +107,26 @@ void old_code() {
 		}
 	}
 
-	// Terminate the key.
+	// Add a key to terminate the collection.
 	keySize++;
 	keys = (COMPRESSION_KEY *)realloc(keys, keySize * sizeof(COMPRESSION_KEY));
 
 	keys[keySize-1].destOffset = -1;
 	keys[keySize-1].copyCount = 0;
 
+	return keys;
+}
+
+
+
+void *CreateKeyBits(COMPRESSION_KEY *keys)
+{
 	// Create key bitfield based on recorded key data.
-	keyCursor = 0;
-	for (int currentOffset = 0; i < outputSize; i++)
+	byte *bitfield = malloc(1);
+	int bitfieldSize = 0;
+
+	int keyCursor = 0;
+	for (int currentOffset = 0; i < outputLen; i++)
 	{
 		if(currentOffset < keys[keyCursor].destOffset)
 		{
@@ -135,106 +149,118 @@ void old_code() {
 		}
 	}
 
+	// Add a terminator.
+	bitfieldSize++;
+	bitfield = (byte *)realloc(bitfield, bitfieldSize);
+	bitfield[bitfieldSize-1] = 0xF;
+
+	// If needed, align the bitfield to the next whole byte (8 bits)
+	while (bitfieldSize & 7)
+	{
+		bitfieldSize++;
+		bitfield = (byte *)realloc(bitfield, bitfieldSize);
+
+		bitfield[bitfieldSize-1] = 0;
+	}
+
+	return bitfield;
+}
+
+
+
+void CreateCompressedData(COMPRESSION_KEY *keys) {
+	// TODO: Break up this logic into smaller functions to be used by 'compress()'.
+
 	// TODO: Finish me!
 	// TODO: Code beyond this point hasn't been fully updated yet.
 
-	// add terminator to key
-	bitfield_size++;
-	bitfield = (byte *)realloc(bitfield, bitfield_size);
-	bitfield[bitfield_size-1] = 0xF;
-
-	// if needed, align the bitfield to the next whole byte (8 bits)
-	while (bitfield_size & 7)
+	// Write data
+	int keyCursor = 0;
+	int bitCursor = 0;
+	for (currentCursor = 0; currentCursor < outputLen; currentCursor++)
 	{
-		bitfield_size++;
-		bitfield = (byte *)realloc(bitfield, bitfield_size);
-
-		bitfield[bitfield_size-1] = 0;
-	}
-
-	// write data
-	n = 0;	// used as subscript to key[]
-	b = 0;	// used as subscript to bitfield[]
-	for (i = 0; i < outputSize; i++)
-	{
-		if (i < outputSize)
+		if ((bitCursor & 7) == 0)
 		{
-			if ((b & 7) == 0)
-			{
-				data_comp_1 = 0;
+			// We have no bits to read, so grab the next set of eight.
+			data_comp_1 = 0;
 
-				if(bitfield[b] == 0xF)	data_comp_1 |= 1;
-				else					data_comp_1 |= bitfield[b];
+			if(bitfield[bitCursor] == 0xF)		data_comp_1 |= 1;
+			else								data_comp_1 |= bitfield[bitCursor];
 
-				if(bitfield[b+1] == 0xF)	data_comp_1 |= 2;
-				else					data_comp_1 |= (bitfield[b+1]<<1);
+			if(bitfield[bitCursor+1] == 0xF)	data_comp_1 |= 2;
+			else								data_comp_1 |= (bitfield[bitCursor+1]<<1);
 
-				if(bitfield[b+2] == 0xF)	data_comp_1 |= 4;
-				else					data_comp_1 |= (bitfield[b+2]<<2);
+			if(bitfield[bitCursor+2] == 0xF)	data_comp_1 |= 4;
+			else								data_comp_1 |= (bitfield[bitCursor+2]<<2);
 
-				if(bitfield[b+3] == 0xF)	data_comp_1 |= 8;
-				else					data_comp_1 |= (bitfield[b+3]<<3);
+			if(bitfield[bitCursor+3] == 0xF)	data_comp_1 |= 8;
+			else								data_comp_1 |= (bitfield[bitCursor+3]<<3);
 
-				if(bitfield[b+4] == 0xF)	data_comp_1 |= 16;
-				else					data_comp_1 |= (bitfield[b+4]<<4);
+			if(bitfield[bitCursor+4] == 0xF)	data_comp_1 |= 16;
+			else								data_comp_1 |= (bitfield[bitCursor+4]<<4);
 
-				if(bitfield[b+5] == 0xF)	data_comp_1 |= 32;
-				else					data_comp_1 |= (bitfield[b+5]<<5);
+			if(bitfield[bitCursor+5] == 0xF)	data_comp_1 |= 32;
+			else								data_comp_1 |= (bitfield[bitCursor+5]<<5);
 
-				if(bitfield[b+6] == 0xF)	data_comp_1 |= 64;
-				else					data_comp_1 |= (bitfield[b+6]<<6);
+			if(bitfield[bitCursor+6] == 0xF)	data_comp_1 |= 64;
+			else								data_comp_1 |= (bitfield[bitCursor+6]<<6);
 
-				if(bitfield[b+7] == 0xF)	data_comp_1 |= 128;
-				else					data_comp_1 |= (bitfield[b+7]<<7);
+			if(bitfield[bitCursor+7] == 0xF)	data_comp_1 |= 128;
+			else								data_comp_1 |= (bitfield[bitCursor+7]<<7);
 
-				fputc(data_comp_1, out_file);
-				compressed_size++;
-			}
-
-			if (data_comp_1 & 1)
-			{
-				fputc(keys[n+3], out_file);
-				fputc(keys[n+2], out_file);
-				compressed_size += 2;
-
-				i += (*(unsigned short *)&keys[n+2] & 0xF);
-				n += 4;
-			}
-			else
-			{
-				fputc(uncompressed[i], out_file);
-				compressed_size++;
-			}
-
-			data_comp_1 >>= 1;
-			b++;
+			fputc(data_comp_1, out_file);
+			compressed_size++;
 		}
+
+		if (data_comp_1 & 1)
+		{
+			// The current bit is 1, meaning the data is compressed.
+			// Write the offset and copy count to the output.
+			unsigned short packedData = ((keys[keyCursor].destOffset - keys[keyCursor].srcOffset) << 4) | (keys[keyCursor].copyCount - 1)
+			fputc(packedData >> 8, out_file);
+			fputc(packedData & 0xFF, out_file);
+			compressed_size += 2;
+
+			currentCursor += (keys[keyCursor].copyCount - 1);
+			keyCursor += 4;
+		}
+		else
+		{
+			// The current bit is 0, meaning the data is uncompressed.
+			// Write the byte to the output.
+			fputc(uncompressed[currentCursor], out_file);
+			compressed_size++;
+		}
+
+		// Advance to the next bit.
+		data_comp_1 >>= 1;
+		bitCursor++;
 	}
 
-	if ((b&7) == 0)
+	if ((bitCursor&7) == 0)
 	{
-		if (bitfield[b] == 0xF)
+		if (bitfield[bitCursor] == 0xF)
 		{
 			// let 'i' go one over to allow special cases
 			// where terminator needs to be inserted
 			// (e.g. MAP14 "SEGS")
-			b = 1;
-			fputc(b, out_file);
+			bitCursor = 1;
+			fputc(bitCursor, out_file);
 			compressed_size++;
 		}
 	}
 
 	// add terminator
 	compressed_size += 2;
-	i = 0;
-	fwrite(&i, 2, 1, out_file);
+	currentCursor = 0;
+	fwrite(&currentCursor, 2, 1, out_file);
 
 	while (compressed_size & 3){
-		fputc(i, out_file);
+		fputc(currentCursor, out_file);
 		compressed_size++;
 	}
 
-	WriteTable(lump, out_file_size, outputSize);
+	WriteTable(lump, out_file_size, outputLen);
 
 	out_file_size += compressed_size;
 }
