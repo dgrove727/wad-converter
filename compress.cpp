@@ -2,13 +2,11 @@
 #include "compress.h"
 #include <stdlib.h>
 
-// TODO: Still using 'fputc()' and 'fwrite()'. Create a buffer in memory instead.
-
 void *compress(void *data, size_t inputLen, size_t *outputLen)
 {
 	COMPRESSION_KEY *keys = CreateKeys(data, inputLen);
 	byte *keyBits = (byte *)CreateKeyBits(keys, inputLen);	// TODO: Investigate. Is this actually necessary if we have 'keys'?
-	CreateCompressedData(keys, keyBits, inputLen, outputLen);
+	CreateCompressedData(data, keys, keyBits, inputLen, outputLen);
 
 	free(keys);
 	free(keyBits);
@@ -17,7 +15,7 @@ void *compress(void *data, size_t inputLen, size_t *outputLen)
 }
 
 
-//*
+// TODO: Make private
 COMPRESSION_KEY *CreateKeys(void *data, size_t inputLen)
 {
 	// Create key data.
@@ -129,7 +127,7 @@ COMPRESSION_KEY *CreateKeys(void *data, size_t inputLen)
 }
 
 
-
+// TODO: Make private
 void *CreateKeyBits(COMPRESSION_KEY *keys, size_t inputLen)
 {
 	// Create key bitfield based on recorded key data.
@@ -178,16 +176,18 @@ void *CreateKeyBits(COMPRESSION_KEY *keys, size_t inputLen)
 }
 
 
-
-void *CreateCompressedData(COMPRESSION_KEY *keys, byte *keyBits, size_t inputLen, size_t *outputLen) {
+// TODO: Make private
+void *CreateCompressedData(void *uncompressed, COMPRESSION_KEY *keys, byte *keyBits, size_t inputLen, size_t *outputLen) {
 	// Write data
 	int keyCursor = 0;
 	int bitCursor = 0;
 	int compressedSize = 0;
 
+	byte *compressed = (byte *)malloc(inputLen + 8);	// This should be plenty big for the compressed data. Resize later.
+
 	byte *bitfield = static_cast<byte *>(keyBits);
 
-	for (int currentCursor = 0; currentCursor < inputLen; currentCursor++)
+	for (int inputCursor = 0; inputCursor < inputLen; inputCursor++)
 	{
 		byte bits = 0;
 		if ((bitCursor & 7) == 0)
@@ -218,7 +218,7 @@ void *CreateCompressedData(COMPRESSION_KEY *keys, byte *keyBits, size_t inputLen
 			if(bitfield[bitCursor+7] == 0xF)	bits |= 128;
 			else								bits |= (bitfield[bitCursor+7]<<7);
 
-// TODO:			fputc(bits, out_file);
+			compressed[compressedSize] = bits;
 			compressedSize++;
 		}
 
@@ -227,18 +227,18 @@ void *CreateCompressedData(COMPRESSION_KEY *keys, byte *keyBits, size_t inputLen
 			// The current bit is 1, meaning the data is compressed.
 			// Write the offset and copy count to the output.
 			unsigned short packedData = ((keys[keyCursor].destOffset - keys[keyCursor].srcOffset) << 4) | (keys[keyCursor].copyCount - 1);
-// TODO:			fputc(packedData >> 8, out_file);
-// TODO:			fputc(packedData & 0xFF, out_file);
+			compressed[compressedSize] = packedData >> 8;
+			compressed[compressedSize+1] = packedData;
 			compressedSize += 2;
 
-			currentCursor += (keys[keyCursor].copyCount - 1);
+			inputCursor += (keys[keyCursor].copyCount - 1);
 			keyCursor += 4;
 		}
 		else
 		{
 			// The current bit is 0, meaning the data is uncompressed.
 			// Write the byte to the output.
-// TODO:			fputc(uncompressed[currentCursor], out_file);
+			compressed[compressedSize] = ((byte *)uncompressed)[inputCursor];	// TODO: Does this work? Review the results...
 			compressedSize++;
 		}
 
@@ -251,27 +251,30 @@ void *CreateCompressedData(COMPRESSION_KEY *keys, byte *keyBits, size_t inputLen
 	{
 		if (bitfield[bitCursor] == 0xF)
 		{
-			// let 'i' go one over to allow special cases
-			// where terminator needs to be inserted
-			// (e.g. MAP14 "SEGS")
+			// Let 'bitCursor' go one over to allow special cases where the
+			// terminator needs to be inserted (e.g. MAP14 "SEGS").
 			bitCursor = 1;
-// TODO:			fputc(bitCursor, out_file);
+			compressed[compressedSize] = bitCursor;
 			compressedSize++;
 		}
 	}
 
-	// add terminator
+	// Add terminator
+	compressed[compressedSize] = 0;
+	compressed[compressedSize+1] = 0;
 	compressedSize += 2;
-// TODO:	currentCursor = 0;
-// TODO:	fwrite(&currentCursor, 2, 1, out_file);
 
+	// Size the data to the next nearest 4-byte interval.
 	while (compressedSize & 3){
-// TODO:		fputc(currentCursor, out_file);
+		compressed[compressedSize] = 0;
 		compressedSize++;
 	}
 
+	// Resize the buffer now that we're done writing all the data.
+	compressed = (byte *)realloc(compressed, compressedSize);
+
 	*outputLen = compressedSize;
 
-	return NULL;	// TODO: Return buffer.
+	return compressed;
 }
 //*/
