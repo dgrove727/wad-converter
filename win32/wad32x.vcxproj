@@ -24,6 +24,7 @@
     <ClCompile Include="..\decompress.cpp" />
     <ClCompile Include="..\Exporter_32X.cpp" />
     <ClCompile Include="..\Exporter_Jaguar.cpp" />
+    <ClCompile Include="..\gfx_convert.cpp" />
     <ClCompile Include="..\Listable.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\WADEntry.cpp" />
@@ -35,7 +36,10 @@
     <ClInclude Include="..\Exporter.h" />
     <ClInclude Include="..\Exporter_32X.h" />
     <ClInclude Include="..\Exporter_Jaguar.h" />
+    <ClInclude Include="..\gfx_convert.h" />
     <ClInclude Include="..\Listable.h" />
+    <ClInclude Include="..\stb_image.h" />
+    <ClInclude Include="..\stb_image_write.h" />
     <ClInclude Include="..\WADEntry.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

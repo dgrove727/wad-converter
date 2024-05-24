@@ -3,6 +3,8 @@
 #include <string.h>
 #include "common.h"
 #include "WADEntry.h"
+#include "decompress.h"
+#include "gfx_convert.h"
 
 #define		VERSION			1.10
 #define		WAD_FORMAT		1
@@ -26,6 +28,12 @@
 // Temporary
 void ReadPC();
 void ReadMars();
+void DumpData(const char* filename, const byte* data, size_t length)
+{
+	FILE* f = fopen(filename, "wb");
+	fwrite(data, length, 1, f);
+	fclose(f);
+}
 
 // List that holds all of the extracted WAD entries in RAM.
 // The data from a PC or Jag/32X WAD should be extracted into this list first, then
@@ -172,8 +180,33 @@ bool SetEntryName(char *entryName, const char *data)
 	return isCompressed;
 }
 
+void GfxTests()
+{
+	FILE *lump = fopen("DOOR2_4.lmp", "rb");
+
+	fseek(lump, 0, SEEK_END);
+	long file_size = ftell(lump);
+	rewind(lump);
+
+	byte *buffer = (byte *)malloc(file_size);
+	fread(buffer, file_size, 1, lump);
+	fclose(lump);
+
+	int outputLen;
+	byte *pngData = PatchToPNG(buffer, file_size, &outputLen);
+
+	lump = fopen("output.png", "wb");
+	fwrite(pngData, outputLen, 1, lump);
+	fclose(lump);
+
+	free(pngData);
+}
+
 int main(int argc, char *argv[])
 {
+//	GfxTests();
+//	return 0;
+
 	printf(
 		"---------------------------------\n"
 		" DOOM 32X / JAGUAR WAD CONVERTER v%01.02f\n"
@@ -379,7 +412,56 @@ void ReadMars()
 		WADEntry *entry = new WADEntry();
 		entry->SetIsCompressed(SetEntryName(entryName, entryName));
 		entry->SetName(entryName);
-		entry->SetData(&data[ptr - 0xC], size);
+
+		if (entry->IsCompressed())
+		{
+			if (strstr(".", entry->GetName()))
+				continue;
+			// Decompress it here, on the fly
+			entry->SetIsCompressed(false);
+
+			byte* input = &data[ptr - 0xC];
+
+			entry->SetData(decompress(input, size), size);
+			DumpData("what.lmp", (byte*)entry->GetData(), entry->GetDataLength());
+
+			/*
+			int getidbyte = 0;
+			int len;
+			int pos;
+			int i;
+			unsigned char* source;
+			int idbyte = 0;
+
+			while (1)
+			{
+
+				// get a new idbyte if necessary
+				if (!getidbyte) idbyte = *input++;
+				getidbyte = (getidbyte + 1) & 7;
+
+				if (idbyte & 1)
+				{
+					// decompress
+					pos = *input++ << LENSHIFT;
+					pos = pos | (*input >> LENSHIFT);
+					source = output - pos - 1;
+					len = (*input++ & 0xf) + 1;
+					if (len == 1) break;
+					for (i = 0; i < len; i++)
+						*output++ = *source++;
+				}
+				else {
+					*output++ = *input++;
+				}
+
+				idbyte = idbyte >> 1;
+
+			}
+
+			entry->SetData(output, size);*/
+		}
+
 		Listable::Add(entry, (Listable **)&wadEntries);
 	}
 
