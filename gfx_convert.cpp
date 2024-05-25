@@ -318,7 +318,7 @@ byte *RGBToIndexed(byte *rgbData, int width, int height)
 
 byte *FlatToPNG(byte *flatData, int width, int height, int *outputLen)
 {
-	return nullptr;
+	return stbi_write_png_to_mem(flatData, 0, width, height, 1, outputLen);
 }
 
 byte *PNGToFlat(byte *pngData, int pngLength, int *width, int *height)
@@ -384,6 +384,43 @@ byte *PatchToPNG(byte *patchData, size_t dataLen, int *outputLen)
 				yPos++;
 			}
 			
+			pixel++; // dummy value
+			post = (const post_t *)pixel;
+		}
+	}
+
+	return stbi_write_png_to_mem(rawImage, 0, header->width, header->height, 1, outputLen);
+}
+
+byte *JagSpriteToPNG(byte *sprHeader, byte *sprData, size_t headerLen, size_t dataLen, int *outputLen)
+{
+	// TODO: Not finished/tested yet.
+
+	patchHeader_t *header = (patchHeader_t *)sprHeader;
+
+	byte *rawImage = (byte *)malloc(header->width * header->height * 1);
+	memset(rawImage, 247, header->width * header->height * 1); // Transparent value
+
+	for (int i = 0; i < header->width; i++)
+	{
+		unsigned int colOffset = header->columnofs[i];
+		const post_t *post = (post_t *)(sprData + colOffset);
+
+		int yPos = 0;
+		while (post->topdelta != 255)
+		{
+			yPos = post->topdelta;
+			const byte *pixel = post->data;
+
+			for (int j = 0; j < post->length; j++)
+			{
+				size_t pixelLocation = (yPos * header->width) + i;
+
+				rawImage[pixelLocation] = *pixel;
+				pixel++;
+				yPos++;
+			}
+
 			pixel++; // dummy value
 			post = (const post_t *)pixel;
 		}
