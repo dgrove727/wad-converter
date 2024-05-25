@@ -476,3 +476,8 @@ byte *PNGToPatch(byte *pngData, size_t dataLen, int *outputLen)
 
 	return patchImage;
 }
+
+void *PNGToJagSprite(byte *pngData, size_t pngLen, byte *sprHeader, int *headerLen, byte *sprData, int *dataLen)
+{
+	return nullptr;
+}
