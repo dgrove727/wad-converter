@@ -6,12 +6,12 @@ void *compress(void *data, size_t inputLen, size_t *outputLen)
 {
 	COMPRESSION_KEY *keys = CreateKeys(data, inputLen);
 	byte *keyBits = (byte *)CreateKeyBits(keys, inputLen);	// TODO: Investigate. Is this actually necessary if we have 'keys'?
-	CreateCompressedData(data, keys, keyBits, inputLen, outputLen);
+	byte *output = (byte *)CreateCompressedData(data, keys, keyBits, inputLen, outputLen);
 
 	free(keys);
 	free(keyBits);
 
-	return NULL;
+	return output;
 }
 
 
@@ -183,7 +183,7 @@ void *CreateCompressedData(void *uncompressed, COMPRESSION_KEY *keys, byte *keyB
 	int bitCursor = 0;
 	int compressedSize = 0;
 
-	byte *compressed = (byte *)malloc(inputLen + 8);	// This should be plenty big for the compressed data. Resize later.
+	byte *compressed = (byte *)malloc((inputLen * 1.125) + 4);	// This should be plenty big for the compressed data. Resize later.
 
 	byte *bitfield = static_cast<byte *>(keyBits);
 
@@ -277,4 +277,3 @@ void *CreateCompressedData(void *uncompressed, COMPRESSION_KEY *keys, byte *keyB
 
 	return compressed;
 }
-//*/
