@@ -3,16 +3,6 @@
 #include <memory.h>
 #include <string.h>
 
-void *memdup(const void *mem, size_t size)
-{
-	void *out = malloc(size);
-
-	if (out != NULL)
-		memcpy(out, mem, size);
-
-	return out;
-}
-
 const char *WADEntry::GetName() const
 {
 	return _name;

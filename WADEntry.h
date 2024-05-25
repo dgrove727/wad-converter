@@ -1,7 +1,6 @@
 #pragma once
 #include "Listable.h"
-
-void *memdup(const void *mem, size_t size);
+#include "common.h"
 
 struct WADEntry : Listable
 {

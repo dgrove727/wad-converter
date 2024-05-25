@@ -182,7 +182,7 @@ bool SetEntryName(char *entryName, const char *data)
 
 void GfxTests()
 {
-	FILE *lump = fopen("POSSA0.png", "rb");
+	FILE *lump = fopen("BRAKA1.png", "rb");
 
 	fseek(lump, 0, SEEK_END);
 	long file_size = ftell(lump);
@@ -192,15 +192,15 @@ void GfxTests()
 	fread(buffer, file_size, 1, lump);
 	fclose(lump);
 
-	int outputLen;
 	int width, height;
-	byte *writeData = PNGToFlat(buffer, file_size, &width, &height, &outputLen);
+	byte *writeData = PNGToFlat(buffer, file_size, &width, &height);
 
 	FILE *writeOut = fopen("D:\\outputFlat.raw", "wb");
-	fwrite(writeData, outputLen, 1, writeOut);
+	fwrite(writeData, width * height, 1, writeOut);
 	fclose(writeOut);
 	return;
 
+	int outputLen;
 	byte *pngData = PatchToPNG(buffer, file_size, &outputLen);
 
 	lump = fopen("output.png", "wb");

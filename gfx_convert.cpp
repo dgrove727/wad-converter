@@ -272,13 +272,30 @@ byte GetIndexFromRGB(byte r, byte g, byte b)
 {
 	for (int i = 0; i < 256; i++)
 	{
-		palentry_t *palEntry = &palette[i];
+		const palentry_t *palEntry = &palette[i];
 
 		if (palEntry->r == r && palEntry->g == g && palEntry->b == b)
-			return i;
+			return (byte)i;
 	}
 
-	// TODO: If we got here, no entry matched. Should we try to find the closest match?
+	// If we got here, no entry matched. Try to find the closest match.
+
+	int closestIndex = 0;
+	int closestDiff = -1;
+	for (int i = 0; i < 256; i++)
+	{
+		const palentry_t *palEntry = &palette[i];
+
+		int diff = abs(palEntry->r - r) + abs(palEntry->g - g) + abs(palEntry->b - b);
+
+		if (closestDiff < 0 || diff < closestDiff)
+		{
+			closestIndex = i;
+			closestDiff = diff;
+		}
+	}
+
+	return (byte)closestIndex;
 }
 
 byte *RGBToIndexed(byte *rgbData, int width, int height)
@@ -381,20 +398,44 @@ byte *PNGToPatch(byte *pngData, size_t dataLen, int *outputLen)
 	byte *indexedImage = PNGToFlat(pngData, dataLen, &width, &height);
 
 	// Modern memory is cheap, so let's just allocate 1mb as workspace.
-	byte *patchImage = (byte *)malloc(1 * 1024 * 1024);
-	size_t lumpSize = 0;
+	byte *postData = (byte *)malloc(1 * 1024 * 1024);
+	size_t postDataSize = 0;
 
-	patchHeader_t *header = (patchHeader_t*)patchImage;
-	header->leftoffset = 0;
-	header->topoffset = 0;
-	header->width = (unsigned short)width;
-	header->height = (unsigned short)height;
+	patchHeader_t header;
+	header.leftoffset = 0;
+	header.topoffset = 0;
+	header.width = (unsigned short)width;
+	header.height = (unsigned short)height;
 
+	unsigned int columnOfs[4096]; // Again, because memory is cheap...
+	size_t numColumnOfs = 0;
+	unsigned int nextAvailableColOf = sizeof(header);
 
 	post_t *post;
 
-	free(indexedImage);
 
-//	stbi_load_from_memory(pngData, dataLen, x, y, channels_in_file, 1);
-	return nullptr;
+	// Magic happens here
+	// TODO: The actual magic
+
+
+	// Now put it all together
+	size_t lumpSize = sizeof(patchHeader_t) + (numColumnOfs * 4) + (postDataSize);
+	byte *patchImage = (byte *)malloc(lumpSize);
+
+	byte *cursor = patchImage;
+	// Write the header
+	memcpy(cursor, &header, sizeof(patchHeader_t));
+	cursor += sizeof(patchHeader_t);
+
+	// Write the columnofs information
+	memcpy(cursor, columnOfs, sizeof(unsigned int) * numColumnOfs);
+	cursor += sizeof(unsigned int) * numColumnOfs;
+
+	// Finally, write the column post data
+	memcpy(cursor, postData, postDataSize);
+
+	// Cleanup
+	free(postData);
+
+	return patchImage;
 }
