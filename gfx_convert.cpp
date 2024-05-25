@@ -281,17 +281,21 @@ byte GetIndexFromRGB(byte r, byte g, byte b)
 	// If we got here, no entry matched. Try to find the closest match.
 
 	int closestIndex = 0;
-	int closestDiff = -1;
+	int closestDist = -1;
 	for (int i = 0; i < 256; i++)
 	{
 		const palentry_t *palEntry = &palette[i];
 
-		int diff = abs(palEntry->r - r) + abs(palEntry->g - g) + abs(palEntry->b - b);
+		int dist_r = abs(palEntry->r - r);
+		int dist_g = abs(palEntry->g - g);
+		int dist_b = abs(palEntry->b - b);
 
-		if (closestDiff < 0 || diff < closestDiff)
+		int dist = (dist_r * dist_r) + (dist_g * dist_g) + (dist_b * dist_b);
+
+		if (closestDist < 0 || dist < closestDist)
 		{
 			closestIndex = i;
-			closestDiff = diff;
+			closestDist = dist;
 		}
 	}
 
