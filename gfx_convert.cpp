@@ -9,6 +9,268 @@ typedef struct
 	byte r, g, b;
 } palentry_t;
 
+// SRB2 2.0 palette
+palentry_t palette[256] = {
+	{247, 247, 247},
+	{239, 239, 239},
+	{231, 231, 231},
+	{223, 223, 223},
+	{215, 215, 215},
+	{207, 207, 207},
+	{199, 199, 199},
+	{191, 191, 191},
+	{183, 183, 183},
+	{175, 175, 175},
+	{167, 167, 167},
+	{159, 159, 159},
+	{151, 151, 151},
+	{143, 143, 143},
+	{135, 135, 135},
+	{127, 127, 127},
+	{119, 119, 119},
+	{111, 111, 111},
+	{103, 103, 103},
+	{95, 95, 95},
+	{87, 87, 87},
+	{79, 79, 79},
+	{71, 71, 71},
+	{63, 63, 63},
+	{55, 55, 55},
+	{47, 47, 47},
+	{39, 39, 39},
+	{31, 31, 31},
+	{23, 23, 23},
+	{15, 15, 15},
+	{7, 7, 7},
+	{0, 0, 0},
+	{191, 167, 143},
+	{183, 160, 136},
+	{175, 152, 128},
+	{167, 144, 120},
+	{159, 137, 113},
+	{150, 129, 105},
+	{142, 121, 97},
+	{134, 114, 90},
+	{126, 106, 82},
+	{117, 98, 74},
+	{109, 90, 66},
+	{101, 83, 59},
+	{93, 75, 51},
+	{84, 67, 43},
+	{76, 60, 36},
+	{67, 51, 27},
+	{191, 123, 75},
+	{179, 115, 71},
+	{171, 111, 67},
+	{163, 107, 63},
+	{155, 99, 59},
+	{143, 95, 55},
+	{135, 87, 51},
+	{127, 83, 47},
+	{119, 79, 43},
+	{107, 71, 39},
+	{95, 67, 35},
+	{83, 63, 31},
+	{75, 55, 27},
+	{63, 47, 23},
+	{51, 43, 19},
+	{43, 35, 15},
+	{255, 235, 223},
+	{255, 227, 211},
+	{255, 219, 199},
+	{255, 211, 187},
+	{255, 207, 179},
+	{255, 199, 167},
+	{255, 191, 155},
+	{255, 187, 147},
+	{255, 179, 131},
+	{247, 171, 123},
+	{239, 163, 115},
+	{231, 155, 107},
+	{223, 147, 99},
+	{215, 139, 91},
+	{207, 131, 83},
+	{203, 127, 79},
+	{255, 238, 220},
+	{255, 220, 185},
+	{255, 203, 151},
+	{255, 185, 117},
+	{255, 168, 85},
+	{255, 151, 54},
+	{255, 134, 25},
+	{255, 117, 0},
+	{243, 109, 0},
+	{229, 101, 0},
+	{216, 93, 0},
+	{203, 85, 0},
+	{190, 77, 0},
+	{177, 69, 0},
+	{164, 61, 0},
+	{151, 54, 0},
+	{255, 255, 239},
+	{255, 255, 207},
+	{255, 255, 175},
+	{255, 255, 143},
+	{255, 255, 111},
+	{255, 255, 79},
+	{255, 255, 47},
+	{255, 255, 15},
+	{255, 255, 0},
+	{207, 207, 0},
+	{175, 175, 0},
+	{143, 143, 0},
+	{111, 111, 0},
+	{79, 79, 0},
+	{47, 47, 0},
+	{15, 15, 0},
+	{255, 255, 115},
+	{235, 219, 87},
+	{215, 187, 67},
+	{195, 155, 47},
+	{175, 123, 31},
+	{155, 91, 19},
+	{135, 67, 7},
+	{115, 43, 0},
+	{255, 255, 255},
+	{255, 223, 223},
+	{255, 191, 191},
+	{255, 159, 159},
+	{255, 127, 127},
+	{255, 95, 95},
+	{255, 63, 63},
+	{255, 31, 31},
+	{255, 0, 0},
+	{239, 0, 0},
+	{223, 0, 0},
+	{207, 0, 0},
+	{191, 0, 0},
+	{175, 0, 0},
+	{159, 0, 0},
+	{143, 0, 0},
+	{127, 0, 0},
+	{111, 0, 0},
+	{95, 0, 0},
+	{79, 0, 0},
+	{63, 0, 0},
+	{47, 0, 0},
+	{31, 0, 0},
+	{15, 0, 0},
+	{255, 183, 183},
+	{243, 163, 163},
+	{231, 143, 143},
+	{219, 123, 123},
+	{203, 107, 107},
+	{191, 91, 91},
+	{179, 79, 79},
+	{167, 63, 63},
+	{142, 46, 0},
+	{134, 39, 0},
+	{126, 32, 0},
+	{117, 25, 0},
+	{109, 18, 0},
+	{101, 11, 0},
+	{93, 5, 0},
+	{85, 0, 0},
+	{119, 255, 79},
+	{112, 240, 75},
+	{105, 224, 70},
+	{97, 208, 65},
+	{90, 192, 60},
+	{82, 176, 55},
+	{75, 160, 50},
+	{67, 144, 45},
+	{60, 128, 40},
+	{53, 112, 35},
+	{45, 96, 30},
+	{38, 80, 25},
+	{30, 64, 20},
+	{23, 48, 15},
+	{15, 32, 10},
+	{7, 15, 4},
+	{222, 255, 168},
+	{199, 228, 148},
+	{173, 200, 128},
+	{149, 173, 107},
+	{124, 146, 88},
+	{100, 119, 68},
+	{74, 90, 48},
+	{50, 63, 29},
+	{0, 255, 0},
+	{0, 223, 0},
+	{0, 191, 0},
+	{0, 159, 0},
+	{0, 127, 0},
+	{0, 95, 0},
+	{0, 63, 0},
+	{0, 31, 0},
+	{255, 111, 255},
+	{255, 0, 255},
+	{223, 0, 223},
+	{191, 0, 191},
+	{159, 0, 159},
+	{127, 0, 127},
+	{95, 0, 95},
+	{63, 0, 63},
+	{233, 233, 243},
+	{196, 196, 225},
+	{157, 157, 206},
+	{119, 119, 187},
+	{84, 84, 167},
+	{65, 65, 131},
+	{46, 46, 92},
+	{27, 27, 52},
+	{213, 241, 255},
+	{191, 235, 255},
+	{170, 227, 255},
+	{149, 221, 255},
+	{128, 214, 255},
+	{106, 207, 255},
+	{85, 200, 255},
+	{63, 191, 255},
+	{55, 157, 223},
+	{47, 143, 191},
+	{39, 119, 159},
+	{31, 95, 127},
+	{0, 191, 191},
+	{0, 127, 127},
+	{0, 95, 95},
+	{0, 63, 63},
+	{239, 239, 255},
+	{207, 207, 255},
+	{175, 175, 255},
+	{143, 143, 255},
+	{111, 111, 255},
+	{79, 79, 255},
+	{47, 47, 255},
+	{15, 15, 255},
+	{0, 0, 255},
+	{0, 0, 223},
+	{0, 0, 207},
+	{0, 0, 191},
+	{0, 0, 175},
+	{0, 0, 159},
+	{0, 0, 143},
+	{0, 0, 127},
+	{0, 0, 111},
+	{0, 0, 95},
+	{0, 0, 79},
+	{0, 0, 63},
+	{0, 0, 47},
+	{0, 0, 31},
+	{0, 0, 15},
+	{0, 255, 255},
+	{207, 127, 207},
+	{183, 111, 183},
+	{159, 95, 159},
+	{135, 79, 135},
+	{111, 63, 111},
+	{87, 47, 87},
+	{63, 31, 63},
+	{39, 15, 39},
+};
+
+/*
+* Doom palette
 palentry_t palette[256] = {
 	{0, 0, 0},
 	{31, 23, 11},
@@ -266,7 +528,7 @@ palentry_t palette[256] = {
 	{159, 0, 155},
 	{111, 0, 107},
 	{167, 107, 107},
-};
+};*/
 
 byte GetIndexFromRGB(byte r, byte g, byte b)
 {
@@ -355,7 +617,7 @@ typedef struct
 	byte topdelta;
 	byte length;
 	byte unused;
-	byte data[1];
+	byte data[256];
 } post_t;
 
 // Works for patches, sprites, all of the transparency-format Doom graphics
@@ -435,6 +697,7 @@ byte *JagSpriteToPNG(byte *sprHeader, byte *sprData, size_t headerLen, size_t da
 
 byte *PNGToPatch(byte *pngData, size_t dataLen, int *outputLen)
 {
+	const byte transparentIndex = 247;
 	int width, height;
 	byte *indexedImage = PNGToFlat(pngData, dataLen, &width, &height);
 
@@ -443,30 +706,113 @@ byte *PNGToPatch(byte *pngData, size_t dataLen, int *outputLen)
 	size_t postDataSize = 0;
 
 	patchHeader_t header;
-	header.leftoffset = 0;
-	header.topoffset = 0;
+	header.leftoffset = 0x23;
+	header.topoffset = 0x3b;
 	header.width = (unsigned short)width;
 	header.height = (unsigned short)height;
 
 	unsigned int columnOfs[4096]; // Again, because memory is cheap...
 	size_t numColumnOfs = 0;
-	unsigned int nextAvailableColOf = sizeof(header);
+	unsigned int nextAvailableColOf = 0; // Not going to know this start point until we finish (dependent on the # of posts we end up with)
 
-	post_t *post;
+	post_t post;
+	post.unused = 0;
 
+	for (int x = 0; x < width; x++)
+	{
+		int y = 0;
+		bool lookingForColStart = true;
 
-	// Magic happens here
-	// TODO: The actual magic
+		bool wroteNothing = true;
 
+		int colLength = 0;
+		while (y < height)
+		{
+			// Get pixel value
+			size_t pixelLocation = (y * width) + x;
+			byte pixel = indexedImage[pixelLocation];
+
+			if (pixel == transparentIndex && !lookingForColStart)
+			{
+				lookingForColStart = true;
+
+				// Flush post data
+				postData[postDataSize++] = post.topdelta;
+				postData[postDataSize++] = post.length;
+				postData[postDataSize++] = post.unused;
+				for (int i = 0; i < post.length; i++)
+					postData[postDataSize++] = post.data[i];
+
+				postData[postDataSize++] = post.data[post.length - 1]; // dummy byte
+				colLength += post.length + 4;
+			}
+			else if (pixel != transparentIndex && lookingForColStart)
+			{
+				wroteNothing = false;
+
+				post.topdelta = y;
+				post.length = 0;
+				post.unused = pixel;
+				lookingForColStart = false;
+				post.data[post.length++] = pixel;
+			}
+			else if (pixel != transparentIndex && !lookingForColStart)
+			{
+				// Add an additional pixel to this post
+				post.data[post.length++] = pixel;
+			}
+
+			y++;
+		}
+
+		if (wroteNothing)
+		{
+			postData[postDataSize++] = 255; // End marker
+
+			columnOfs[numColumnOfs++] = nextAvailableColOf;
+			nextAvailableColOf += 1;
+		}
+		else if (!lookingForColStart) // Instead of hitting a transparent pixel to end this post, we hit the literal bottom of the image.
+		{
+			// Flush post data
+			postData[postDataSize++] = post.topdelta;
+			postData[postDataSize++] = post.length;
+			postData[postDataSize++] = post.unused;
+			for (int i = 0; i < post.length; i++)
+				postData[postDataSize++] = post.data[i];
+
+			postData[postDataSize++] = post.data[post.length - 1]; // dummy byte
+
+			postData[postDataSize++] = 255; // End marker
+
+			colLength += post.length + 5;
+
+			columnOfs[numColumnOfs++] = nextAvailableColOf;
+			nextAvailableColOf += colLength;
+		}
+		else
+		{
+			postData[postDataSize++] = 255; // End marker
+
+			colLength++;
+
+			columnOfs[numColumnOfs++] = nextAvailableColOf;
+			nextAvailableColOf += colLength;
+		}
+	}
 
 	// Now put it all together
-	size_t lumpSize = sizeof(patchHeader_t) + (numColumnOfs * 4) + (postDataSize);
+	size_t lumpSize = 8 + (numColumnOfs * 4) + (postDataSize);
 	byte *patchImage = (byte *)malloc(lumpSize);
 
 	byte *cursor = patchImage;
 	// Write the header
-	memcpy(cursor, &header, sizeof(patchHeader_t));
-	cursor += sizeof(patchHeader_t);
+	memcpy(cursor, &header, 8); // Only first 8 bytes of header
+	cursor += 8;
+
+	// translate the columnofs positions now that we know how big columnofs is going to be
+	for (int i = 0; i < numColumnOfs; i++)
+		columnOfs[i] += 8 + (numColumnOfs * 4);
 
 	// Write the columnofs information
 	memcpy(cursor, columnOfs, sizeof(unsigned int) * numColumnOfs);
@@ -477,6 +823,8 @@ byte *PNGToPatch(byte *pngData, size_t dataLen, int *outputLen)
 
 	// Cleanup
 	free(postData);
+
+	*outputLen = lumpSize;
 
 	return patchImage;
 }

@@ -180,34 +180,43 @@ bool SetEntryName(char *entryName, const char *data)
 	return isCompressed;
 }
 
+static byte *ReadAllBytes(FILE *f, int *file_size)
+{
+	fseek(f, 0, SEEK_END);
+	*file_size = (int)ftell(f);
+	rewind(f);
+
+	byte *buffer = (byte *)malloc(*file_size);
+	fread(buffer, *file_size, 1, f);
+
+	return buffer;
+}
+
 void GfxTests()
 {
-	FILE *lump = fopen("BRAKA1.png", "rb");
-
-	fseek(lump, 0, SEEK_END);
-	long file_size = ftell(lump);
-	rewind(lump);
-
-	byte *buffer = (byte *)malloc(file_size);
-	fread(buffer, file_size, 1, lump);
+	FILE *lump;
+	int lumpSize;
+	lump = fopen("PLAYA1.png", "rb");
+	byte *origPng = ReadAllBytes(lump, &lumpSize);
 	fclose(lump);
-
-	int width, height;
-	byte *writeData = PNGToFlat(buffer, file_size, &width, &height);
-
-	FILE *writeOut = fopen("D:\\outputFlat.raw", "wb");
-	fwrite(writeData, width * height, 1, writeOut);
-	fclose(writeOut);
-	return;
-
+	
+	// Convert it to a lump
 	int outputLen;
-	byte *pngData = PatchToPNG(buffer, file_size, &outputLen);
+	byte *convPatch;
+	convPatch = PNGToPatch(origPng, lumpSize, &outputLen);
 
-	lump = fopen("output.png", "wb");
-	fwrite(pngData, outputLen, 1, lump);
+	// Dump it to disk for SCIENCE
+	lump = fopen("PLAYA1_output.lmp", "wb");
+	fwrite(convPatch, outputLen, 1, lump);
 	fclose(lump);
 
-	free(pngData);
+	// Convert it back to a PNG
+	convPatch = PatchToPNG(convPatch, outputLen, &outputLen);
+
+	// Dump PNG to disk for SCIENCE
+	lump = fopen("PLAYA1_final.png", "wb");
+	fwrite(convPatch, outputLen, 1, lump);
+	fclose(lump);
 }
 
 int main(int argc, char *argv[])
