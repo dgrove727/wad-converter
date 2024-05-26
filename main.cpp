@@ -221,9 +221,6 @@ void GfxTests()
 
 int main(int argc, char *argv[])
 {
-	GfxTests();
-	return 0;
-
 	printf(
 		"---------------------------------\n"
 		" DOOM 32X / JAGUAR WAD CONVERTER v%01.02f\n"
@@ -412,6 +409,10 @@ void ReadMars()
 	byte *data = (byte *)malloc(table_ptr - 0xC);
 	fread(data, 1, table_ptr - 0xC, in_file);
 
+	char prevEntry[9];
+	prevEntry[0] = '\0';
+	strcpy(prevEntry, "unknown");
+
 	char entryName[9];
 	entryName[8] = '\0';
 	for (int i = 0; i < lump_count; i++)
@@ -433,14 +434,26 @@ void ReadMars()
 		if (entry->IsCompressed())
 		{
 			if (strstr(".", entry->GetName()))
+			{
+				char exportFile[16];
+				sprintf(exportFile, "%s_c.lmp", prevEntry);
+				byte *input = &data[ptr - 0xC];
+				entry->SetData(decompress(input, size), size);
+				DumpData(exportFile, (byte *)entry->GetData(), entry->GetDataLength());
 				continue;
+			}
 			// Decompress it here, on the fly
 			entry->SetIsCompressed(false);
 
 			byte* input = &data[ptr - 0xC];
 
+			strcpy(prevEntry, entry->GetName());
+
+			char exportFile[16];
+			sprintf(exportFile, "%s.lmp", entry->GetName());
+
 			entry->SetData(decompress(input, size), size);
-			DumpData("what.lmp", (byte*)entry->GetData(), entry->GetDataLength());
+			DumpData(exportFile, (byte*)entry->GetData(), entry->GetDataLength());
 
 			/*
 			int getidbyte = 0;
@@ -477,6 +490,15 @@ void ReadMars()
 			}
 
 			entry->SetData(output, size);*/
+		}
+		else
+		{
+			char exportFile[16];
+			sprintf(exportFile, "%s.lmp", entry->GetName());
+
+			byte *input = &data[ptr - 0xC];
+			entry->SetData(input, size);
+			DumpData(exportFile, (byte *)entry->GetData(), entry->GetDataLength());
 		}
 
 		Listable::Add(entry, (Listable **)&wadEntries);
