@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stddef.h>
+
 typedef unsigned char byte;
 
 void *memdup(const void *mem, size_t size);
