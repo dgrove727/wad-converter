@@ -12,7 +12,7 @@
 // WAD_FORMAT:
 // 0 -- (versions 0.99 - 1.00)
 // 1 -- (current)
-// 
+//
 // _32X_ lump doesn't have any info in versions prior to v1.10. When _32X_
 // doesn't exist or is empty, we assume the format is 0.
 
@@ -30,7 +30,10 @@ void ReadPC();
 void ReadMars();
 void DumpData(const char* filename, const byte* data, size_t length)
 {
-	FILE* f = fopen(filename, "wb");
+	char path[] = "./dump/\0\0\0\0\0\0\0\0\0\0\0\0\0";
+	strcat(path, filename);
+
+	FILE* f = fopen(path, "wb");
 	fwrite(data, length, 1, f);
 	fclose(f);
 }
@@ -199,7 +202,7 @@ void GfxTests()
 	lump = fopen("PLAYA1.png", "rb");
 	byte *origPng = ReadAllBytes(lump, &lumpSize);
 	fclose(lump);
-	
+
 	// Convert it to a lump
 	int outputLen;
 	byte *convPatch;
@@ -231,7 +234,7 @@ int main(int argc, char *argv[])
 	);
 
 	// TODO: Add a parameter here that sets Jaguar or 32X mode
-	
+
 	if (argc < 4)
 	{
 		printf(
@@ -242,35 +245,35 @@ int main(int argc, char *argv[])
 		system("PAUSE");
 		Shutdown();
 	}
-	
+
 	int i = strlen(argv[1]) - 1;
-	
+
 	while (i > 0)
 	{
 		if(argv[1][i] >= 'A' && argv[1][i] <= 'Z')
 			argv[1][i] += 0x20;
 		i--;
 	}
-	
+
 	if (strcmp(argv[1], "-export") == 0)
 	{
 		in_file = fopen(argv[2], "rb");
 		if (!in_file)
 		{
 			printf("ERROR: ROM file not found.\n");
-			Shutdown();		
+			Shutdown();
 		}
-		
+
 		out_file = fopen(argv[3], "wb");
 		if(!out_file)
 		{
 			printf("ERROR: Unable to create output file.\n");
 			fclose(in_file);
-			Shutdown();		
+			Shutdown();
 		}
-		
+
 		ReadMars();
-//		Mars2PC();						
+//		Mars2PC();
 	}
 	else if (strcmp(argv[1], "-import") == 0)
 	{
@@ -280,7 +283,7 @@ int main(int argc, char *argv[])
 			printf("ERROR: WAD file not found.\n");
 			Shutdown();
 		}
-		
+
 #ifdef IMPORT_MODE_WAD
 		out_file = fopen(argv[3], "wb");	// USE THIS FOR OUTPUT_WAD
 		if(!out_file){
@@ -297,16 +300,16 @@ int main(int argc, char *argv[])
 			Shutdown();
 		}
 #endif
-		
+
 		ReadPC();
 //		PC2Mars();
 	}
 	else
 	{
 		printf("ERROR: Invalid command.\n");
-		Shutdown();		
+		Shutdown();
 	}
-	
+
 	return 0;
 }
 
@@ -332,7 +335,7 @@ void Shutdown()
 		fclose(in_file);
 	if (out_file)
 		fclose(out_file);
-	
+
 	exit(0);
 }
 
@@ -430,6 +433,7 @@ void ReadMars()
 		WADEntry *entry = new WADEntry();
 		entry->SetIsCompressed(SetEntryName(entryName, entryName));
 		entry->SetName(entryName);
+		//printf("lump %d/%d:  %s\n", i, lump_count, entry->GetName());
 
 		if (entry->IsCompressed())
 		{
@@ -568,9 +572,9 @@ void ReadPC()
 void PC2Mars()
 {
 	int lump;
-	
+
 	conversion_task = PC_2_MARS;
-	
+
 	fseek(in_file, 0, SEEK_END);
 	file_size = ftell(in_file);
 	rewind(in_file);
@@ -599,11 +603,11 @@ void PC2Mars()
 		system("PAUSE");
 		return;
 	}
-	
+
 	out_table = (byte *)malloc(1);
-	
+
 	lump_count += 3; // fix the patch count
-	
+
 	data = (byte *)malloc(table_ptr - 0xC);
 	fread(data, 1, table_ptr - 0xC, in_file);
 	table = (byte *)malloc(lump_count * 16);
@@ -611,13 +615,13 @@ void PC2Mars()
 	{
 		fread(&table[(i*16)], 4, 1, in_file);		// ptr
 		*(int *)&table[(i*16)] = swap_endian(*(int *)&table[(i*16)]);
-		
+
 		fread(&table[(i*16)+4], 4, 1, in_file);		// size
 		*(int *)&table[(i*16)+4] = swap_endian(*(int *)&table[(i*16)+4]);
-		
+
 		fread(&table[(i*16)+8], 1, 8, in_file);		// name
 	}
-	
+
 	for (int i = 0; i < lump_count; i++)
 	{
 		*(int *)&table[i*16] = swap_endian(*(int *)&table[i*16]);
@@ -629,7 +633,7 @@ void PC2Mars()
 			table[(i * 16) + 15] = 'S';
 	}
 	fclose(in_file);
-	
+
 #ifdef IMPORT_MODE_WAD
 	strcpy(label, "DAWI"); // make sure we're creating an IWAD
 	fwrite(&label, 4, 1, out_file);
@@ -639,8 +643,8 @@ void PC2Mars()
 	fseek(out_file, 0, SEEK_END);
 	out_file_size = ftell(out_file);
 	rewind(out_file);
-	
-	// Check for "DAWI" marker at start of file	
+
+	// Check for "DAWI" marker at start of file
 	fread(&label, 4, 1, out_file);
 	if (!strcmp(label, "DAWI"))
 	{
@@ -669,10 +673,10 @@ void PC2Mars()
 		return;
 	}
 #endif
-	
+
 	out_file_size = 0xC;
 	out_lump_count = lump_count;
-	
+
 	for (lump = 0; lump < lump_count-3; lump++)
 	{
 		char entryName[9];
@@ -819,7 +823,7 @@ void PC2Mars()
 				break;
 		}
 	}
-	
+
 	out_lump_count -= 7;
 #ifndef FORCE_LITTLE_ENDIAN
 	int i = swap_endian(ftell(out_file) - iwad_ptr);
@@ -827,12 +831,12 @@ void PC2Mars()
 #else
 	i = ftell(out_file) - iwad_ptr;
 #endif
-	
+
 	fwrite(out_table, 1, out_table_size, out_file);
-	
+
 #ifndef IMPORT_MODE_WAD
 	printf("\n");
-	
+
 	// Adjust ROM size
 	int n = ftell(out_file);
 	printf("ROM size = %i.%iMB\n", n>>20, (int)(((float)((n >> 16) & 0xF) / 16.0f) * 10));
@@ -851,11 +855,11 @@ void PC2Mars()
 	if (n > 0x400000)
 		printf("WARNING: ROM exceeds the Sega Genesis ROM size limitation of 4MB.\n");
 #endif
-	
+
 	fseek(out_file, iwad_ptr + 4, SEEK_SET);
 	fwrite(&out_lump_count, 4, 1, out_file);
 	fwrite(&i, 4, 1, out_file);
-	
+
 #ifndef IMPORT_MODE_WAD
 	// Fix checksum
 	checksum = 0;
@@ -872,9 +876,9 @@ void PC2Mars()
 	checksum = (swap_endian(checksum) >> 16);
 	printf("Checksum = 0x%04X\n", checksum);
 #endif
-	
+
 	printf("\nImport finished!\n");
-	system("PAUSE");	
+	system("PAUSE");
 	return;
 }
 
@@ -885,15 +889,15 @@ void Mars2PC()
 void Mars2PC()
 {
 	// Conversion: [32X] ---->> [PC]
-	
+
 	int lump;
-	
+
 	conversion_task = MARS_2_PC;
-	
+
 	fseek(in_file, 0, SEEK_END);
 	file_size = ftell(in_file);
 	rewind(in_file);
-	
+
 	for (int i = 0; i < file_size; i += 4)
 	{
 		// Search the ROM for the "IWAD" signature to locate the WAD data.
@@ -919,7 +923,7 @@ void Mars2PC()
 			}
 		}
 	}
-	
+
 	//if (label != 0x44415749 && label != 0x44415750)	// TODO: Double-check. Pretty sure this was a mistake. Shouldn't care about "PWAD".
 	if (label != 0x44415749)
 	{
@@ -928,12 +932,12 @@ void Mars2PC()
 		system("PAUSE");
 		return;
 	}
-	
+
 	out_table = (byte *)malloc(1);
-	
+
 	lump_count += 2;	// fix the patch count
 	lump_count++;	// make room for PNAMES
-	
+
 	data = (byte *)malloc(table_ptr - 0xC);
 	fread(data, 1, table_ptr - 0xC, in_file);
 	table = (byte *)malloc(lump_count * 16);
@@ -967,18 +971,18 @@ void Mars2PC()
 		}
 	}
 	fclose(in_file);
-	
+
 	label = 0x44415750;	// make sure we're creating an PWAD
 	fwrite(&label, 4, 1, out_file);
 	fseek(out_file, 8, SEEK_CUR);
-	
+
 	out_lump_count = lump_count;
-	
+
 	// Put 32X label in WAD file
 	Create_32X_();
 	lump_value_fix++;
 	out_lump_count++;
-	
+
 	for (lump=0; lump < lump_count-3; lump++)
 	{
 		printf("0x%04X\t%c%c%c%c%c%c%c%c\n", lump + lump_value_fix,
@@ -1205,16 +1209,16 @@ void Mars2PC()
 				break;
 		}
 	}
-	
+
 	i = ftell(out_file);
 	fwrite(out_table, 1, out_table_size, out_file);
-	
+
 	fseek(out_file, 4, SEEK_SET);
 	fwrite(&out_lump_count, 4, 1, out_file);
 	fwrite(&i, 4, 1, out_file);
-	
+
 	printf("\nExport finished!\n");
-	system("PAUSE");	
+	system("PAUSE");
 	return;
 }*/
 
@@ -1224,7 +1228,7 @@ void Read_32X_(int lump)
 {
 	int data_ptr = *(int *)&table[(lump*16)] - 0xC;
 	int data_size = *(int *)&table[(lump*16)+4];
-	
+
 	if (data_size < 9)
 	{
 		format = 0;
@@ -1250,13 +1254,13 @@ void Create_32X_()
 	const char *string = "WAD32X";
 	const short ver = (short)(VERSION * 100);
 	const short format = WAD_FORMAT;
-	
+
 	fwrite(string, 1, strlen(string), out_file);
 	fwrite(&ver, 2, 1, out_file);
 	fwrite(&format, 2, 1, out_file);
-	
+
 	WriteTableCustom(out_file_size, 10, "_32X_");
-	
+
 	out_file_size += 10;
 }
 
@@ -1265,21 +1269,21 @@ void CreatePNAMES(int lump)
 	int data_ptr = *(int *)&table[(lump*16)] - 0xC;
 	int data_size = *(int *)&table[(lump*16)+4];
 	char name[9];
-	
+
 	int i;
-	
+
 	name[8] = '\0';
-	
+
 	for (i = 0x12C; i < data_size; i += 0x20)
 	{
 		memcpy(name, &data[data_ptr + i], 8);
 		WritePatchName(name);
 	}
-	
+
 	fwrite(pnames_table, 1, 4+(patches_count<<3), out_file);
-	
+
 	WriteTableCustom(out_file_size, 4+(patches_count<<3), "PNAMES");
-	
+
 	out_file_size += (4+(patches_count<<3));
 }
 
@@ -1289,17 +1293,17 @@ void CreateTEXTURE1(int lump)
 	// convention purposes.
 	unsigned long long *texture1_names = NULL;
 	unsigned short *texture1_order = NULL;
-	
+
 	if (num_of_textures > 0)
 	{
 		texture1_names = (unsigned long long *)malloc(num_of_textures<<3);
 		texture1_order = (unsigned short *)calloc(num_of_textures, 2);
 	}
-	
+
 	for (int i = 0; i < num_of_textures; i++)
 	{
 		//texture1_names[i] = *(long long *)&out_texture1_data[i<<5];
-		
+
 		texture1_names[i] = out_texture1_data[(i<<5)+0];
 		texture1_names[i] <<= 8;
 		texture1_names[i] |= out_texture1_data[(i<<5)+1];
@@ -1316,7 +1320,7 @@ void CreateTEXTURE1(int lump)
 		texture1_names[i] <<= 8;
 		texture1_names[i] |= out_texture1_data[(i<<5)+7];
 	}
-	
+
 	for (int i = 0; i < num_of_textures; i++)
 	{
 		for (int n = 0; n < num_of_textures; n++)
@@ -1325,23 +1329,23 @@ void CreateTEXTURE1(int lump)
 				texture1_order[i]++;
 		}
 	}
-	
+
 	fwrite(out_texture1_table, 1, (num_of_textures<<2) + 4, out_file);
-	
+
 	for (int i = 0; i < num_of_textures; i++)
 	{
 		int n = 0;
 		while (texture1_order[n] != i)
 			n++;
-		
+
 		*(short *)&out_texture1_data[(n << 5) + 26] = i;
 		fwrite(&out_texture1_data[n << 5], 1, 32, out_file);
 	}
-	
+
 	WriteTableCustom(out_file_size, (num_of_textures<<2) + (num_of_textures<<5) + 4, "TEXTURE1");
-	
+
 	out_file_size += (num_of_textures<<2) + (num_of_textures<<5) + 4;
-	
+
 	if(num_of_textures > 0)
 	{
 		free(texture1_names);
@@ -1353,23 +1357,23 @@ void ConvertTEXTURE1Data(int lump)
 {
 	int data_ptr = *(int *)&table[(lump*16)] - 0xC;
 	int data_size = *(int *)&table[(lump*16)+4];
-	
+
 	int i;
-	
+
 	int num_of_textures = *(int *)&data[data_ptr];
-	
+
 	int *texture_ptr_table;
 	char *texture_data_table;
-	
+
 	// Our task with this function is to copy TEXTURE1 with "AASHITTY" inserted
 	texture_ptr_table = (int *)malloc((num_of_textures+1) << 2);
 	texture_data_table = (char *)malloc((num_of_textures+1) << 5);
-	
+
 	// Copy PTR table
 	texture_ptr_table[0] = ((num_of_textures+1)<<2) + 4;
 	for (i = 1; i < num_of_textures+1; i++)
 		texture_ptr_table[i] = *(int *)&data[data_ptr + 4 - 4 + (i<<2)] + 32 + 4;
-	
+
 	// Copy DATA table
 	texture_data_table[0] = 'A';
 	texture_data_table[1] = 'A';
@@ -1389,23 +1393,23 @@ void ConvertTEXTURE1Data(int lump)
 	*(short *)&texture_data_table[26] = 0;
 	*(short *)&texture_data_table[28] = 1;
 	*(short *)&texture_data_table[30] = 0;
-	
+
 	for(i=0; i < (num_of_textures<<5); i++)
 		texture_data_table[32 + i] = data[data_ptr + 4 + (num_of_textures<<2) + i];
-	
+
 	num_of_textures++;
 	fwrite(&num_of_textures, 4, 1, out_file);
 	num_of_textures--;
-	
+
 	fwrite(texture_ptr_table, 4, num_of_textures+1, out_file);
-	
+
 	fwrite(texture_data_table, 1, (num_of_textures+1)<<5, out_file);
-	
+
 	free(texture_ptr_table);
 	free(texture_data_table);
-	
+
 	WriteTable(lump, out_file_size, 4 + ((num_of_textures+1)<<2) + ((num_of_textures+1)<<5));
-	
+
 	out_file_size += (4 + ((num_of_textures+1)<<2) + ((num_of_textures+1)<<5));
 }
 
@@ -1413,14 +1417,14 @@ void ConvertPLAYPALData(int lump)
 {
 	int data_ptr = *(int *)&table[(lump*16)] - 0xC;
 	int data_size = *(int *)&table[(lump*16)+4];
-	
+
 	unsigned short color;
-	
+
 	for (color = 0; color < 11520; color++)
 		fputc(data[data_ptr + (color % data_size)], out_file);
-	
+
 	WriteTable(lump, out_file_size, 11520);
-	
+
 	out_file_size += 11520;
 }
 
@@ -1428,10 +1432,10 @@ void ConvertCOLORMAPData32X(int lump)
 {
 	int data_ptr = *(int *)&table[(lump*16)] - 0xC;
 	int data_size = *(int *)&table[(lump*16)+4];
-	
+
 	unsigned short color;
 	unsigned short shade;
-	
+
 	if (data_size == 8704)
 	{
 		// COLORMAP doesn't contain the extra 32X data
@@ -1443,18 +1447,18 @@ void ConvertCOLORMAPData32X(int lump)
 				fputc(data[data_ptr + (color % 256) + shade], out_file);
 			}
 		}
-		
+
 		WriteTable(lump, out_file_size, 16384);
-		
+
 		out_file_size += 16384;
 	}
 	else if (format == 0)
 	{
 		// this is for backwards compatibility with v0.99 and v1.00 WAD files
 		fwrite(&data[data_ptr], 1, data_size, out_file);
-		
+
 		WriteTable(lump, out_file_size, data_size);
-		
+
 		out_file_size += data_size;
 	}
 	else
@@ -1467,16 +1471,16 @@ void ConvertCOLORMAPData32X(int lump)
 				fputc(data[data_ptr + (color % 256) + shade + 8704], out_file);
 			}
 		}
-		
+
 		WriteTable(lump, out_file_size, 16384);
-		
+
 		out_file_size += 16384;
 	}
 }
 
 void ConvertCOLORMAPData(int lump)
 {
-	char inv_colormap[0x100] = 
+	char inv_colormap[0x100] =
 	{
 		0x04, 0x51, 0x50, 0x59, 0x00, 0x51, 0x50, 0x50, 0x04, 0x55, 0x53, 0x51, 0x50, 0x57, 0x56, 0x54,
 		0x6D, 0x6C, 0x6A, 0x03, 0x68, 0x66, 0x65, 0x64, 0x62, 0x61, 0x60, 0x5F, 0x5E, 0x5D, 0x5C, 0x5B,
@@ -1495,35 +1499,35 @@ void ConvertCOLORMAPData(int lump)
 		0x00, 0x00, 0x08, 0x07, 0x07, 0x06, 0x05, 0x05, 0x5B, 0x59, 0x58, 0x57, 0x57, 0x55, 0x53, 0x52,
 		0x50, 0x50, 0x50, 0x04, 0x04, 0x04, 0x04, 0x04, 0x03, 0x6F, 0x69, 0x5F, 0x5B, 0x58, 0x55, 0x61
 	};
-	
+
 	int data_ptr = *(int *)&table[(lump*16)] - 0xC;
 	//int data_size = *(int *)&table[(lump*16)+4];
-	
+
 	unsigned short color;
 	unsigned short shade;
-	
+
 	// regular colors
 	for (shade = 0; shade < 32*256*2; shade += (256*2))
 	{
 		for (color = (128*2); color < (256+128)*2; color += 2)
 			fputc(data[data_ptr + (color % (256*2)) + shade], out_file);
 	}
-	
+
 	// invulnerability colors
 	for (color = 0; color < 256; color++)
 		fputc(inv_colormap[color], out_file);
 	for (color = 0; color < 256; color++)
 		fputc(0, out_file);
-	
+
 	// interlacing colors (for when data is ported back to the 32X)
 	for (shade = 0; shade < 32*256*2; shade += (256*2))
 	{
 		for (color = (128*2)+1; color < (256+128)*2; color += 2)
 			fputc(data[data_ptr + (color % (256*2)) + shade], out_file);
 	}
-	
+
 	WriteTable(lump, out_file_size, 16896);
-	
+
 	out_file_size += 16896;
 }
 
@@ -1531,28 +1535,28 @@ void ConvertMapData32X(int lump, char mapfile)
 {
 	int data_ptr = *(int *)&table[(lump*16)] - 0xC;
 	int data_size = *(int *)&table[(lump*16)+4];
-	
+
 	byte *output = 0;
 	int output_size = 0;
-	
+
 	byte *uncompressed = 0;
 	int compressed_size = 0;
-	
+
 	byte *key = 0;
 	int key_size = 0;
-	
+
 	byte *bitfield = 0;
 	int bitfield_size = 0;
-	
-	int n;	// 
-	int i;	// 
-	int b;	// 
+
+	int n;	//
+	int i;	//
+	int b;	//
 	int c;	// number of bytes to compare
-	
+
 	int data_comp_1;
 	int data_comp_2;
 	char bytes_to_copy = 0;
-	
+
 	switch (mapfile)
 	{
 		case THINGS:
@@ -1562,12 +1566,12 @@ void ConvertMapData32X(int lump, char mapfile)
 		case SSECTORS:
 		case SECTORS:
 			output_size = data_size;	// must be uncompressed size
-			
+
 			key = (byte *)malloc(1);
 			bitfield = (byte *)malloc(1);
-			
+
 			table[(lump*16)+8] |= 0x80;
-			
+
 			uncompressed = (byte *)malloc(data_size);
 			for (i = 0; i < data_size; i++)
 				uncompressed[i] = data[data_ptr + i];
@@ -1617,7 +1621,7 @@ void ConvertMapData32X(int lump, char mapfile)
 			}
 			break;
 	}
-	
+
 	if (table[(lump*16)+8] >> 7)
 	{
 		// data needs to be compressed
@@ -1627,20 +1631,20 @@ void ConvertMapData32X(int lump, char mapfile)
 			data_comp_1 = (uncompressed[i]<<16)
 			 | (uncompressed[i+1]<<8)
 			 | uncompressed[i+2];
-			 
+
 			for (n = 0; n < i; n++)
 			{
 				if (i-n > 0x1000)
 					n = i - 0x1000;
-					
+
 				data_comp_2 = (uncompressed[n]<<16)
 				 | (uncompressed[n + (1%(i-n))]<<8)
 				 | uncompressed[n + (2%(i-n))];
-				
+
 				if (data_comp_1 == data_comp_2)
 				{
 					// check to see how many bytes match beyond 3
-					
+
 					if (bytes_to_copy == 0)
 					{
 						bytes_to_copy = 3;
@@ -1673,9 +1677,9 @@ void ConvertMapData32X(int lump, char mapfile)
 							}
 							else
 								c = 0x40;
-						}	
+						}
 					}
-					
+
 					if (c == 17)
 					{
 						bytes_to_copy = 16;
@@ -1683,29 +1687,29 @@ void ConvertMapData32X(int lump, char mapfile)
 					}
 				}
 			}
-			
+
 			if (bytes_to_copy)
 			{
 				// add info to the key
-				
+
 				key_size += 4;
 				key = (byte *)realloc(key, key_size);
-				
+
 				*(unsigned short *)&key[key_size - 4] = i;
 				*(unsigned short *)&key[key_size - 2] = (((i-b)-1)<<4) | (bytes_to_copy-1);
-				
+
 				i += (bytes_to_copy-1);
-				
+
 				bytes_to_copy = 0;
 			}
 		}
-		
+
 		key_size += 4;
 		key = (byte *)realloc(key, key_size);
-		
+
 		*(unsigned short *)&key[key_size - 4] = 0xFFFF;
 		*(unsigned short *)&key[key_size - 2] = 0;
-		
+
 		// create key bitfield
 		n = 0;
 		for (i = 0; i < output_size; i++)
@@ -1714,80 +1718,80 @@ void ConvertMapData32X(int lump, char mapfile)
 			{
 				bitfield_size++;
 				bitfield = (byte *)realloc(bitfield, bitfield_size);
-				
+
 				bitfield[bitfield_size-1] = 0;
 			}
 			else
 			{
 				bitfield_size++;
 				bitfield = (byte *)realloc(bitfield, bitfield_size);
-				
+
 				bitfield[bitfield_size-1] = 1;
-				
+
 				i += (*(unsigned short *)&key[n+2] & 0xF);
 				n += 4;
 			}
 		}
-		
+
 		// add terminator to key
 		bitfield_size++;
 		bitfield = (byte *)realloc(bitfield, bitfield_size);
 		bitfield[bitfield_size-1] = 0xF;
-		
+
 		// if needed, align the bitfield to the next whole byte (8 bits)
 		while (bitfield_size & 7)
 		{
 			bitfield_size++;
 			bitfield = (byte *)realloc(bitfield, bitfield_size);
-			
+
 			bitfield[bitfield_size-1] = 0;
 		}
-		
+
 		// write data
 		n = 0;	// used as subscript to key[]
 		b = 0;	// used as subscript to bitfield[]
 		for (i = 0; i < output_size; i++)
-		{	
+		{
 			if (i < output_size)
 			{
 				if ((b & 7) == 0)
 				{
 					data_comp_1 = 0;
-					
+
 					if(bitfield[b] == 0xF)	data_comp_1 |= 1;
 					else					data_comp_1 |= bitfield[b];
-					
+
 					if(bitfield[b+1] == 0xF)	data_comp_1 |= 2;
 					else					data_comp_1 |= (bitfield[b+1]<<1);
-					
+
 					if(bitfield[b+2] == 0xF)	data_comp_1 |= 4;
 					else					data_comp_1 |= (bitfield[b+2]<<2);
-					
+
 					if(bitfield[b+3] == 0xF)	data_comp_1 |= 8;
 					else					data_comp_1 |= (bitfield[b+3]<<3);
-					
+
 					if(bitfield[b+4] == 0xF)	data_comp_1 |= 16;
 					else					data_comp_1 |= (bitfield[b+4]<<4);
-					
+
 					if(bitfield[b+5] == 0xF)	data_comp_1 |= 32;
 					else					data_comp_1 |= (bitfield[b+5]<<5);
-					
+
 					if(bitfield[b+6] == 0xF)	data_comp_1 |= 64;
 					else					data_comp_1 |= (bitfield[b+6]<<6);
-					
+
 					if(bitfield[b+7] == 0xF)	data_comp_1 |= 128;
 					else					data_comp_1 |= (bitfield[b+7]<<7);
-					
+
 					fputc(data_comp_1, out_file);
 					compressed_size++;
 				}
-				
+
 				if (data_comp_1 & 1)
 				{
 					fputc(key[n+3], out_file);
 					fputc(key[n+2], out_file);
 					compressed_size += 2;
-					
+
 					i += (*(unsigned short *)&key[n+2] & 0xF);
 					n += 4;
 				}
@@ -1796,16 +1800,16 @@ void ConvertMapData32X(int lump, char mapfile)
 					fputc(uncompressed[i], out_file);
 					compressed_size++;
 				}
-				
+
 				data_comp_1 >>= 1;
 				b++;
-			}	
+			}
 		}
-		
+
 		if ((b&7) == 0)
 		{
 			if (bitfield[b] == 0xF)
-			{	
+			{
 				// let 'i' go one over to allow special cases
 				// where terminator needs to be inserted
 				// (e.g. MAP14 "SEGS")
@@ -1814,25 +1818,25 @@ void ConvertMapData32X(int lump, char mapfile)
 				compressed_size++;
 			}
 		}
-		
+
 		// add terminator
 		compressed_size += 2;
 		i = 0;
 		fwrite(&i, 2, 1, out_file);
-		
+
 		while (compressed_size & 3){
 			fputc(i, out_file);
 			compressed_size++;
 		}
-		
+
 		WriteTable(lump, out_file_size, output_size);
-		
+
 		out_file_size += compressed_size;
 	}
 	else
 	{
 		fwrite(output, 1, output_size, out_file);
-		
+
 		i = 0;
 		n = output_size;
 		while (n & 3)
@@ -1840,18 +1844,18 @@ void ConvertMapData32X(int lump, char mapfile)
 			fputc(i, out_file);
 			n++;
 		}
-		
+
 		WriteTable(lump, out_file_size, output_size);
-		
+
 		out_file_size += output_size;
-		
+
 		n = output_size;
 		while (n & 3){
 			n++;
 			out_file_size++;
 		}
 	}
-	
+
 	if (output)
 		free(output);
 	if (uncompressed)
@@ -1866,26 +1870,26 @@ void ConvertMapData(int lump, char mapfile)
 {
 	int data_ptr = *(int *)&table[(lump*16)] - 0xC;
 	int data_size = *(int *)&table[(lump*16)+4];
-	
+
 	byte *uncompressed;
 	byte *converted = NULL;
-	
+
 	int ci;
 	int i;
-	
+
 	char key;
 	char key_bit;
-	
+
 	int key_location;
 	char key_count;
-	
+
 	uncompressed = (byte *)malloc(data_size + 16);	// add 16 to make sure we have enough room
-	
+
 	if (table[(lump*16)+8] >> 7){
 		// data must be decompressed
-		
+
 		table[(lump*16)+8] &= 0x7F;
-		
+
 		ci = 0;
 		i = 0;
 		while (i < data_size)
@@ -1899,7 +1903,7 @@ void ConvertMapData(int lump, char mapfile)
 					key_location = (data[data_ptr + ci]<<8) | data[data_ptr + ci+1];
 					key_count = (key_location & 0xF)+1;
 					key_location = i-((key_location>>4)+1);
-					
+
 					while (key_count > 0)
 					{
 						uncompressed[i] = uncompressed[key_location];
@@ -1916,7 +1920,7 @@ void ConvertMapData(int lump, char mapfile)
 					ci++;
 					i++;
 				}
-				
+
 				key >>= 1;
 			}
 		}
@@ -1926,7 +1930,7 @@ void ConvertMapData(int lump, char mapfile)
 		for (i = 0; i < data_size; i++)
 			uncompressed[i] = data[data_ptr + i];
 	}
-	
+
 	switch (mapfile)
 	{
 		case THINGS:
@@ -1989,13 +1993,13 @@ void ConvertMapData(int lump, char mapfile)
 			break;
 	#endif
 	}
-	
+
 	fwrite(converted, 1, data_size, out_file);
-	
+
 	WriteTable(lump, out_file_size, data_size);
-	
+
 	out_file_size += data_size;
-	
+
 	free(uncompressed);
 	free(converted);
 }
@@ -2004,11 +2008,11 @@ void ConvertRawData(int lump)
 {
 	int data_ptr = *(int *)&table[(lump*16)] - 0xC;
 	int data_size = *(int *)&table[(lump*16)+4];
-	
+
 	fwrite(&data[data_ptr], 1, data_size, out_file);
-	
+
 	WriteTable(lump, out_file_size, data_size);
-	
+
 	out_file_size += data_size;
 }
 
@@ -2022,28 +2026,28 @@ void ConvertTextureData32X(int lump)
 {
 	int data_ptr = *(int *)&table[(lump*16)] - 0xC;
 	int data_size = *(int *)&table[(lump*16)+4];
-	
+
 	short x_size;
 	short y_size;
 	int offset;
-	
+
 	short x;
 	short y;
-	
+
 	byte *output;
-	
+
 	char entryName[9];
 	SetEntryName(entryName, (const char*)&table[(lump * 16) + 8]);
-	
+
 	x_size = *(short *)&data[data_ptr];
 	y_size = *(short *)&data[data_ptr+2];
-	
+
 	WriteTexture1(x_size, y_size, entryName);
-	
+
 	offset = *(int *)&data[data_ptr+8] + 3;
-	
+
 	output = (byte *)malloc((x_size * y_size) + 320);
-	
+
 	for(x=0; x < x_size; x++){
 		for(y=0; y < y_size; y++){
 			output[y + (x * y_size)] = data[data_ptr + offset];
@@ -2051,16 +2055,16 @@ void ConvertTextureData32X(int lump)
 		}
 		offset += 5;
 	}
-	
+
 	for(x=0; x < 320; x++){
 		output[(x_size * y_size) + x] = output[x];
 	}
-	
+
 	fwrite(output, 1, (x_size * y_size) + 320, out_file);
 	WriteTable(lump, out_file_size, (x_size * y_size) + 320);
-	
+
 	out_file_size += ((x_size * y_size) + 320);
-	
+
 	free(output);
 }
 
@@ -2075,39 +2079,39 @@ void ConvertTextureData(int lump)
 		// copy last byte in line
 		// write 0xFF
 		// repeat these steps for the next line
-	
+
 	int data_ptr = *(int *)&table[(lump*16)] - 0xC;
 	int data_size = *(int *)&table[(lump*16)+4];
-	
+
 	byte *output;
 	byte *line_lookup;
-	
+
 	int line_lookup_size;
-	
+
 	int array_size = 0;
 	short prev_array_size = 0;
-	
+
 	int n;
 	int offset;
 	int line;
-	
+
 	short x_size;
 	short y_size;
-	
+
 	byte texture_name[8];
-	
+
 	int bytes_to_go;
 	int bytes_copied;
 	int byte_count;
-	
+
 	output = (byte *)malloc(1);
-	
+
 	for (int i = 0; i < 8; i++){
 		texture_name[i] = table[(lump*16)+8+i];
 		if(texture_name[i] >= 'A' && texture_name[i] <= 'Z')
 			texture_name[i] += 0x20; // Set to lowercase
 	}
-	
+
 	for (int i = 0; i < texture1_size; i++)
 	{
 		if (!memcmp(&texture1[i], texture_name, 8))
@@ -2129,41 +2133,41 @@ void ConvertTextureData(int lump)
 	// Y offset
 	i = 0x7B;
 	fwrite(&i, 2, 1, out_file);
-	
+
 	line_lookup_size = x_size << 2;
 	line_lookup = (byte *)malloc(line_lookup_size);
-	
+
 	n = line_lookup_size + 8;
 	for (i=0; i < x_size; i++)
 	{
 		fwrite(&n, 4, 1, out_file);
 		n += (y_size+5);
 	}
-	
+
 	offset = 0;
-	
+
 	for (line=0; line < x_size; line++)
 	{
 		fputc(0, out_file);
 		fputc(y_size, out_file);
-		
+
 		// duplicate byte
 		fputc(data[data_ptr + offset], out_file);
 
 		fwrite(&data[data_ptr + offset], 1, y_size, out_file);
-		
+
 		// duplicate byte
 		fputc(data[data_ptr + offset + y_size-1], out_file);
-		
+
 		fputc(0xFF, out_file);
-		
+
 		offset += y_size;
 	}
-	
+
 	WriteTable(lump, out_file_size, ((y_size+5)*x_size) + 8 + line_lookup_size);
-	
+
 	out_file_size += (((y_size+5)*x_size) + 8 + line_lookup_size);
-	
+
 	free(line_lookup);
 	free(output);
 }
@@ -2172,27 +2176,27 @@ void ConvertSpriteData32X(int lump)
 {
 	int data_ptr = *(int *)&table[(lump*16)] - 0xC;
 	int data_size = *(int *)&table[(lump*16)+4];
-	
+
 	short width;
 	short height;
 	short x_offset;
 	short y_offset;
-	
+
 	int di = 0;		// data 'i'
 	int ki = 0;		// key_data 'i'
 	int ri = 0;		// raw_data 'i'
-	
+
 	int i = 0;
 	int line = 0;
-	
+
 	int word = 0;
 	int byte_count = 0;
 	int bytes_copied = 0;
-	
+
 	byte *key_table;
 	byte *key_data;
 	byte *raw_data;
-	
+
 	// Width
 	width = (data[data_ptr+1]<<8) | data[data_ptr+0];
 	fputc(data[data_ptr+1], out_file);
@@ -2209,15 +2213,15 @@ void ConvertSpriteData32X(int lump)
 	y_offset = (data[data_ptr+7]<<8) | data[data_ptr+6];
 	fputc(data[data_ptr+7], out_file);
 	fputc(data[data_ptr+6], out_file);
-	
+
 	key_table = (byte *)malloc(width<<1);	// 32X table uses shorts as opposed to longs
 	key_data = (byte *)malloc(1);
 	raw_data = (byte *)malloc(1);
-	
+
 	while (line < width)
 	{
 		word = data[data_ptr + (width<<2) + 8 + di];
-		
+
 		if(word != 0xFF)
 		{
 			word <<= 8;
@@ -2229,7 +2233,7 @@ void ConvertSpriteData32X(int lump)
 			word = 0xFFFF;
 			di++;
 		}
-		
+
 		if(word == 0xFFFF)
 		{
 			line++;
@@ -2239,7 +2243,7 @@ void ConvertSpriteData32X(int lump)
 					line++;
 
 				di += i;
-				
+
 				i++;
 				key_data = (byte*)realloc(key_data, ki + (i<<1));
 				while (i > 0)
@@ -2261,10 +2265,10 @@ void ConvertSpriteData32X(int lump)
 			key_data = (byte*)realloc(key_data, ki+4);
 			key_data[ki] = word>>8;
 			key_data[ki+1] = word;
-			
+
 			*(short *)&key_data[ki+2] = swap_endian(bytes_copied+1)>>16;
 			ki += 4;
-			
+
 			raw_data = (byte*)realloc(raw_data, ri + (word & 0xFF) + 2);
 			byte_count = (word & 0xFF) + 2;
 			for (i=0; i < byte_count; i++)
@@ -2276,35 +2280,35 @@ void ConvertSpriteData32X(int lump)
 			bytes_copied += i;
 		}
 	}
-	
+
 	while (ri & 3)
 	{
 		ri++;
 		raw_data = (byte*)realloc(raw_data, ri);
 		raw_data[ri-1] = 0;
 	}
-	
+
 	*(short *)&key_table[0] = swap_endian((width<<1) + 8)>>16;
-	
+
 	i = 0;
 	for (line=1; line < width; line++)
 	{
 		while (*(unsigned short *)&key_data[i] != 0xFFFF)
 			i += 2;
-		
+
 		*(short *)&key_table[line<<1] = swap_endian((width<<1) + 8 + i + 2)>>16;
 		i += 2;
 	}
-	
+
 	fwrite(key_table, 2, width, out_file);
 	fwrite(key_data, 1, ki, out_file);
 	WriteTable(lump, out_file_size, (width<<1) + ki + 8);
 	out_file_size += ((width<<1) + ki + 8);
-	
+
 	fwrite(raw_data, 1, ri, out_file);
 	WriteTableCustom(out_file_size, ri, ".");
 	out_file_size += ri;
-	
+
 	free(key_table);
 	free(key_data);
 	free(raw_data);
@@ -2316,27 +2320,27 @@ void ConvertSpriteData(int lump)
 	int key_size = *(int *)&table[(lump*16)+4];
 	int data_ptr = *(int *)&table[(lump*16)+16] - 0xC;
 	int data_size = *(int *)&table[(lump*16)+20];
-	
+
 	byte *uncompressed;
 	byte *written_bytes;
 	byte *line_lookup;
-	
+
 	int line_lookup_size;
-	
+
 	int array_size = 0;
 	short prev_array_size = 0;
-	
+
 	int word;
 	short location;
-	
+
 	int bytes_to_go;
 	int bytes_copied_key;
 	int bytes_copied_data;
 	int byte_count;
-	
+
 	uncompressed = (byte *)malloc(1);
 	written_bytes = (byte *)malloc(1);
-	
+
 	// Width
 	fputc(data[key_ptr+1], out_file);
 	fputc(data[key_ptr+0], out_file);
@@ -2349,10 +2353,10 @@ void ConvertSpriteData(int lump)
 	// Y offset
 	fputc(data[key_ptr+7], out_file);
 	fputc(data[key_ptr+6], out_file);
-	
+
 	int i = (data[key_ptr+8]<<8) | data[key_ptr+9];
 	int n = 0;
-	
+
 	bytes_copied_key = 0;
 	bytes_to_go = key_size - i;
 	while (i < key_size-2)
@@ -2364,7 +2368,7 @@ void ConvertSpriteData(int lump)
 			if (i < key_size-2)
 			{
 				word <<= 24;
-				
+
 				for (n=0; data[key_ptr+i] == 0xFF && data[key_ptr+i+1] == 0xFF; n++)
 					i += 2;
 				word |= (n<<16);
@@ -2372,35 +2376,35 @@ void ConvertSpriteData(int lump)
 				i += 2;
 			}
 		}
-		
+
 		location = ((data[key_ptr+i]<<8) | data[key_ptr+i+1]) - 1;
 		i += 2;
-		
+
 		if (word < 0)
 		{
 			prev_array_size = array_size;
 			array_size = location+3+bytes_copied_key + ((word >> 16) & 0xFF);
 			uncompressed = (byte *)realloc(uncompressed, array_size);
 			written_bytes = (byte *)realloc(written_bytes, array_size);
-			
+
 			while (prev_array_size < array_size)
 			{
 				written_bytes[prev_array_size] = 0;
 				prev_array_size++;
 			}
-			
+
 			for (int n=0; n <= (byte)((word >> 16) & 0xFF); n++)
 			{
 				uncompressed[location + bytes_copied_key+n] = 0xFF;
 				written_bytes[location + bytes_copied_key+n] = 1;
 			}
-			
+
 			uncompressed[location + bytes_copied_key+n] = word >> 8;
 			uncompressed[location + bytes_copied_key+n+1] = word;
-			
+
 			written_bytes[location + bytes_copied_key+n] = 1;
 			written_bytes[location + bytes_copied_key+n+1] = 1;
-			
+
 			bytes_copied_key += (3 + ((word >> 16) & 0xFF));
 		}
 		else
@@ -2409,33 +2413,33 @@ void ConvertSpriteData(int lump)
 			array_size = location+2+bytes_copied_key;
 			uncompressed = (byte *)realloc(uncompressed, array_size);
 			written_bytes = (byte *)realloc(written_bytes, array_size);
-			
+
 			while (prev_array_size < array_size)
 			{
 				written_bytes[prev_array_size] = 0;
 				prev_array_size++;
 			}
-			
+
 			uncompressed[location + bytes_copied_key] = word >> 8;
 			uncompressed[location + bytes_copied_key+1] = word;
-			
+
 			written_bytes[location + bytes_copied_key] = 1;
 			written_bytes[location + bytes_copied_key+1] = 1;
-			
+
 			bytes_copied_key += 2;
 		}
 	}
-	
+
 	bytes_copied_data = 0;
 	for (n=0; n < data_size; n++)
 	{
 		if ((n + bytes_copied_data) >= array_size)
 		{
 			array_size++;
-			
+
 			uncompressed = (byte *)realloc(uncompressed, array_size);
 			written_bytes = (byte *)realloc(written_bytes, array_size);
-			
+
 			written_bytes[n + bytes_copied_data] = 0;
 		}
 		if (written_bytes[n + bytes_copied_data])
@@ -2446,16 +2450,16 @@ void ConvertSpriteData(int lump)
 		else
 			uncompressed[n + bytes_copied_data] = data[data_ptr+n];
 	}
-	
+
 	for (int i=0; i < array_size; i++)
 	{
 		if(uncompressed[i] == 0xFF)
 			n++;
 	}
-	
+
 	line_lookup_size = (n+1)<<2;
 	line_lookup = (byte *)malloc(line_lookup_size);
-	
+
 	n = 0;
 	*(int *)&line_lookup[0] = line_lookup_size + 8;
 	for (int i=0; i < array_size; i++)
@@ -2466,9 +2470,9 @@ void ConvertSpriteData(int lump)
 			*(int *)&line_lookup[n<<2] = line_lookup_size + 8 + i+1;
 		}
 	}
-	
+
 	fwrite(line_lookup, 1, line_lookup_size, out_file);
-	
+
 	i = (*(int *)&line_lookup[n<<2]) + 1 - line_lookup_size - 8;
 	byte_count = uncompressed[i] + 4;
 	uncompressed = (byte *)realloc(uncompressed, array_size + 2);
@@ -2482,22 +2486,22 @@ void ConvertSpriteData(int lump)
 	}
 	array_size = i;
 	free(line_lookup);
-	
+
 	uncompressed = (byte *)realloc(uncompressed, array_size);
 	uncompressed[array_size-1] = 0xFF;
-	
+
 	while (array_size & 3)
 	{
 		array_size++;
 		uncompressed = (byte *)realloc(uncompressed, array_size);
 		uncompressed[array_size-1] = 0;
 	}
-	
+
 	fwrite(uncompressed, 1, array_size, out_file);
-	
+
 	WriteTable(lump, out_file_size, array_size + line_lookup_size + 8);
 	out_file_size += (array_size + line_lookup_size + 8);
-	
+
 	free(uncompressed);
 	free(written_bytes);
 }
@@ -2505,7 +2509,7 @@ void ConvertSpriteData(int lump)
 void WritePatchName(char *name)
 {
 	char i;
-	
+
 	if (pnames_table == 0)
 	{
 		patches_count = 1;
@@ -2518,12 +2522,12 @@ void WritePatchName(char *name)
 		pnames_table = (byte *)realloc(pnames_table, 4 + (patches_count<<3));
 		*(int *)&pnames_table[0] = patches_count;
 	}
-	
+
 	for (i=0; i<8; i++)
 	{
 		if(name[i] >= 'a' && name[i] <= 'z')
 			name[i] -= 0x20;
-		
+
 		if (name[i] == 0)
 		{
 			while (i < 8)
@@ -2540,14 +2544,14 @@ void WritePatchName(char *name)
 void WriteTable(int lump, int ptr, int size)
 {
 	out_table = (byte *)realloc(out_table, out_table_size + 16);
-	
+
 #ifndef FORCE_LITTLE_ENDIAN
 	if (conversion_task == PC_2_MARS){
 		ptr = swap_endian(ptr);
 		size = swap_endian(size);
 	}
 #endif
-	
+
 	*(int *)&out_table[out_table_size] = ptr;
 	*(int *)&out_table[out_table_size+4] = size;
 	out_table[out_table_size+8] = table[(lump*16)+8];
@@ -2558,23 +2562,23 @@ void WriteTable(int lump, int ptr, int size)
 	out_table[out_table_size+13] = table[(lump*16)+13];
 	out_table[out_table_size+14] = table[(lump*16)+14];
 	out_table[out_table_size+15] = table[(lump*16)+15];
-	
+
 	out_table_size += 16;
 }
 
 void WriteTableCustom(int ptr, int size, const char *name)
 {
 	char i;
-	
+
 	out_table = (byte *)realloc(out_table, out_table_size + 16);
-	
+
 #ifndef FORCE_LITTLE_ENDIAN
 	if (conversion_task == PC_2_MARS){
 		ptr = swap_endian(ptr);
 		size = swap_endian(size);
 	}
 #endif
-	
+
 	*(int *)&out_table[out_table_size] = ptr;
 	*(int *)&out_table[out_table_size+4] = size;
 	for (i=0; i<8; i++)
@@ -2590,17 +2594,17 @@ void WriteTableCustom(int ptr, int size, const char *name)
 			}
 		}
 	}
-	
+
 	out_table_size += 16;
 }
 
 void WriteTableStart(char type)
 {
 	out_table = (byte *)realloc(out_table, out_table_size + 16);
-	
+
 	*(int *)&out_table[out_table_size] = 0;
 	*(int *)&out_table[out_table_size+4] = 0;
-	
+
 	switch (type)
 	{
 		case TYPE_TEXTURE:
@@ -2624,17 +2628,17 @@ void WriteTableStart(char type)
 	out_table[out_table_size+13] = 'R';
 	out_table[out_table_size+14] = 'T';
 	out_table[out_table_size+15] = 0;
-	
+
 	out_table_size += 16;
 }
 
 void WriteTableEnd(char type)
 {
 	out_table = (byte *)realloc(out_table, out_table_size + 16);
-	
+
 	*(int *)&out_table[out_table_size] = 0;
 	*(int *)&out_table[out_table_size+4] = 0;
-	
+
 	switch(type)
 	{
 		case TYPE_TEXTURE:
@@ -2661,16 +2665,16 @@ void WriteTableEnd(char type)
 	out_table[out_table_size+13] = 0;
 	out_table[out_table_size+14] = 0;
 	out_table[out_table_size+15] = 0;
-	
+
 	out_table_size += 16;
 }
 
 void WriteTexture1(short x_size, short y_size, const char *name)
 {
 	int i;
-	
+
 	num_of_textures++;
-	
+
 	if (out_texture1_data)
 	{
 		out_texture1_data = (byte *)realloc(out_texture1_data, num_of_textures << 5);
@@ -2681,11 +2685,11 @@ void WriteTexture1(short x_size, short y_size, const char *name)
 		out_texture1_data = (byte *)malloc(num_of_textures << 5);
 		out_texture1_table = (byte *)malloc((num_of_textures << 2) + 4);
 	}
-	
+
 	*(int *)&out_texture1_table[0] = num_of_textures;
 	for (i = 0; i < num_of_textures; i++)
 		*(int *)&out_texture1_table[(i<<2) + 4] = (num_of_textures << 2) + (i << 5) + 4;
-	
+
 	// Set each entry character to '\0' to start
 	memset(&out_texture1_data[(num_of_textures << 5) - 32], 0, 8);
 
