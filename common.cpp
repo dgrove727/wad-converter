@@ -12,9 +12,14 @@ void *memdup(const void *mem, size_t size)
     return out;
 }
 
-int swap_endian(unsigned int i)
+unsigned int swap_endian32(unsigned int i)
 {
     return (i >> 24) + ((i >> 8) & 0x0000FF00) + ((i << 8) & 0x00FF0000) + (i << 24);
+}
+
+unsigned short swap_endian16(unsigned short i)
+{
+    return (i >> 8) | (i << 8);
 }
 
 bool strStartsWith(const char *base, const char *str) {

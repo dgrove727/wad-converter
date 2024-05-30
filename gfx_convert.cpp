@@ -657,44 +657,45 @@ byte *PatchToPNG(byte *patchData, size_t dataLen, int *outputLen)
 
 	return stbi_write_png_to_mem(rawImage, 0, header->width, header->height, 1, outputLen);
 }
-
-byte *JagSpriteToPNG(byte *sprHeader, byte *sprData, size_t headerLen, size_t dataLen, int *outputLen)
+/*
+byte *JagSpriteToPNG(const byte *sprHeader, const byte *sprData, size_t headerLen, size_t dataLen, int *outputLen)
 {
 	// TODO: Not finished/tested yet.
 
-	patchHeader_t *header = (patchHeader_t *)sprHeader;
+	const patchHeader_t *header = (const patchHeader_t *)sprHeader;
 
 	byte *rawImage = (byte *)malloc(header->width * header->height * 1);
 	memset(rawImage, 247, header->width * header->height * 1); // Transparent value
 
-	for (int i = 0; i < header->width; i++)
+	// For jaguar, column offsets are 16-bit unsigned
+	unsigned short *colOfsPointer = (unsigned short*)header->columnofs;
+	unsigned short *columnOfs = (unsigned short *)malloc(header->width * sizeof(unsigned short));
+	for (int w = 0; w < header->width; w++)
+		columnOfs[w] = *colOfsPointer++;
+
+	// Reading pixel data
+	for (int w = 0; w < header->width; w++)
 	{
-		unsigned int colOffset = header->columnofs[i];
-		const post_t *post = (post_t *)(sprData + colOffset);
+		int top;
+		int post_p = columnOfs[w];
 
-		int yPos = 0;
-		while (post->topdelta != 255)
+		while ((top = sprHeader[post_p]) != 0xff)
 		{
-			yPos = post->topdelta;
-			const byte *pixel = post->data;
-
-			for (int j = 0; j < post->length; j++)
+			int len = sprHeader[post_p + 1];
+			unsigned short pixel_p = sprHeader[post_p + 2];
+			
+			for (int p = 0; p < len; p++)
 			{
-				size_t pixelLocation = (yPos * header->width) + i;
-
-				rawImage[pixelLocation] = *pixel;
-				pixel++;
-				yPos++;
+				size_t pos = w + header->width * (top + p);
+				rawImage[pos] = sprData[pixel_p + p];
 			}
-
-			pixel++; // dummy value
-			post = (const post_t *)pixel;
+			post_p += 4;
 		}
 	}
 
 	return stbi_write_png_to_mem(rawImage, 0, header->width, header->height, 1, outputLen);
 }
-
+*/
 byte *PNGToPatch(byte *pngData, size_t dataLen, int *outputLen)
 {
 	const byte transparentIndex = 247;
@@ -828,8 +829,9 @@ byte *PNGToPatch(byte *pngData, size_t dataLen, int *outputLen)
 
 	return patchImage;
 }
-
+/*
 void *PNGToJagSprite(byte *pngData, size_t pngLen, byte *sprHeader, int *headerLen, byte *sprData, int *dataLen)
 {
 	return nullptr;
 }
+*/
