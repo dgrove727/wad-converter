@@ -14,7 +14,7 @@ void *memdup(const void *mem, size_t size)
 
 unsigned int swap_endian32(unsigned int i)
 {
-    return (i >> 24) + ((i >> 8) & 0x0000FF00) + ((i << 8) & 0x00FF0000) + (i << 24);
+    return (i >> 24) | ((i >> 8) & 0x0000FF00) | ((i << 8) & 0x00FF0000) | (i << 24);
 }
 
 unsigned short swap_endian16(unsigned short i)

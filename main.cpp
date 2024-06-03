@@ -139,7 +139,6 @@ void WriteTableCustom(int ptr, int size, const char *name);
 void WriteTableStart(char type);
 void WriteTableEnd(char type);
 void WriteTexture1(short x_size, short y_size, const char *name);
-int swap_endian(unsigned int i);
 
 enum
 {
@@ -385,12 +384,12 @@ void ReadMars()
 	{
 		// "DAWI" or "DAWP" found
 		fread(&lump_count, 4, 1, in_file);
-		lump_count = swap_endian(lump_count);
+		lump_count = swap_endian32(lump_count);
 		if (lump_count > 0 && lump_count <= 2048)
 		{
 			// limit based on "MAXLUMPS" in Jaguar source
 			fread(&table_ptr, 4, 1, in_file);
-			table_ptr = swap_endian(table_ptr);
+			table_ptr = swap_endian32(table_ptr);
 			if (table_ptr >= 0xC && table_ptr < 0x400000)
 			{
 				// limit of 4MB based on maximum Genesis ROM size
@@ -423,11 +422,11 @@ void ReadMars()
 	{
 		unsigned int ptr;
 		fread(&ptr, 4, 1, in_file);		// ptr
-		ptr = swap_endian(ptr);
+		ptr = swap_endian32(ptr);
 
 		unsigned int size;
 		fread(&size, 4, 1, in_file);		// size
-		size = swap_endian(size);
+		size = swap_endian32(size);
 
 		fread(entryName, 1, 8, in_file);		// name
 
@@ -625,18 +624,18 @@ void PC2Mars()
 	for (int i = 0; i < lump_count; i++)
 	{
 		fread(&table[(i*16)], 4, 1, in_file);		// ptr
-		*(int *)&table[(i*16)] = swap_endian(*(int *)&table[(i*16)]);
+		*(int *)&table[(i*16)] = swap_endian32(*(int *)&table[(i*16)]);
 
 		fread(&table[(i*16)+4], 4, 1, in_file);		// size
-		*(int *)&table[(i*16)+4] = swap_endian(*(int *)&table[(i*16)+4]);
+		*(int *)&table[(i*16)+4] = swap_endian32(*(int *)&table[(i*16)+4]);
 
 		fread(&table[(i*16)+8], 1, 8, in_file);		// name
 	}
 
 	for (int i = 0; i < lump_count; i++)
 	{
-		*(int *)&table[i*16] = swap_endian(*(int *)&table[i*16]);
-		*(int *)&table[(i*16)+4] = swap_endian(*(int *)&table[(i*16)+4]);
+		*(int *)&table[i*16] = swap_endian32(*(int *)&table[i*16]);
+		*(int *)&table[(i*16)+4] = swap_endian32(*(int *)&table[(i*16)+4]);
 
 		// Set PLAYPAL to PLAYPALS
 		// TODO: Jaguar does not have a 'PLAYPALS'
@@ -661,12 +660,12 @@ void PC2Mars()
 	{
 		// "DAWI" found
 		fread(&out_lump_count, 4, 1, out_file);
-		out_lump_count = swap_endian(out_lump_count);
+		out_lump_count = swap_endian32(out_lump_count);
 		if (out_lump_count > 0 && out_lump_count <= 2048)
 		{
 			// limit based on "MAXLUMPS" in Jaguar source
 			fread(&out_table_ptr, 4, 1, out_file);
-			out_table_ptr = swap_endian(out_table_ptr);
+			out_table_ptr = swap_endian32(out_table_ptr);
 			if (out_table_ptr >= 0xC && out_table_ptr < 0x400000)
 			{
 				// limit of 4MB based on maximum Genesis ROM size
@@ -750,7 +749,7 @@ void PC2Mars()
 				}
 				else
 				{
-					ConvertSpriteDataFromPCToJag(lump);
+					//TODO: ConvertSpriteDataFromPCToJag(lump);
 					lump_value_fix++;
 					out_lump_count++;
 				}
@@ -837,8 +836,8 @@ void PC2Mars()
 
 	out_lump_count -= 7;
 #ifndef FORCE_LITTLE_ENDIAN
-	int i = swap_endian(ftell(out_file) - iwad_ptr);
-	out_lump_count = swap_endian(out_lump_count);
+	int i = swap_endian32(ftell(out_file) - iwad_ptr);
+	out_lump_count = swap_endian32(out_lump_count);
 #else
 	i = ftell(out_file) - iwad_ptr;
 #endif
@@ -858,9 +857,9 @@ void PC2Mars()
 	}
 	fseek(out_file, 0x1A4, SEEK_SET);
 	n--;
-	n = swap_endian(n);
+	n = swap_endian32(n);
 	fwrite(&n, 4, 1, out_file);
-	n = swap_endian(n);
+	n = swap_endian32(n);
 	n++;
 	printf("File size = %i.%iMB\n", n>>20, (int)(((float)((n >> 16) & 0xF) / 16.0f) * 10));
 	if (n > 0x400000)
@@ -878,13 +877,13 @@ void PC2Mars()
 	for (t = 0x200; t < n; t += 2)
 	{
 		fread(&d, 2, 1, out_file);
-		d = (swap_endian(d) >> 16);
+		d = (swap_endian32(d) >> 16);
 		checksum += d;
 	}
 	fseek(out_file, 0x18E, SEEK_SET);
-	checksum = (swap_endian(checksum) >> 16);
+	checksum = (swap_endian32(checksum) >> 16);
 	fwrite(&checksum, 2, 1, out_file);
-	checksum = (swap_endian(checksum) >> 16);
+	checksum = (swap_endian32(checksum) >> 16);
 	printf("Checksum = 0x%04X\n", checksum);
 #endif
 
@@ -918,12 +917,12 @@ void Mars2PC()
 		{
 			// "DAWI" found
 			fread(&lump_count, 4, 1, in_file);
-			lump_count = swap_endian(lump_count);
+			lump_count = swap_endian32(lump_count);
 			if(lump_count > 0 && lump_count <= 2048)
 			{
 				// limit based on "MAXLUMPS" in Jaguar source
 				fread(&table_ptr, 4, 1, in_file);
-				table_ptr = swap_endian(table_ptr);
+				table_ptr = swap_endian32(table_ptr);
 				if(table_ptr >= 0xC && table_ptr < 0x400000)
 				{
 					// limit of 4MB based on maximum Genesis ROM size
@@ -957,8 +956,8 @@ void Mars2PC()
 	{
 		unsigned int firstWord = *(int *)&table[i * 16];
 		unsigned int secondWord = *(int *)&table[(i * 16) + 4];
-		*(int *)&table[i*16] = swap_endian(firstWord);
-		*(int *)&table[(i*16)+4] = swap_endian(secondWord);
+		*(int *)&table[i*16] = swap_endian32(firstWord);
+		*(int *)&table[(i*16)+4] = swap_endian32(secondWord);
 
 		char entryName[9];
 		bool isCompressed = SetEntryName(entryName, (const char*)&table[(i * 16) + 8]);
@@ -2224,8 +2223,8 @@ void WriteTable(int lump, int ptr, int size)
 
 #ifndef FORCE_LITTLE_ENDIAN
 	if (conversion_task == PC_2_MARS){
-		ptr = swap_endian(ptr);
-		size = swap_endian(size);
+		ptr = swap_endian32(ptr);
+		size = swap_endian32(size);
 	}
 #endif
 
@@ -2251,8 +2250,8 @@ void WriteTableCustom(int ptr, int size, const char *name)
 
 #ifndef FORCE_LITTLE_ENDIAN
 	if (conversion_task == PC_2_MARS){
-		ptr = swap_endian(ptr);
-		size = swap_endian(size);
+		ptr = swap_endian32(ptr);
+		size = swap_endian32(size);
 	}
 #endif
 
