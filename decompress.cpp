@@ -6,7 +6,6 @@ byte *decompress(const byte *data, size_t outputLen)
 {
 	byte *uncompressed = (byte *)malloc(outputLen + 16);	// Add 16 to make sure we have enough room.
 
-	return uncompressed;
 	// TODO: Investigate. Is it really necessary to add 16 bytes to the buffer?
 
 	size_t readCursor = 0;

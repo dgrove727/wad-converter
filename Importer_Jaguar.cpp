@@ -49,9 +49,17 @@ WADEntry *Importer_Jaguar::Execute()
 		return NULL;
 	}
 
+	size_t directorySize = 16 * lump_count;
+	size_t dataSize = file_size - table_ptr; // 0xC is WAD header size (12 bytes)
+
 	WADEntry *wadEntries = NULL;
-	byte *data = (byte *)malloc(table_ptr - 0xC);
-	fread(data, 1, table_ptr - 0xC, in_file);
+
+	// Buffer all of the directory + entry data in RAM
+	byte *data = (byte *)malloc(dataSize);
+	fseek(in_file, table_ptr, SEEK_SET);
+	fread(data, file_size - table_ptr, 1, in_file);
+
+	fseek(in_file, table_ptr, SEEK_SET);
 
 	char prevEntry[9];
 	prevEntry[0] = '\0';
@@ -70,11 +78,16 @@ WADEntry *Importer_Jaguar::Execute()
 		size = swap_endian32(size);
 
 		fread(entryName, 1, 8, in_file);		// name
-		byte *entryData = &data[ptr - 0xC]; // data
+		byte *entryData = &data[ptr - table_ptr]; // data
 
 		WADEntry *entry = new WADEntry();
 		entry->SetIsCompressed(SetEntryName(entryName, entryName));
 		entry->SetName(entryName);
+
+		if (!strcmp("TEXTURE1", entryName))
+		{
+			printf("hi\n");
+		}
 
 		if (entry->IsCompressed())
 		{
