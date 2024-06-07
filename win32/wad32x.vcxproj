@@ -28,6 +28,7 @@
     <ClCompile Include="..\Importer_Jaguar.cpp" />
     <ClCompile Include="..\Importer_PC.cpp" />
     <ClCompile Include="..\Listable.cpp" />
+    <ClCompile Include="..\lzss.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\WADEntry.cpp" />
   </ItemGroup>
@@ -42,6 +43,7 @@
     <ClInclude Include="..\Importer_Jaguar.h" />
     <ClInclude Include="..\Importer_PC.h" />
     <ClInclude Include="..\Listable.h" />
+    <ClInclude Include="..\lzss.h" />
     <ClInclude Include="..\stb_image.h" />
     <ClInclude Include="..\stb_image_write.h" />
     <ClInclude Include="..\WADEntry.h" />

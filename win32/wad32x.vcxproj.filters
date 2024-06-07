@@ -48,6 +48,9 @@
     <ClCompile Include="..\Importer_Jaguar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\lzss.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Listable.h">
@@ -87,6 +90,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Importer_PC.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lzss.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

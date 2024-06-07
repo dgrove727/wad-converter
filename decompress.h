@@ -3,4 +3,4 @@
 #include <stddef.h>
 #include "common.h"
 
-byte *decompress(const byte *data, size_t outputLen);
+byte *decompress(byte *data, size_t outputLen);

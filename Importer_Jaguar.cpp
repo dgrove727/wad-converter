@@ -54,10 +54,10 @@ WADEntry *Importer_Jaguar::Execute()
 
 	WADEntry *wadEntries = NULL;
 
-	// Buffer all of the directory + entry data in RAM
-	byte *data = (byte *)malloc(dataSize);
-	fseek(in_file, table_ptr, SEEK_SET);
-	fread(data, file_size - table_ptr, 1, in_file);
+	// Buffer the entire file into RAM
+	byte *data = (byte *)malloc(file_size);
+	fseek(in_file, 0, SEEK_SET);
+	fread(data, file_size, 1, in_file);
 
 	fseek(in_file, table_ptr, SEEK_SET);
 
@@ -78,7 +78,7 @@ WADEntry *Importer_Jaguar::Execute()
 		size = swap_endian32(size);
 
 		fread(entryName, 1, 8, in_file);		// name
-		byte *entryData = &data[ptr - table_ptr]; // data
+		byte *entryData = &data[ptr]; // data
 
 		WADEntry *entry = new WADEntry();
 		entry->SetIsCompressed(SetEntryName(entryName, entryName));
@@ -100,7 +100,7 @@ WADEntry *Importer_Jaguar::Execute()
 			entry->SetData(decompData, size);
 			free(decompData);
 
-			if (strstr(".", entry->GetName()))
+/*			if (strstr(".", entry->GetName()))
 			{
 				char exportFile[16];
 				sprintf(exportFile, "%s_c.lmp", prevEntry);
@@ -108,11 +108,11 @@ WADEntry *Importer_Jaguar::Execute()
 				continue;
 			}
 
-
+			*/
 			char exportFile[16];
 			sprintf(exportFile, "%s.lmp", entry->GetName());
 			DumpData(exportFile, (const byte *)entry->GetData(), entry->GetDataLength());
-
+			
 			/*
 			int getidbyte = 0;
 			int len;
@@ -153,11 +153,11 @@ WADEntry *Importer_Jaguar::Execute()
 		{
 			entry->SetData(entryData, size);
 			strcpy(prevEntry, entry->GetName());
-
+			/*
 			// Dump Test
 			char exportFile[16];
 			sprintf(exportFile, "%s.lmp", entry->GetName());
-			DumpData(exportFile, (byte *)entry->GetData(), entry->GetDataLength());
+			DumpData(exportFile, (byte *)entry->GetData(), entry->GetDataLength());*/
 		}
 
 		Listable::Add(entry, (Listable **)&wadEntries);
