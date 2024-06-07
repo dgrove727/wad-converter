@@ -102,11 +102,21 @@ WADEntry *Importer_Jaguar::Execute()
 
 		if (entry->IsCompressed())
 		{
-			directory_t *nextEntryInfo = &directory[i + 1];
-			unsigned int realSize = nextEntryInfo->filepos;
-			realSize -= ptr;
+			if (i == lump_count - 1) // last entry, so we need to go by file size
+			{
+				unsigned int realSize = file_size;
+				realSize -= ptr;
 
-			entry->SetData(entryData, realSize);
+				entry->SetData(entryData, realSize);
+			}
+			else
+			{
+				directory_t *nextEntryInfo = &directory[i + 1];
+				unsigned int realSize = nextEntryInfo->filepos;
+				realSize -= ptr;
+
+				entry->SetData(entryData, realSize);
+			}
 			entry->SetUnCompressedDataLength(size);
 		}
 		else

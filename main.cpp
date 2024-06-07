@@ -4,6 +4,7 @@
 #include "common.h"
 #include "gfx_convert.h"
 #include "Importer_Jaguar.h"
+#include "Exporter_Jaguar.h"
 #include "Importer_PC.h"
 
 #define		VERSION			1.10
@@ -48,8 +49,45 @@ void GfxTests()
 	fclose(lump);
 }
 
+static void MyFunTest()
+{
+	FILE *f = fopen("D:\\32xrb2\\d32xr31.wad", "rb");
+
+	Importer_Jaguar *ij = new Importer_Jaguar(f);
+	WADEntry *importedEntries = ij->Execute();
+	delete ij;
+
+	WADEntry *node;
+	for (node = importedEntries; node; node = (WADEntry *)node->next)
+	{
+		if (!strcmp("VGM_E1M1", node->GetName()))
+		{
+			FILE *repl = fopen("D:\\32xrb2\\e1m1orig.zgm", "rb");
+			fseek(repl, 0, SEEK_END);
+			long replSize = ftell(repl);
+			fseek(repl, 0, SEEK_SET);
+
+			byte *replData = (byte*)malloc(replSize);
+			fread(replData, replSize, 1, repl);
+			fclose(repl);
+
+			node->SetData(replData, replSize);
+			free(replData);
+			break;
+		}
+	}
+
+	// Write it out
+	FILE *expF = fopen("D:\\32xrb2\\d32xr31-mod.wad", "wb");
+	Exporter_Jaguar *ex = new Exporter_Jaguar(importedEntries, expF);
+	ex->Execute();
+	delete ex;
+}
+
 int main(int argc, char *argv[])
 {
+	MyFunTest();
+	return 0;
 	printf(
 		"---------------------------------\n"
 		" DOOM 32X / JAGUAR WAD CONVERTER v%01.02f\n"
