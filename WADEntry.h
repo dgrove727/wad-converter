@@ -13,6 +13,7 @@ private:
 	char *_name;
 	void *_data;
 	size_t _dataLength;
+	size_t _uncompressedDataLength;
 	bool _isCompressed;
 
 public:
@@ -23,6 +24,9 @@ public:
 	const size_t GetDataLength() const;
 	bool IsCompressed() const;
 	void SetIsCompressed(bool value);
+
+	void SetUnCompressedDataLength(size_t value);
+	const size_t GetUnCompressedDataLength() const;
 
 	WADEntry();
 	WADEntry(const char *name, const void *data, size_t length);

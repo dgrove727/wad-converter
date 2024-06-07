@@ -3,6 +3,13 @@
 #include <string.h>
 #include "decompress.h"
 
+typedef struct
+{
+	int filepos;
+	int size;
+	char name[8];
+} directory_t;
+
 static void DumpData(const char *filename, const byte *data, size_t length)
 {
 	char path[2048];
@@ -49,9 +56,6 @@ WADEntry *Importer_Jaguar::Execute()
 		return NULL;
 	}
 
-	size_t directorySize = 16 * lump_count;
-	size_t dataSize = file_size - table_ptr; // 0xC is WAD header size (12 bytes)
-
 	WADEntry *wadEntries = NULL;
 
 	// Buffer the entire file into RAM
@@ -61,6 +65,21 @@ WADEntry *Importer_Jaguar::Execute()
 
 	fseek(in_file, table_ptr, SEEK_SET);
 
+	// Grab the directory information
+	// We need this because the reported sizes aren't the real sizes;
+	// You need to look at the next entry for that information.
+	size_t directorySize = 16 * lump_count;
+	directory_t *directory = new directory_t[lump_count];
+	fread(directory, 16, lump_count, in_file);
+
+	// Fix endian-ness
+	for (size_t i = 0; i < lump_count; i++)
+	{
+		directory_t *dirEntry = &directory[i];
+		dirEntry->filepos = swap_endian32(dirEntry->filepos);
+		dirEntry->size = swap_endian32(dirEntry->size);
+	}
+
 	char prevEntry[9];
 	prevEntry[0] = '\0';
 	strcpy(prevEntry, "unknown");
@@ -69,101 +88,38 @@ WADEntry *Importer_Jaguar::Execute()
 	entryName[8] = '\0';
 	for (size_t i = 0; i < lump_count; i++)
 	{
-		unsigned int ptr;
-		fread(&ptr, 4, 1, in_file);		// ptr
-		ptr = swap_endian32(ptr);
+		unsigned int ptr = directory[i].filepos;
 
-		unsigned int size;
-		fread(&size, 4, 1, in_file);		// size
-		size = swap_endian32(size);
+		unsigned int size = directory[i].size;
 
-		fread(entryName, 1, 8, in_file);		// name
+		strncpy(entryName, directory[i].name, 8);
+
 		byte *entryData = &data[ptr]; // data
 
 		WADEntry *entry = new WADEntry();
 		entry->SetIsCompressed(SetEntryName(entryName, entryName));
 		entry->SetName(entryName);
 
-		if (!strcmp("TEXTURE1", entryName))
-		{
-			printf("hi\n");
-		}
-
 		if (entry->IsCompressed())
 		{
-			// Decompress it here, on the fly
-			entry->SetIsCompressed(false);
+			directory_t *nextEntryInfo = &directory[i + 1];
+			unsigned int realSize = nextEntryInfo->filepos;
+			realSize -= ptr;
 
-			strcpy(prevEntry, entry->GetName());
-
-			byte *decompData = decompress(entryData, size);
-			entry->SetData(decompData, size);
-			free(decompData);
-
-/*			if (strstr(".", entry->GetName()))
-			{
-				char exportFile[16];
-				sprintf(exportFile, "%s_c.lmp", prevEntry);
-				DumpData(exportFile, (const byte *)entry->GetData(), entry->GetDataLength());
-				continue;
-			}
-
-			*/
-			char exportFile[16];
-			sprintf(exportFile, "%s.lmp", entry->GetName());
-			DumpData(exportFile, (const byte *)entry->GetData(), entry->GetDataLength());
-			
-			/*
-			int getidbyte = 0;
-			int len;
-			int pos;
-			int i;
-			unsigned char* source;
-			int idbyte = 0;
-
-			while (1)
-			{
-
-				// get a new idbyte if necessary
-				if (!getidbyte) idbyte = *input++;
-				getidbyte = (getidbyte + 1) & 7;
-
-				if (idbyte & 1)
-				{
-					// decompress
-					pos = *input++ << LENSHIFT;
-					pos = pos | (*input >> LENSHIFT);
-					source = output - pos - 1;
-					len = (*input++ & 0xf) + 1;
-					if (len == 1) break;
-					for (i = 0; i < len; i++)
-						*output++ = *source++;
-				}
-				else {
-					*output++ = *input++;
-				}
-
-				idbyte = idbyte >> 1;
-
-			}
-
-			entry->SetData(output, size);*/
+			entry->SetData(entryData, realSize);
+			entry->SetUnCompressedDataLength(size);
 		}
 		else
 		{
 			entry->SetData(entryData, size);
 			strcpy(prevEntry, entry->GetName());
-			/*
-			// Dump Test
-			char exportFile[16];
-			sprintf(exportFile, "%s.lmp", entry->GetName());
-			DumpData(exportFile, (byte *)entry->GetData(), entry->GetDataLength());*/
 		}
 
 		Listable::Add(entry, (Listable **)&wadEntries);
 	}
 
 	free(data);
+	delete[] directory;
 
 	return wadEntries;
 }

@@ -28,6 +28,7 @@ void WADEntry::SetData(const void *value, size_t length)
 
 	_data = memdup(value, length);
 	_dataLength = length;
+	_uncompressedDataLength = length;
 }
 
 const size_t WADEntry::GetDataLength() const
@@ -43,6 +44,16 @@ bool WADEntry::IsCompressed() const
 void WADEntry::SetIsCompressed(bool value)
 {
 	_isCompressed = value;
+}
+
+void WADEntry::SetUnCompressedDataLength(size_t value)
+{
+	_uncompressedDataLength = value;
+}
+
+const size_t WADEntry::GetUnCompressedDataLength() const
+{
+	return _uncompressedDataLength;
 }
 
 WADEntry::WADEntry() : Listable()
