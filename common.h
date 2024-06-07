@@ -10,3 +10,5 @@ unsigned short swap_endian16(unsigned short i);
 
 bool strStartsWith(const char *base, const char *str);
 bool strEndsWith(const char *str, const char *suffix);
+
+bool SetEntryName(char *entryName, const char *data);

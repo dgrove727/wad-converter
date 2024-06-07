@@ -16,7 +16,7 @@ void *compress(void *data, size_t inputLen, size_t *outputLen)
 
 
 // TODO: Make private
-COMPRESSION_KEY *CreateKeys(void *data, size_t inputLen)
+COMPRESSION_KEY *CreateKeys(void *data, int inputLen)
 {
 	// Create key data.
 	COMPRESSION_KEY *keys = (COMPRESSION_KEY *)malloc(1);
@@ -128,7 +128,7 @@ COMPRESSION_KEY *CreateKeys(void *data, size_t inputLen)
 
 
 // TODO: Make private
-void *CreateKeyBits(COMPRESSION_KEY *keys, size_t inputLen)
+void *CreateKeyBits(COMPRESSION_KEY *keys, int inputLen)
 {
 	// Create key bitfield based on recorded key data.
 	byte *bitfield = (byte *)malloc(1);
@@ -187,7 +187,7 @@ void *CreateCompressedData(void *uncompressed, COMPRESSION_KEY *keys, byte *keyB
 
 	byte *bitfield = static_cast<byte *>(keyBits);
 
-	for (int inputCursor = 0; inputCursor < inputLen; inputCursor++)
+	for (int inputCursor = 0; inputCursor < (int)inputLen; inputCursor++)
 	{
 		byte bits = 0;
 		if ((bitCursor & 7) == 0)
@@ -226,9 +226,9 @@ void *CreateCompressedData(void *uncompressed, COMPRESSION_KEY *keys, byte *keyB
 		{
 			// The current bit is 1, meaning the data is compressed.
 			// Write the offset and copy count to the output.
-			unsigned short packedData = ((keys[keyCursor].destOffset - keys[keyCursor].srcOffset) << 4) | (keys[keyCursor].copyCount - 1);
+			unsigned short packedData = (unsigned short)(((keys[keyCursor].destOffset - keys[keyCursor].srcOffset) << 4) | (keys[keyCursor].copyCount - 1));
 			compressed[compressedSize] = packedData >> 8;
-			compressed[compressedSize+1] = packedData;
+			compressed[compressedSize+1] = (byte)packedData;
 			compressedSize += 2;
 
 			inputCursor += (keys[keyCursor].copyCount - 1);

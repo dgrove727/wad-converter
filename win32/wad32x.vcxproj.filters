@@ -30,9 +30,6 @@
     <ClCompile Include="..\common.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Exporter_32X.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\Exporter_Jaguar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -43,6 +40,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\convert.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Importer_PC.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Importer_Jaguar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -57,9 +60,6 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\common.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Exporter_32X.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Exporter_Jaguar.h">
@@ -81,6 +81,12 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\convert.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Importer_Jaguar.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Importer_PC.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

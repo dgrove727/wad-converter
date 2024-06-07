@@ -1,5 +1,6 @@
 #pragma once
 
 #include <stddef.h>
+#include "common.h"
 
-void *decompress(void *data, size_t outputLen);
+byte *decompress(const byte *data, size_t outputLen);

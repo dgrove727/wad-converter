@@ -2,15 +2,17 @@
 #include "common.h"
 #include <stdlib.h>
 
-void *decompress(void *data, size_t outputLen)
+byte *decompress(const byte *data, size_t outputLen)
 {
 	byte *uncompressed = (byte *)malloc(outputLen + 16);	// Add 16 to make sure we have enough room.
+
+	return uncompressed;
 	// TODO: Investigate. Is it really necessary to add 16 bytes to the buffer?
 
-	int readCursor = 0;
-	int writeCursor = 0;
+	size_t readCursor = 0;
+	size_t writeCursor = 0;
 
-	byte *compressed = static_cast<byte *>(data);
+	const byte *compressed = data;
 
 	// Continue decompressing until "outputLen" bytes have been written.
 	while (writeCursor < outputLen) {
@@ -25,7 +27,7 @@ void *decompress(void *data, size_t outputLen)
 				char copyLen = compressed[readCursor + 1] & 0xF;
 				readCursor += 2;
 
-				copyCursor = writeCursor - copyCursor;
+				copyCursor = (short)(writeCursor - copyCursor);
 
 				// Copy bytes to the current write position which were written previously.
 				while (copyLen > 0) {

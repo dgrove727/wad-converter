@@ -812,7 +812,7 @@ byte *PNGToPatch(byte *pngData, size_t dataLen, int *outputLen)
 	cursor += 8;
 
 	// translate the columnofs positions now that we know how big columnofs is going to be
-	for (int i = 0; i < numColumnOfs; i++)
+	for (size_t i = 0; i < numColumnOfs; i++)
 		columnOfs[i] += 8 + (numColumnOfs * 4);
 
 	// Write the columnofs information

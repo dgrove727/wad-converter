@@ -39,3 +39,15 @@ bool strEndsWith(const char *str, const char *suffix)
 
     return 0 == strncmp(str + str_len - suffix_len, suffix, suffix_len);
 }
+
+// Loads a WAD entry name and also tells you if it's marked as compressed
+bool SetEntryName(char *entryName, const char *data)
+{
+    strncpy(entryName, data, 8);
+    entryName[8] = '\0';
+
+    bool isCompressed = (entryName[0] >> 7) != 0;
+    entryName[0] = entryName[0] & 127;
+
+    return isCompressed;
+}

@@ -2,6 +2,11 @@
 #include "Listable.h"
 #include "common.h"
 
+// List that holds all of the extracted WAD entries in RAM.
+// The data from a PC or Jag/32X WAD should be extracted into this list first, then
+// the export routines will read the WAD entries from this list and write them back out.
+// This will simplify the import/export process and not require multiple file handles to
+// be open at the same time, as well as avoid a lot of crazy pointer management.
 struct WADEntry : Listable
 {
 private:

@@ -23,9 +23,10 @@
     <ClCompile Include="..\compress.cpp" />
     <ClCompile Include="..\convert.cpp" />
     <ClCompile Include="..\decompress.cpp" />
-    <ClCompile Include="..\Exporter_32X.cpp" />
     <ClCompile Include="..\Exporter_Jaguar.cpp" />
     <ClCompile Include="..\gfx_convert.cpp" />
+    <ClCompile Include="..\Importer_Jaguar.cpp" />
+    <ClCompile Include="..\Importer_PC.cpp" />
     <ClCompile Include="..\Listable.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\WADEntry.cpp" />
@@ -36,9 +37,10 @@
     <ClInclude Include="..\convert.h" />
     <ClInclude Include="..\decompress.h" />
     <ClInclude Include="..\Exporter.h" />
-    <ClInclude Include="..\Exporter_32X.h" />
     <ClInclude Include="..\Exporter_Jaguar.h" />
     <ClInclude Include="..\gfx_convert.h" />
+    <ClInclude Include="..\Importer_Jaguar.h" />
+    <ClInclude Include="..\Importer_PC.h" />
     <ClInclude Include="..\Listable.h" />
     <ClInclude Include="..\stb_image.h" />
     <ClInclude Include="..\stb_image_write.h" />
