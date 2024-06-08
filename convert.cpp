@@ -16,6 +16,12 @@
 #define WRITEINT(p,b)     { int *p_tmp = (int *)p; *p_tmp = (int)(b); p_tmp++; p = (byte *)p_tmp; }
 #define WRITEUINT(p,b)    { unsigned int *p_tmp = (unsigned int *)p; *p_tmp = (unsigned int)(b); p_tmp++; p = (byte *)p_tmp; }
 
+// TODO: We also need to convert UI graphics to that Jaguar format, as well
+byte *ConvertUIGraphicFromPCToJag(byte *lumpData, int lumpSize, int *jagDataLen)
+{
+	return NULL;
+}
+
 void ConvertSpriteDataFromPCToJag(byte *lumpData, int lumpSize, byte *jagHeader, int *jagHeaderLen, byte *jagData, int *jagDataLen)
 {
 	short width;

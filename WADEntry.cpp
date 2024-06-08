@@ -16,17 +16,17 @@ void WADEntry::SetName(const char *value)
 	_name = strdup(value);
 }
 
-const void *WADEntry::GetData() const
+const byte *WADEntry::GetData() const
 {
 	return _data;
 }
 
-void WADEntry::SetData(const void *value, size_t length)
+void WADEntry::SetData(const byte *value, size_t length)
 {
 	if (_data)
 		free(_data);
 
-	_data = memdup(value, length);
+	_data = (byte*)memdup(value, length);
 	_dataLength = length;
 	_uncompressedDataLength = length;
 }
@@ -60,7 +60,7 @@ WADEntry::WADEntry() : Listable()
 {
 }
 
-WADEntry::WADEntry(const char *name, const void *data, size_t length)
+WADEntry::WADEntry(const char *name, const byte *data, size_t length)
 {
 	SetName(name);
 	SetData(data, length);

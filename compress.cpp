@@ -2,7 +2,7 @@
 #include "compress.h"
 #include <stdlib.h>
 
-void *compress(void *data, size_t inputLen, size_t *outputLen)
+byte *compress(byte *data, size_t inputLen, size_t *outputLen)
 {
 	COMPRESSION_KEY *keys = CreateKeys(data, inputLen);
 	byte *keyBits = (byte *)CreateKeyBits(keys, inputLen);	// TODO: Investigate. Is this actually necessary if we have 'keys'?

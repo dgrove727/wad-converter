@@ -51,6 +51,12 @@
     <ClCompile Include="..\lzss.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Exporter_PC.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\CarmackCompress.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Listable.h">
@@ -93,6 +99,12 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\lzss.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Exporter_PC.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CarmackCompress.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

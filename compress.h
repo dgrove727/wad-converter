@@ -25,7 +25,7 @@ enum
 
 
 // Make these public...
-void *compress(void *data, size_t inputLen, size_t *outputLen);
+byte *compress(byte *data, size_t inputLen, size_t *outputLen);
 
 // Make these private...
 COMPRESSION_KEY *CreateKeys(void *data, int inputLen);

@@ -11,7 +11,7 @@ struct WADEntry : Listable
 {
 private:
 	char *_name;
-	void *_data;
+	byte *_data;
 	size_t _dataLength;
 	size_t _uncompressedDataLength;
 	bool _isCompressed;
@@ -19,8 +19,8 @@ private:
 public:
 	const char *GetName() const;
 	void SetName(const char *value);
-	const void *GetData() const;
-	void SetData(const void *value, size_t length);
+	const byte *GetData() const;
+	void SetData(const byte *value, size_t length);
 	const size_t GetDataLength() const;
 	bool IsCompressed() const;
 	void SetIsCompressed(bool value);
@@ -29,6 +29,6 @@ public:
 	const size_t GetUnCompressedDataLength() const;
 
 	WADEntry();
-	WADEntry(const char *name, const void *data, size_t length);
+	WADEntry(const char *name, const byte *data, size_t length);
 	virtual ~WADEntry();
 };

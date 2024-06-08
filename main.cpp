@@ -6,12 +6,15 @@
 #include "Importer_Jaguar.h"
 #include "Exporter_Jaguar.h"
 #include "Importer_PC.h"
+#include "lzss.h"
+#include "CarmackCompress.h"
 
 #define		VERSION			1.10
 #define		WAD_FORMAT		1
 
-static byte *ReadAllBytes(FILE *f, int *file_size)
+static byte *ReadAllBytes(const char *filename, int *file_size)
 {
+	FILE *f = fopen(filename, "rb");
 	fseek(f, 0, SEEK_END);
 	*file_size = (int)ftell(f);
 	rewind(f);
@@ -19,16 +22,23 @@ static byte *ReadAllBytes(FILE *f, int *file_size)
 	byte *buffer = (byte *)malloc(*file_size);
 	fread(buffer, *file_size, 1, f);
 
+	fclose(f);
+
 	return buffer;
+}
+
+static void WriteAllBytes(const char *filename, const byte *data, size_t len)
+{
+	FILE *f = fopen(filename, "wb");
+	fwrite(data, len, 1, f);
+	fclose(f);
 }
 
 void GfxTests()
 {
 	FILE *lump;
 	int lumpSize;
-	lump = fopen("PLAYA1.png", "rb");
-	byte *origPng = ReadAllBytes(lump, &lumpSize);
-	fclose(lump);
+	byte *origPng = ReadAllBytes("PLAYA1.png", &lumpSize);
 
 	// Convert it to a lump
 	int outputLen;
@@ -72,6 +82,58 @@ static void MyFunTest()
 	WADEntry *node;
 	for (node = importedEntries; node; node = (WADEntry *)node->next)
 	{
+		if (!strcmp("TITLE", node->GetName()))
+		{
+			int filesize;
+			byte *newTitle = ReadAllBytes("D:\\32xrb2\\comptest\\secret.lmp", &filesize);
+
+			int compressedSize = 0;
+			byte *recompressFinal = encode(newTitle, filesize, &compressedSize);
+
+			byte *alittlebigger = (byte *)calloc(1, compressedSize + 2);
+			memcpy(alittlebigger, recompressFinal, compressedSize);
+
+
+			node->SetData(alittlebigger, compressedSize+2);
+			node->SetUnCompressedDataLength(filesize);
+
+
+			/*
+			WriteAllBytes("D:\\32xrb2\\comptest\\TITLE-lzss.lmp", node->GetData(), node->GetDataLength());
+
+			byte *uncompressed = (byte *)malloc(node->GetUnCompressedDataLength());
+			lzss_state_t lzss;
+			lzss_setup(&lzss, (uint8_t *)node->GetData(), (uint8_t *)uncompressed, 0x1000);
+
+
+			int uncompSize = node->GetUnCompressedDataLength();
+
+			FILE *output = fopen("D:\\32xrb2\\comptest\\TITLE.lmp", "wb");
+
+			while (uncompSize > 0)
+			{
+				int readSize = uncompSize > 0x1000 ? 0x1000 : uncompSize;
+
+				lzss_read(&lzss, readSize);
+				fwrite(lzss.buf, readSize, 1, output);
+
+				uncompSize -= readSize;
+			}
+
+			fclose(output);
+
+			byte *recompress = ReadAllBytes("D:\\32xrb2\\comptest\\TITLE.lmp", &uncompSize);
+			int compressedSize = 0;
+			byte *recompressFinal = encode(recompress, (int)uncompSize, &compressedSize);
+
+			WriteAllBytes("D:\\32xrb2\\comptest\\TITLE-relzss.lmp", recompressFinal, compressedSize);
+
+			
+//			WriteAllBytes("D:\\32xrb2\\comptest\\TITLE.lmp", uncompressed, node->GetUnCompressedDataLength());
+
+			free(uncompressed);
+			*/
+		}
 		if (!strcmp("VGM_E1M1", node->GetName()))
 		{
 			FILE *repl = fopen("D:\\32xrb2\\toxic.zgm", "rb");
@@ -113,16 +175,12 @@ static void MyFunTest()
 	const char *outputROM = "D:\\32xrb2\\D32XR-Jump.32x";
 
 	int baseromFileSize;
-	FILE *of = fopen(baseROM, "rb");
-	byte *baseROMData = ReadAllBytes(of, &baseromFileSize);
-	fclose(of);
+	byte *baseROMData = ReadAllBytes(baseROM, &baseromFileSize);
 
 	int wadFileSize;
-	of = fopen("D:\\32xrb2\\d32xr31-mod.wad", "rb");
-	byte *wadData = ReadAllBytes(of, &wadFileSize);
-	fclose(of);
+	byte *wadData = ReadAllBytes("D:\\32xrb2\\d32xr31-mod.wad", &wadFileSize);
 
-	of = fopen(outputROM, "wb");
+	FILE *of = fopen(outputROM, "wb");
 	fwrite(baseROMData, baseromFileSize, 1, of);
 	fwrite(wadData, wadFileSize, 1, of);
 	free(baseROMData);
