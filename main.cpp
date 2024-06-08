@@ -49,6 +49,18 @@ void GfxTests()
 	fclose(lump);
 }
 
+WADEntry *FindEntry(WADEntry *entries, const char *name)
+{
+	WADEntry *node;
+	for (node = entries; node; node = (WADEntry *)node->next)
+	{
+		if (!strcmp(node->GetName(), name))
+			return node;
+	}
+
+	return NULL;
+}
+
 static void MyFunTest()
 {
 	FILE *f = fopen("D:\\32xrb2\\d32xr31.wad", "rb");
@@ -62,7 +74,7 @@ static void MyFunTest()
 	{
 		if (!strcmp("VGM_E1M1", node->GetName()))
 		{
-			FILE *repl = fopen("D:\\32xrb2\\e1m1orig.zgm", "rb");
+			FILE *repl = fopen("D:\\32xrb2\\toxic.zgm", "rb");
 			fseek(repl, 0, SEEK_END);
 			long replSize = ftell(repl);
 			fseek(repl, 0, SEEK_SET);
@@ -73,7 +85,20 @@ static void MyFunTest()
 
 			node->SetData(replData, replSize);
 			free(replData);
-			break;
+		}
+		else if (!strcmp("OOF", node->GetName()))
+		{
+			FILE *repl = fopen("D:\\32xrb2\\S3K_5F.wav", "rb");
+			fseek(repl, 0, SEEK_END);
+			long replSize = ftell(repl);
+			fseek(repl, 0, SEEK_SET);
+
+			byte *replData = (byte *)malloc(replSize);
+			fread(replData, replSize, 1, repl);
+			fclose(repl);
+
+			node->SetData(replData, replSize);
+			free(replData);
 		}
 	}
 
@@ -82,6 +107,39 @@ static void MyFunTest()
 	Exporter_Jaguar *ex = new Exporter_Jaguar(importedEntries, expF);
 	ex->Execute();
 	delete ex;
+
+	// Merge fun
+	const char *baseROM = "D:\\32xrb2\\D32XR-JumpBase.32x";
+	const char *outputROM = "D:\\32xrb2\\D32XR-Jump.32x";
+
+	int baseromFileSize;
+	FILE *of = fopen(baseROM, "rb");
+	byte *baseROMData = ReadAllBytes(of, &baseromFileSize);
+	fclose(of);
+
+	int wadFileSize;
+	of = fopen("D:\\32xrb2\\d32xr31-mod.wad", "rb");
+	byte *wadData = ReadAllBytes(of, &wadFileSize);
+	fclose(of);
+
+	of = fopen(outputROM, "wb");
+	fwrite(baseROMData, baseromFileSize, 1, of);
+	fwrite(wadData, wadFileSize, 1, of);
+	free(baseROMData);
+	free(wadData);
+
+	int targetSize = 5242864;
+	targetSize -= wadFileSize;
+	targetSize -= baseromFileSize;
+
+	if (targetSize > 0)
+	{
+		byte *fillData = (byte*)calloc(1, targetSize);
+		fwrite(fillData, targetSize, 1, of);
+		free(fillData);
+	}
+
+	fclose(of);
 }
 
 int main(int argc, char *argv[])
