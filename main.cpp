@@ -34,6 +34,35 @@ static void WriteAllBytes(const char *filename, const byte *data, size_t len)
 	fclose(f);
 }
 
+static byte *DecompressWADEntry(WADEntry *entry)
+{
+	const int bufferSize = 0x1000;
+
+	byte *uncompressed = (byte *)malloc(bufferSize);
+	lzss_state_t lzss;
+	lzss_setup(&lzss, (uint8_t *)entry->GetData(), (uint8_t *)uncompressed, bufferSize);
+
+	int uncompSize = entry->GetUnCompressedDataLength();
+
+	byte *finalUncompressed = (byte *)malloc(entry->GetUnCompressedDataLength());
+	byte *writePtr = finalUncompressed;
+
+	while (uncompSize > 0)
+	{
+		int readSize = uncompSize > bufferSize ? bufferSize : uncompSize;
+
+		lzss_read(&lzss, readSize);
+		memcpy(writePtr, lzss.buf, readSize);
+		writePtr += readSize;
+
+		uncompSize -= readSize;
+	}
+
+	free(uncompressed);
+
+	return finalUncompressed;
+}
+
 void GfxTests()
 {
 	FILE *lump;
@@ -71,6 +100,26 @@ WADEntry *FindEntry(WADEntry *entries, const char *name)
 	return NULL;
 }
 
+void ReplaceWithFile(WADEntry *entry, const char *filename)
+{
+	int filesize;
+	byte *newData = ReadAllBytes(filename, &filesize);
+
+	if (entry->IsCompressed())
+	{
+		int compressedSize = 0;
+		byte *recompressFinal = encode(newData, filesize, &compressedSize);
+
+		entry->SetData(recompressFinal, compressedSize);
+		entry->SetUnCompressedDataLength(filesize);
+		free(recompressFinal);
+	}
+	else
+		entry->SetData(newData, filesize);
+
+	free(newData);
+}
+
 static void MyFunTest()
 {
 	FILE *f = fopen("D:\\32xrb2\\d32xr31.wad", "rb");
@@ -79,88 +128,48 @@ static void MyFunTest()
 	WADEntry *importedEntries = ij->Execute();
 	delete ij;
 
+	bool insideSprites = false;
+	bool insideTextures = false;
+	bool insideFlats = false;
+
 	WADEntry *node;
-	for (node = importedEntries; node; node = (WADEntry *)node->next)
+	WADEntry *next;
+	for (node = importedEntries; node; node = next)
 	{
-		if (!strcmp("TITLE", node->GetName()))
+		next = (WADEntry*)node->next;
+
+		if (!strcmp(node->GetName(), "S_START"))
+			insideSprites = true;
+		if (!strcmp(node->GetName(), "S_END"))
+			insideSprites = false;
+		if (!strcmp(node->GetName(), "T_START"))
+			insideTextures = true;
+		if (!strcmp(node->GetName(), "T_END"))
+			insideTextures = false;
+		if (!strcmp(node->GetName(), "F_START"))
+			insideFlats = true;
+		if (!strcmp(node->GetName(), "F_END"))
+			insideFlats = false;
+
+		if (!strcmp("PLAYPALS", node->GetName()))
 		{
-			int filesize;
-			byte *newTitle = ReadAllBytes("D:\\32xrb2\\comptest\\secret.lmp", &filesize);
-
-			int compressedSize = 0;
-			byte *recompressFinal = encode(newTitle, filesize, &compressedSize);
-
-			byte *alittlebigger = (byte *)calloc(1, compressedSize + 2);
-			memcpy(alittlebigger, recompressFinal, compressedSize);
-
-
-			node->SetData(alittlebigger, compressedSize+2);
-			node->SetUnCompressedDataLength(filesize);
-
-
-			/*
-			WriteAllBytes("D:\\32xrb2\\comptest\\TITLE-lzss.lmp", node->GetData(), node->GetDataLength());
-
-			byte *uncompressed = (byte *)malloc(node->GetUnCompressedDataLength());
-			lzss_state_t lzss;
-			lzss_setup(&lzss, (uint8_t *)node->GetData(), (uint8_t *)uncompressed, 0x1000);
-
-
-			int uncompSize = node->GetUnCompressedDataLength();
-
-			FILE *output = fopen("D:\\32xrb2\\comptest\\TITLE.lmp", "wb");
-
-			while (uncompSize > 0)
-			{
-				int readSize = uncompSize > 0x1000 ? 0x1000 : uncompSize;
-
-				lzss_read(&lzss, readSize);
-				fwrite(lzss.buf, readSize, 1, output);
-
-				uncompSize -= readSize;
-			}
-
-			fclose(output);
-
-			byte *recompress = ReadAllBytes("D:\\32xrb2\\comptest\\TITLE.lmp", &uncompSize);
-			int compressedSize = 0;
-			byte *recompressFinal = encode(recompress, (int)uncompSize, &compressedSize);
-
-			WriteAllBytes("D:\\32xrb2\\comptest\\TITLE-relzss.lmp", recompressFinal, compressedSize);
-
-			
-//			WriteAllBytes("D:\\32xrb2\\comptest\\TITLE.lmp", uncompressed, node->GetUnCompressedDataLength());
-
-			free(uncompressed);
-			*/
+			ReplaceWithFile(node, "D:\\32xrb2\\PLAYPALS.lmp");
 		}
-		if (!strcmp("VGM_E1M1", node->GetName()))
+		else if (!strcmp("TITLE", node->GetName()))
 		{
-			FILE *repl = fopen("D:\\32xrb2\\toxic.zgm", "rb");
-			fseek(repl, 0, SEEK_END);
-			long replSize = ftell(repl);
-			fseek(repl, 0, SEEK_SET);
-
-			byte *replData = (byte*)malloc(replSize);
-			fread(replData, replSize, 1, repl);
-			fclose(repl);
-
-			node->SetData(replData, replSize);
-			free(replData);
+			ReplaceWithFile(node, "D:\\32xrb2\\comptest\\secret.lmp");
+		}
+		else if (!strcmp("INTERPIC", node->GetName()))
+		{
+			Listable::Remove(node, (Listable **)&importedEntries);
+		}
+		else if (!strcmp("VGM_E1M1", node->GetName()))
+		{
+//			ReplaceWithFile(node, "D:\\32xrb2\\decision.zgm");
 		}
 		else if (!strcmp("OOF", node->GetName()))
 		{
-			FILE *repl = fopen("D:\\32xrb2\\S3K_5F.wav", "rb");
-			fseek(repl, 0, SEEK_END);
-			long replSize = ftell(repl);
-			fseek(repl, 0, SEEK_SET);
-
-			byte *replData = (byte *)malloc(replSize);
-			fread(replData, replSize, 1, repl);
-			fclose(repl);
-
-			node->SetData(replData, replSize);
-			free(replData);
+			ReplaceWithFile(node, "D:\\32xrb2\\S3K_5F.wav");
 		}
 	}
 
