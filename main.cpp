@@ -131,6 +131,7 @@ static void MyFunTest()
 	bool insideSprites = false;
 	bool insideTextures = false;
 	bool insideFlats = false;
+	bool insideSounds = false;
 
 	WADEntry *node;
 	WADEntry *next;
@@ -150,10 +151,14 @@ static void MyFunTest()
 			insideFlats = true;
 		if (!strcmp(node->GetName(), "F_END"))
 			insideFlats = false;
-
+		if (!strcmp(node->GetName(), "DS_START"))
+			insideSounds = true;
+		if (!strcmp(node->GetName(), "DS_END"))
+			insideSounds = false;
+		/*
 		if (!strcmp("PLAYPALS", node->GetName()))
 		{
-			ReplaceWithFile(node, "D:\\32xrb2\\PLAYPALS.lmp");
+			ReplaceWithFile(node, "D:\\32xrb2\\SRB2_PLAYPALS.lmp");
 		}
 		else if (!strcmp("TITLE", node->GetName()))
 		{
@@ -170,7 +175,16 @@ static void MyFunTest()
 		else if (!strcmp("OOF", node->GetName()))
 		{
 			ReplaceWithFile(node, "D:\\32xrb2\\S3K_5F.wav");
+		}*/
+
+		if (insideSounds && strcmp(node->GetName(), "DS_START"))
+			Listable::Remove(node, (Listable **)&importedEntries);
+		else if (strcmp(node->GetName(), "VGM_E1M1") && strstr(node->GetName(), "VGM_E"))
+		{
+			Listable::Remove(node, (Listable **)&importedEntries);
 		}
+		else if (!strcmp(node->GetName(), "VGM_END"))
+			Listable::Remove(node, (Listable **)&importedEntries);
 	}
 
 	// Write it out
@@ -195,7 +209,7 @@ static void MyFunTest()
 	free(baseROMData);
 	free(wadData);
 
-	int targetSize = 5242864;
+	int targetSize = 5242880;
 	targetSize -= wadFileSize;
 	targetSize -= baseromFileSize;
 
