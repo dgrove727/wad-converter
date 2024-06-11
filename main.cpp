@@ -120,6 +120,17 @@ void ReplaceWithFile(WADEntry *entry, const char *filename)
 	free(newData);
 }
 
+static void SpitWAD(WADEntry *entries)
+{
+	for (WADEntry *entry = entries; entry; entry = (WADEntry *)entry->next)
+		printf("%s : %d\n", entry->GetName(), entry->IsCompressed());
+}
+
+static void DumpEntry(WADEntry *entry, const char *filename)
+{
+	WriteAllBytes(filename, entry->IsCompressed() ? DecompressWADEntry(entry) : entry->GetData(), entry->GetUnCompressedDataLength());
+}
+
 static void MyFunTest()
 {
 	FILE *f = fopen("D:\\32xrb2\\d32xr31.wad", "rb");
@@ -127,6 +138,11 @@ static void MyFunTest()
 	Importer_Jaguar *ij = new Importer_Jaguar(f);
 	WADEntry *importedEntries = ij->Execute();
 	delete ij;
+
+//	SpitWAD(importedEntries);
+
+	WADEntry *soundsWad = NULL;
+	WADEntry *mapWad = NULL;
 
 	bool insideSprites = false;
 	bool insideTextures = false;
@@ -138,6 +154,53 @@ static void MyFunTest()
 	for (node = importedEntries; node; node = next)
 	{
 		next = (WADEntry*)node->next;
+
+		if (false)//!strcmp(node->GetName(), "MAP03"))
+		{
+			WADEntry *things = (WADEntry *)node->next;
+			WADEntry *linedefs = (WADEntry *)things->next;
+			WADEntry *sidedefs = (WADEntry *)linedefs->next;
+			WADEntry *vertexes = (WADEntry *)sidedefs->next;
+			WADEntry *segs = (WADEntry *)vertexes->next;
+			WADEntry *ssectors = (WADEntry *)segs->next;
+			WADEntry *nodes = (WADEntry *)ssectors->next;
+			WADEntry *sectors = (WADEntry *)nodes->next;
+			WADEntry *reject = (WADEntry *)sectors->next;
+			WADEntry *blockmap = (WADEntry *)reject->next;
+
+			DumpEntry(things, "D:\\32xrb2\\comptest\\MAP03\\THINGS.lmp");
+			ReplaceWithFile(things, "D:\\32xrb2\\comptest\\MAP03\\export\\THINGS.lmp");
+
+			DumpEntry(linedefs, "D:\\32xrb2\\comptest\\MAP03\\LINEDEFS.lmp");
+			ReplaceWithFile(linedefs, "D:\\32xrb2\\comptest\\MAP03\\export\\LINEDEFS.lmp");
+
+			DumpEntry(sidedefs, "D:\\32xrb2\\comptest\\MAP03\\SIDEDEFS.lmp");
+			ReplaceWithFile(sidedefs, "D:\\32xrb2\\comptest\\MAP03\\export\\SIDEDEFS.lmp");
+
+			DumpEntry(vertexes, "D:\\32xrb2\\comptest\\MAP03\\VERTEXES.lmp");
+			ReplaceWithFile(vertexes, "D:\\32xrb2\\comptest\\MAP03\\export\\VERTEXES.lmp");
+
+			DumpEntry(segs, "D:\\32xrb2\\comptest\\MAP03\\SEGS.lmp");
+			ReplaceWithFile(segs, "D:\\32xrb2\\comptest\\MAP03\\export\\SEGS.lmp");
+
+			DumpEntry(ssectors, "D:\\32xrb2\\comptest\\MAP03\\SSECTORS.lmp");
+			ReplaceWithFile(ssectors, "D:\\32xrb2\\comptest\\MAP03\\export\\SSECTORS.lmp");
+
+			DumpEntry(nodes, "D:\\32xrb2\\comptest\\MAP03\\NODES.lmp");
+			ReplaceWithFile(nodes, "D:\\32xrb2\\comptest\\MAP03\\export\\NODES.lmp");
+
+			DumpEntry(sectors, "D:\\32xrb2\\comptest\\MAP03\\SECTORS.lmp");
+			ReplaceWithFile(sectors, "D:\\32xrb2\\comptest\\MAP03\\export\\SECTORS.lmp");
+
+			DumpEntry(reject, "D:\\32xrb2\\comptest\\MAP03\\REJECT.lmp");
+			ReplaceWithFile(reject, "D:\\32xrb2\\comptest\\MAP03\\export\\REJECT.lmp");
+
+			DumpEntry(blockmap, "D:\\32xrb2\\comptest\\MAP03\\BLOCKMAP.lmp");
+			ReplaceWithFile(blockmap, "D:\\32xrb2\\comptest\\MAP03\\export\\BLOCKMAP.lmp");
+
+			next = (WADEntry*)blockmap->next;
+			continue;
+		}
 
 		if (!strcmp(node->GetName(), "S_START"))
 			insideSprites = true;
@@ -152,9 +215,17 @@ static void MyFunTest()
 		if (!strcmp(node->GetName(), "F_END"))
 			insideFlats = false;
 		if (!strcmp(node->GetName(), "DS_START"))
+		{
+			Listable::RemoveNoFree(node, (Listable **)&importedEntries);
+			Listable::Add(node, (Listable **)&soundsWad);
 			insideSounds = true;
+		}
 		if (!strcmp(node->GetName(), "DS_END"))
+		{
+			Listable::RemoveNoFree(node, (Listable **)&importedEntries);
+			Listable::Add(node, (Listable **)&soundsWad);
 			insideSounds = false;
+		}
 		/*
 		if (!strcmp("PLAYPALS", node->GetName()))
 		{
@@ -177,8 +248,21 @@ static void MyFunTest()
 			ReplaceWithFile(node, "D:\\32xrb2\\S3K_5F.wav");
 		}*/
 
+		if (!strcmp(node->GetName(), "DEMO1"))
+		{
+			ReplaceWithFile(node, "D:\\32xrb2\\DEMO1.lmp");
+		}
+
+		if (!strcmp(node->GetName(), "DMAPINFO"))
+		{
+			ReplaceWithFile(node, "D:\\32xrb2\\comptest\\DMAPINFO.txt");
+		}
+
 		if (insideSounds && strcmp(node->GetName(), "DS_START"))
-			Listable::Remove(node, (Listable **)&importedEntries);
+		{
+			Listable::RemoveNoFree(node, (Listable **)&importedEntries);
+			Listable::Add(node, (Listable **)&soundsWad);
+		}
 		else if (strcmp(node->GetName(), "VGM_E1M1") && strstr(node->GetName(), "VGM_E"))
 		{
 			Listable::Remove(node, (Listable **)&importedEntries);
@@ -187,9 +271,32 @@ static void MyFunTest()
 			Listable::Remove(node, (Listable **)&importedEntries);
 	}
 
+	WADEntry *entry = new WADEntry();
+	entry->SetName("M_START");
+	entry->SetUnCompressedDataLength(0);
+	Listable::Add(entry, (Listable **)&importedEntries);
+
+	entry = new WADEntry();
+	int entryDataSize;
+	byte *entryData = ReadAllBytes("D:\\32xrb2\\acb.zgm", &entryDataSize);
+	entry->SetName("VGM_NTRO");
+	entry->SetIsCompressed(true);
+	entry->SetData(entryData, entryDataSize);
+	Listable::Add(entry, (Listable **)&importedEntries);
+
+	entry = new WADEntry();
+	entry->SetName("M_END");
+	entry->SetUnCompressedDataLength(0);
+	Listable::Add(entry, (Listable **)&importedEntries);
+
 	// Write it out
-	FILE *expF = fopen("D:\\32xrb2\\d32xr31-mod.wad", "wb");
+	FILE *expF = fopen("D:\\32xrb2\\doom32x.wad", "wb");
 	Exporter_Jaguar *ex = new Exporter_Jaguar(importedEntries, expF);
+	ex->Execute();
+	delete ex;
+
+	expF = fopen("D:\\32xrb2\\CDImage\\SOUNDS.WAD", "wb");
+	ex = new Exporter_Jaguar(soundsWad, expF);
 	ex->Execute();
 	delete ex;
 
