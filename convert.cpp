@@ -61,11 +61,6 @@ byte *ConvertUIGraphicFromPCToJag(byte *lumpData, int lumpSize, int *jagDataLen)
 
 void ConvertSpriteDataFromPCToJag(byte *lumpData, int lumpSize, byte *jagHeader, int *jagHeaderLen, byte *jagData, int *jagDataLen)
 {
-	short width;
-	short height;
-	short x_offset;
-	short y_offset;
-
 	// Casting to a structure makes it easier to read
 	patchHeader_t *header = (patchHeader_t *)lumpData;
 	jagPatchHeader_t *jagPatchHeader = (jagPatchHeader_t *)jagHeader;
@@ -74,12 +69,10 @@ void ConvertSpriteDataFromPCToJag(byte *lumpData, int lumpSize, byte *jagHeader,
 	jagPatchHeader->leftoffset = swap_endian16(header->leftoffset);
 	jagPatchHeader->topoffset = swap_endian16(header->topoffset);
 
-	// Column pointers
-	const int tableStart = 8;
-	for (int column = 0; column < width; column++) {
-		unsigned short pointer = *(unsigned short *)lumpData[tableStart + (column << 1)];
-		*(unsigned short *)&jagHeader[tableStart + (column << 1)] = swap_endian16(pointer);
-	}
+	// Column pointers; Convert them from unsigned int to unsigned short
+	const unsigned int *tableStart = header->columnofs;
+	for (int column = 0; column < header->width; column++)
+		jagPatchHeader->columnofs[column] = swap_endian16((unsigned short)header->columnofs[column]);
 
 
 
