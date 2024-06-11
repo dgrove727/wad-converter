@@ -16,6 +16,43 @@
 #define WRITEINT(p,b)     { int *p_tmp = (int *)p; *p_tmp = (int)(b); p_tmp++; p = (byte *)p_tmp; }
 #define WRITEUINT(p,b)    { unsigned int *p_tmp = (unsigned int *)p; *p_tmp = (unsigned int)(b); p_tmp++; p = (byte *)p_tmp; }
 
+// Doom GFX has a header, and then pieces of data called
+// 'posts', which are offset (topdelta) from the TOP of the image (ALWAYS, even if it's a mid-column post!)
+// are stored in the rest of the file, with a byte marker separating each one to indicate
+// if a new row should be started or not
+typedef struct
+{
+	unsigned short width;
+	unsigned short height;
+	short leftoffset;
+	short topoffset;
+	unsigned int columnofs[8];
+} patchHeader_t;
+
+typedef struct
+{
+	byte topdelta;
+	byte length;
+	byte unused;
+	byte data[256];
+} post_t;
+
+typedef struct
+{
+	short width;
+	short height;
+	short leftoffset;
+	short topoffset;
+	unsigned short columnofs[8];
+} jagPatchHeader_t;
+
+typedef struct
+{
+	byte topdelta;
+	byte length;
+	unsigned short dataofs[4096]; // 4096 because memory is cheap
+} jagPost_t;
+
 // TODO: We also need to convert UI graphics to that Jaguar format, as well
 byte *ConvertUIGraphicFromPCToJag(byte *lumpData, int lumpSize, int *jagDataLen)
 {
@@ -29,27 +66,19 @@ void ConvertSpriteDataFromPCToJag(byte *lumpData, int lumpSize, byte *jagHeader,
 	short x_offset;
 	short y_offset;
 
-	// Width
-	width = *(short *)lumpData[0];
-	*(short *)&jagHeader[0] = swap_endian16(width);
-
-	// Height
-	height = *(short *)lumpData[2];
-	*(short *)&jagHeader[2] = swap_endian16(height);
-
-	// X offset
-	x_offset = *(short *)lumpData[4];
-	*(short *)&jagHeader[4] = swap_endian16(x_offset);
-
-	// Y offset
-	y_offset = *(short *)lumpData[6];
-	*(short *)&jagHeader[6] = swap_endian16(y_offset);
+	// Casting to a structure makes it easier to read
+	patchHeader_t *header = (patchHeader_t *)lumpData;
+	jagPatchHeader_t *jagPatchHeader = (jagPatchHeader_t *)jagHeader;
+	jagPatchHeader->width = swap_endian16(header->width);
+	jagPatchHeader->height = swap_endian16(header->height);
+	jagPatchHeader->leftoffset = swap_endian16(header->leftoffset);
+	jagPatchHeader->topoffset = swap_endian16(header->topoffset);
 
 	// Column pointers
 	const int tableStart = 8;
 	for (int column = 0; column < width; column++) {
-		int pointer = *(short *)lumpData[tableStart + (column << 1)];
-		*(short *)&jagHeader[tableStart + (column << 1)] = swap_endian16(pointer);
+		unsigned short pointer = *(unsigned short *)lumpData[tableStart + (column << 1)];
+		*(unsigned short *)&jagHeader[tableStart + (column << 1)] = swap_endian16(pointer);
 	}
 
 
