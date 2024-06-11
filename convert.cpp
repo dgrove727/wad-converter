@@ -70,11 +70,11 @@ void ConvertSpriteDataFromPCToJag(byte *lumpData, int lumpSize, byte *jagHeader,
 	jagPatchHeader->topoffset = swap_endian16(header->topoffset);
 
 	// Column pointers; Convert them from unsigned int to unsigned short
-	const unsigned int *tableStart = header->columnofs;
 	for (int column = 0; column < header->width; column++)
 		jagPatchHeader->columnofs[column] = swap_endian16((unsigned short)header->columnofs[column]);
 
-
+	byte *jagHeaderPosition = (byte*)&jagPatchHeader->columnofs[header->width];
+	byte *pcHeaderPosition = (byte*)&header->columnofs[header->width];
 
 	//DLG: Finish!
 
