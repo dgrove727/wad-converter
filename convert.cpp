@@ -16,43 +16,6 @@
 #define WRITEINT(p,b)     { int *p_tmp = (int *)p; *p_tmp = (int)(b); p_tmp++; p = (byte *)p_tmp; }
 #define WRITEUINT(p,b)    { unsigned int *p_tmp = (unsigned int *)p; *p_tmp = (unsigned int)(b); p_tmp++; p = (byte *)p_tmp; }
 
-// Doom GFX has a header, and then pieces of data called
-// 'posts', which are offset (topdelta) from the TOP of the image (ALWAYS, even if it's a mid-column post!)
-// are stored in the rest of the file, with a byte marker separating each one to indicate
-// if a new row should be started or not
-typedef struct
-{
-	unsigned short width;
-	unsigned short height;
-	short leftoffset;
-	short topoffset;
-	unsigned int columnofs[8];
-} patchHeader_t;
-
-typedef struct
-{
-	byte topdelta;
-	byte length;
-	byte unused;
-	byte data[256];
-} post_t;
-
-typedef struct
-{
-	short width;
-	short height;
-	short leftoffset;
-	short topoffset;
-	unsigned short columnofs[8];
-} jagPatchHeader_t;
-
-typedef struct
-{
-	byte topdelta;
-	byte length;
-	unsigned short dataofs[4096]; // 4096 because memory is cheap
-} jagPost_t;
-
 // TODO: We also need to convert UI graphics to that Jaguar format, as well
 byte *ConvertUIGraphicFromPCToJag(byte *lumpData, int lumpSize, int *jagDataLen)
 {
@@ -76,6 +39,8 @@ void ConvertSpriteDataFromPCToJag(byte *lumpData, int lumpSize, byte *jagHeader,
 	byte *jagHeaderPosition = (byte*)&jagPatchHeader->columnofs[header->width];
 	byte *pcHeaderPosition = (byte*)&header->columnofs[header->width];
 
+
+	/*
 	//DLG: Finish!
 
 	int i = 0;
@@ -198,7 +163,7 @@ void ConvertSpriteDataFromPCToJag(byte *lumpData, int lumpSize, byte *jagHeader,
 
 	free(key_table);
 	free(key_data);
-	free(raw_data);
+	free(raw_data);*/
 }
 
 byte *ConvertSpriteDataFromJagToPC(byte *jagHeader, int jagHeaderLen, byte *jagData, int jagDataLen, int *outputLen)

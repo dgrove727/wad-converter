@@ -599,27 +599,6 @@ byte *PNGToFlat(byte *pngData, int pngLength, int *width, int *height)
 	return indexedImage;
 }
 
-// Doom GFX has a header, and then pieces of data called
-// 'posts', which are offset (topdelta) from the TOP of the image (ALWAYS, even if it's a mid-column post!)
-// are stored in the rest of the file, with a byte marker separating each one to indicate
-// if a new row should be started or not
-typedef struct
-{
-	unsigned short width;
-	unsigned short height;
-	short leftoffset;
-	short topoffset;
-	unsigned int columnofs[8];
-} patchHeader_t;
-
-typedef struct
-{
-	byte topdelta;
-	byte length;
-	byte unused;
-	byte data[256];
-} post_t;
-
 // Works for patches, sprites, all of the transparency-format Doom graphics
 // Returns an allocated representation of the 8-bit PNG data (albeit without palette information).
 // Up to you to manage the memory lifetime of it!
@@ -657,6 +636,49 @@ byte *PatchToPNG(byte *patchData, size_t dataLen, int *outputLen)
 
 	return stbi_write_png_to_mem(rawImage, 0, header->width, header->height, 1, outputLen);
 }
+
+byte *JagSpriteToPNG(byte *jagHeader, byte *jagData, size_t headerLen, size_t dataLen, int *outputLen)
+{
+	jagPatchHeader_t *header = (jagPatchHeader_t *)jagHeader;
+
+	unsigned short width = swap_endian16(header->width);
+	unsigned short height = swap_endian16(header->height);
+	unsigned short leftOffset = swap_endian16(header->leftoffset);
+	unsigned short topOffset = swap_endian16(header->topoffset);
+
+	byte *rawImage = (byte *)malloc(width * height * 1);
+	memset(rawImage, 247, width * height * 1); // Transparent value
+
+	for (int i = 0; i < width; i++)
+	{
+		unsigned short colOffset = swap_endian16(header->columnofs[i]);
+		const jagPost_t *post = (jagPost_t *)(jagHeader + colOffset);
+
+		int yPos = 0;
+		while (post->topdelta != 255)
+		{
+			yPos = post->topdelta;
+			byte len = post->length;
+			unsigned short dataOffset = swap_endian16(post->dataofs);
+
+			const byte *pixel = &jagData[dataOffset];
+
+			for (int j = 0; j < post->length; j++)
+			{
+				size_t pixelLocation = (yPos * width) + i;
+
+				rawImage[pixelLocation] = *pixel;
+				pixel++;
+				yPos++;
+			}
+
+			post++;
+		}
+	}
+
+	return stbi_write_png_to_mem(rawImage, 0, width, height, 1, outputLen);
+}
+
 /*
 byte *JagSpriteToPNG(const byte *sprHeader, const byte *sprData, size_t headerLen, size_t dataLen, int *outputLen)
 {
