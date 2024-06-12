@@ -8,6 +8,7 @@
 #include "Importer_PC.h"
 #include "lzss.h"
 #include "CarmackCompress.h"
+#include "convert.h"
 
 #define		VERSION			1.10
 #define		WAD_FORMAT		1
@@ -131,15 +132,130 @@ static void DumpEntry(WADEntry *entry, const char *filename)
 	WriteAllBytes(filename, entry->IsCompressed() ? DecompressWADEntry(entry) : entry->GetData(), entry->GetUnCompressedDataLength());
 }
 
+static void InsertLevelFromFolder(WADEntry *list, const char *levelname, const char *folder)
+{
+	char fullPath[2048]; // 2k ought to be enough for anybody...
+
+	// Header
+	WADEntry *entry = new WADEntry();
+	entry->SetName(levelname);
+	Listable::Add(entry, (Listable **)&list);
+
+	int fileSize;
+
+	// THINGS (compressed)
+	sprintf(fullPath, "%s/THINGS.lmp", folder);
+	entry = new WADEntry();
+	Listable::Add(entry, (Listable **)&list);
+	entry->SetName("THINGS");
+	entry->SetIsCompressed(true);
+	ReplaceWithFile(entry, fullPath);
+
+	// LINEDEFS (compressed)
+	sprintf(fullPath, "%s/LINEDEFS.lmp", folder);
+	entry = new WADEntry();
+	Listable::Add(entry, (Listable **)&list);
+	entry->SetName("LINEDEFS");
+	entry->SetIsCompressed(true);
+	ReplaceWithFile(entry, fullPath);
+
+	// SIDEDEFS (compressed)
+	sprintf(fullPath, "%s/SIDEDEFS.lmp", folder);
+	entry = new WADEntry();
+	Listable::Add(entry, (Listable **)&list);
+	entry->SetIsCompressed(true);
+	ReplaceWithFile(entry, fullPath);
+
+	// VERTEXES
+	sprintf(fullPath, "%s/VERTEXES.lmp", folder);
+	entry = new WADEntry();
+	Listable::Add(entry, (Listable **)&list);
+	entry->SetIsCompressed(false);
+	ReplaceWithFile(entry, fullPath);
+
+	// SEGS (compressed)
+	sprintf(fullPath, "%s/SEGS.lmp", folder);
+	entry = new WADEntry();
+	Listable::Add(entry, (Listable **)&list);
+	entry->SetIsCompressed(true);
+	ReplaceWithFile(entry, fullPath);
+
+	// SSECTORS (compressed)
+	sprintf(fullPath, "%s/SSECTORS.lmp", folder);
+	entry = new WADEntry();
+	Listable::Add(entry, (Listable **)&list);
+	entry->SetIsCompressed(true);
+	ReplaceWithFile(entry, fullPath);
+
+	// NODES
+	sprintf(fullPath, "%s/NODES.lmp", folder);
+	entry = new WADEntry();
+	Listable::Add(entry, (Listable **)&list);
+	entry->SetIsCompressed(false);
+	ReplaceWithFile(entry, fullPath);
+
+	// SECTORS (compressed)
+	sprintf(fullPath, "%s/SECTORS.lmp", folder);
+	entry = new WADEntry();
+	Listable::Add(entry, (Listable **)&list);
+	entry->SetIsCompressed(true);
+	ReplaceWithFile(entry, fullPath);
+
+	// REJECT
+	sprintf(fullPath, "%s/REJECT.lmp", folder);
+	entry = new WADEntry();
+	Listable::Add(entry, (Listable **)&list);
+	entry->SetIsCompressed(false);
+	ReplaceWithFile(entry, fullPath);
+
+	// BLOCKMAP
+	sprintf(fullPath, "%s/BLOCKMAP.lmp", folder);
+	entry = new WADEntry();
+	Listable::Add(entry, (Listable **)&list);
+	entry->SetIsCompressed(false);
+	ReplaceWithFile(entry, fullPath);
+}
+
+static void JagSpriteTest()
+{
+	int pcDoomGfxLen;
+	byte *pcDoomGfx = ReadAllBytes("D:\\32xrb2\\comptest\\MISLA1A5.lmp", &pcDoomGfxLen);
+	byte *jagHeader = (byte *)malloc(1 * 1024); // 1k
+	byte *jagData = (byte *)malloc(64 * 1024); // 64k (impossible to be bigger than this)
+	int jagHeaderSize, jagDataSize;
+
+	ConvertSpriteDataFromPCToJag(pcDoomGfx, pcDoomGfxLen, jagHeader, &jagHeaderSize, jagData, &jagDataSize);
+
+	WriteAllBytes("D:\\32xrb2\\comptest\\PLAYZ5_jagHeader.lmp", jagHeader, jagHeaderSize);
+	WriteAllBytes("D:\\32xrb2\\comptest\\PLAYZ5_jagData.lmp", jagData, jagDataSize);
+
+	int outSize;
+	byte *png = JagSpriteToPNG(jagHeader, jagData, jagHeaderSize, jagDataSize, &outSize);
+
+	WriteAllBytes("D:\\32xrb2\\comptest\\PLAYZ5.png", png, outSize);
+}
+
 static void MyFunTest()
 {
+	JagSpriteTest();
+	return;
+	int fSize1, fSize2, outSize;
+
+	byte *candHeader = ReadAllBytes("D:\\32xrb2\\comptest\\CANDA0.lmp", &fSize1);
+	byte *candData = ReadAllBytes("D:\\32xrb2\\comptest\\CANDA0_dot.lmp", &fSize2);
+
+	byte *png = JagSpriteToPNG(candHeader, candData, fSize1, fSize2, &outSize);
+
+	WriteAllBytes("D:\\32xrb2\\comptest\\cand.png", png, outSize);
+	return;
+
 	FILE *f = fopen("D:\\32xrb2\\d32xr31.wad", "rb");
 
 	Importer_Jaguar *ij = new Importer_Jaguar(f);
 	WADEntry *importedEntries = ij->Execute();
 	delete ij;
 
-//	SpitWAD(importedEntries);
+	SpitWAD(importedEntries);
 
 	WADEntry *soundsWad = NULL;
 	WADEntry *mapWad = NULL;
@@ -154,6 +270,13 @@ static void MyFunTest()
 	for (node = importedEntries; node; node = next)
 	{
 		next = (WADEntry*)node->next;
+
+		if (!strcmp(node->GetName(), "CANDA0"))
+		{
+			DumpEntry(node, "D:\\32xrb2\\comptest\\CANDAO.lmp");
+			DumpEntry((WADEntry *)node->next, "D:\\32xrb2\\comptest\\CANDAO_dot.lmp");
+			printf("Hi\n");
+		}
 
 		if (false)//!strcmp(node->GetName(), "MAP03"))
 		{
@@ -248,10 +371,11 @@ static void MyFunTest()
 			ReplaceWithFile(node, "D:\\32xrb2\\S3K_5F.wav");
 		}*/
 
+		if (!strcmp(node->GetName(), "TEXTURE1"))
+			ReplaceWithFile(node, "D:\\32xrb2\\Patches\\TEXTURE1.lmp");
+
 		if (!strcmp(node->GetName(), "DEMO1"))
-		{
 			ReplaceWithFile(node, "D:\\32xrb2\\DEMO1.lmp");
-		}
 
 		if (!strcmp(node->GetName(), "DMAPINFO"))
 		{
@@ -270,6 +394,8 @@ static void MyFunTest()
 		else if (!strcmp(node->GetName(), "VGM_END"))
 			Listable::Remove(node, (Listable **)&importedEntries);
 	}
+
+	InsertLevelFromFolder(importedEntries, "MAP01", "D:\\32xrb2\\Levels\\MAP01\\Jag");
 
 	WADEntry *entry = new WADEntry();
 	entry->SetName("M_START");

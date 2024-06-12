@@ -22,6 +22,9 @@ byte *ConvertUIGraphicFromPCToJag(byte *lumpData, int lumpSize, int *jagDataLen)
 	return NULL;
 }
 
+//
+// Allocate sufficient space in 'jagHeader' and 'jagData' before calling.
+//
 void ConvertSpriteDataFromPCToJag(byte *lumpData, int lumpSize, byte *jagHeader, int *jagHeaderLen, byte *jagData, int *jagDataLen)
 {
 	// Casting to a structure makes it easier to read
@@ -36,134 +39,42 @@ void ConvertSpriteDataFromPCToJag(byte *lumpData, int lumpSize, byte *jagHeader,
 	for (int column = 0; column < header->width; column++)
 		jagPatchHeader->columnofs[column] = swap_endian16((unsigned short)header->columnofs[column]);
 
-	byte *jagHeaderPosition = (byte*)&jagPatchHeader->columnofs[header->width];
-	byte *pcHeaderPosition = (byte*)&header->columnofs[header->width];
+	byte *dataPtr = jagData;
+	unsigned short headerSize = 8 + (header->width * 2);
+	byte *headerPtr = jagHeader + headerSize;
 
-
-	/*
-	//DLG: Finish!
-
-	int i = 0;
-
-	byte *key_table;
-	byte *key_data;
-	byte *raw_data;
-
-	key_table = (byte *)malloc(width << 1);	// 32X table uses shorts as opposed to longs
-	key_data = (byte *)malloc(1);
-	raw_data = (byte *)malloc(1);
-
-	int line = 0;
-	int lumpDataCursor = 0;
-	int jagHeaderCursor = 0;
-	int jagDataCursor = 0;		// raw_data 'i'
-	int word = 0;
-	int byte_count = 0;
-	int bytes_copied = 0;
-
-	const int dataStart = (width << 1) + 8;
-
-	while (line < width)
+	// 'Draw' the PC Doom graphic into the Jaguar one
+	for (int i = 0; i < header->width; i++)
 	{
-		word = lumpData[dataStart + lumpDataCursor];
+		unsigned short colOffset = (unsigned short)header->columnofs[i];
+		const post_t *post = (post_t *)(lumpData + colOffset);
 
-		if (word != 0xFF)
+		jagPatchHeader->columnofs[i] = swap_endian16(colOffset);
+		jagPost_t *jagPost = (jagPost_t *)headerPtr;
+
+		while (post->topdelta != 255)
 		{
-			word <<= 8;
-			word |= lumpData[dataStart + lumpDataCursor + 1];
-			lumpDataCursor += 2;
+			byte len = post->length;
+			jagPost->topdelta = post->topdelta;
+			jagPost->length = len;
+			jagPost->dataofs = swap_endian16(dataPtr - jagData);
+			headerSize += sizeof(jagPost_t);
 
-			jagHeader = (byte *)realloc(jagHeader, jagHeaderCursor + 4);
-			jagHeader[jagHeaderCursor] = word >> 8;
-			jagHeader[jagHeaderCursor + 1] = word;
+			const byte *pixel = post->data;
 
-			*(short *)&jagHeader[jagHeaderCursor + 2] = swap_endian32(bytes_copied + 1) >> 16;
-			jagHeaderCursor += 4;
+			for (int j = 0; j < post->length; j++)
+				*dataPtr++ = *pixel++;
 
-			raw_data = (byte *)realloc(raw_data, jagDataCursor + (word & 0xFF) + 2);
-			byte_count = (word & 0xFF) + 2;
-			for (i = 0; i < byte_count; i++)
-			{
-				raw_data[jagDataCursor] = lumpData[dataStart + lumpDataCursor];
-				lumpDataCursor++;
-				jagDataCursor++;
-			}
-			bytes_copied += i;
+			pixel++; // dummy value in PC gfx
+			post = (const post_t *)pixel;
 		}
-		else
-		{
-			lumpDataCursor++;
-
-			line++;
-			if (line < width)
-			{
-				for (i = 0; line < width && lumpData[dataStart + lumpDataCursor + i] == 0xFF; i++)
-					line++;
-
-				lumpDataCursor += i;
-
-				i++;
-				key_data = (byte *)realloc(key_data, jagHeaderCursor + (i << 1));
-				while (i > 0)
-				{
-					*(short *)&key_data[jagHeaderCursor] = 0xFFFF;
-					jagHeaderCursor += 2;
-					i--;
-				}
-			}
-			else
-			{
-				key_data = (byte *)realloc(key_data, jagHeaderCursor + 2);
-				*(short *)&key_data[jagHeaderCursor] = 0xFFFF;
-				jagHeaderCursor += 2;
-			}
-		}
+		headerPtr += sizeof(jagPost_t);
 	}
 
-	while (jagDataCursor & 3)
-	{
-		jagDataCursor++;
-		raw_data = (byte *)realloc(raw_data, jagDataCursor);
-		raw_data[jagDataCursor - 1] = 0;
-	}
+	*dataPtr++ = 0xff;
 
-	*(short *)&key_table[0] = swap_endian32((width << 1) + 8) >> 16;
-
-	i = 0;
-	for (int line = 1; line < width; line++)
-	{
-		while (*(unsigned short *)&key_data[i] != 0xFFFF)
-			i += 2;
-
-		*(short *)&key_table[line << 1] = swap_endian32((width << 1) + 8 + i + 2) >> 16;
-		i += 2;
-	}
-
-	jagHeader = (byte *)malloc(jagHeaderCursor);
-	for (int i = 0; i < jagHeaderCursor; i++) {
-		jagHeader[i] = lumpData[dataStart + i];
-	}
-
-	//TODO: //DLG: Continue here!
-	jagData = (byte *)malloc(jagDataCursor);
-	for (int i = 0; i < jagDataCursor; i++) {
-		jagData[i] = raw_data[i];
-	}
-
-
-
-	//out_file_size += ((width << 1) + jagHeaderCursor + 8);
-
-	//fwrite(raw_data, 1, jagDataCursor, out_file);
-	//WriteTableCustom(out_file_size, jagDataCursor, ".");
-	//out_file_size += jagDataCursor;
-
-	*jagHeaderLen = jagHeaderCursor;
-	*jagDataLen = jagDataCursor;
-
-	free(key_table);
-	free(key_data);
-	free(raw_data);*/
+	*jagHeaderLen = headerPtr - jagHeader;
+	*jagDataLen = dataPtr - jagData;
 }
 
 byte *ConvertSpriteDataFromJagToPC(byte *jagHeader, int jagHeaderLen, byte *jagData, int jagDataLen, int *outputLen)
