@@ -22,7 +22,6 @@
     <ClCompile Include="..\CarmackCompress.cpp" />
     <ClCompile Include="..\common.cpp" />
     <ClCompile Include="..\compress.cpp" />
-    <ClCompile Include="..\convert.cpp" />
     <ClCompile Include="..\decompress.cpp" />
     <ClCompile Include="..\Exporter_Jaguar.cpp" />
     <ClCompile Include="..\Exporter_PC.cpp" />
@@ -38,7 +37,6 @@
     <ClInclude Include="..\CarmackCompress.h" />
     <ClInclude Include="..\common.h" />
     <ClInclude Include="..\compress.h" />
-    <ClInclude Include="..\convert.h" />
     <ClInclude Include="..\decompress.h" />
     <ClInclude Include="..\Exporter.h" />
     <ClInclude Include="..\Exporter_Jaguar.h" />

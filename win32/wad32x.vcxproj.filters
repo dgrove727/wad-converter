@@ -39,9 +39,6 @@
     <ClCompile Include="..\gfx_convert.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\convert.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\Importer_PC.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -87,9 +84,6 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\stb_image_write.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\convert.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Importer_Jaguar.h">

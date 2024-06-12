@@ -8,7 +8,6 @@
 #include "Importer_PC.h"
 #include "lzss.h"
 #include "CarmackCompress.h"
-#include "convert.h"
 
 #define		VERSION			1.10
 #define		WAD_FORMAT		1
@@ -62,6 +61,22 @@ static byte *DecompressWADEntry(WADEntry *entry)
 	free(uncompressed);
 
 	return finalUncompressed;
+}
+
+static void ConvertPCSpriteEntryToJagSprite(WADEntry *entry, WADEntry **list)
+{
+	byte *jagHeader = (byte *)malloc(1 * 1024); // 1k
+	byte *jagData = (byte *)malloc(64 * 1024); // 64k (impossible to be bigger than this)
+	int jagHeaderSize, jagDataSize;
+
+	PCSpriteToJag(entry->GetData(), entry->GetDataLength(), jagHeader, &jagHeaderSize, jagData, &jagDataSize);
+
+	// TODO: Compress identical columns.
+
+	entry->SetData(jagHeader, jagHeaderSize);
+
+	WADEntry *dotEntry = new WADEntry(".", jagData, jagDataSize);
+	Listable::AddAfter(dotEntry, entry, (Listable**)&list);
 }
 
 void GfxTests()
@@ -219,15 +234,15 @@ static void InsertLevelFromFolder(WADEntry *list, const char *levelname, const c
 static void JagSpriteTest()
 {
 	int pcDoomGfxLen;
-	byte *pcDoomGfx = ReadAllBytes("D:\\32xrb2\\comptest\\MISLA1A5.lmp", &pcDoomGfxLen);
+	byte *pcDoomGfx = ReadAllBytes("D:\\32xrb2\\comptest\\CANDA0.lmp", &pcDoomGfxLen);
 	byte *jagHeader = (byte *)malloc(1 * 1024); // 1k
 	byte *jagData = (byte *)malloc(64 * 1024); // 64k (impossible to be bigger than this)
 	int jagHeaderSize, jagDataSize;
 
-	ConvertSpriteDataFromPCToJag(pcDoomGfx, pcDoomGfxLen, jagHeader, &jagHeaderSize, jagData, &jagDataSize);
+	PCSpriteToJag(pcDoomGfx, pcDoomGfxLen, jagHeader, &jagHeaderSize, jagData, &jagDataSize);
 
-	WriteAllBytes("D:\\32xrb2\\comptest\\PLAYZ5_jagHeader.lmp", jagHeader, jagHeaderSize);
-	WriteAllBytes("D:\\32xrb2\\comptest\\PLAYZ5_jagData.lmp", jagData, jagDataSize);
+	WriteAllBytes("D:\\32xrb2\\comptest\\CANDA0_jagHeader.lmp", jagHeader, jagHeaderSize);
+	WriteAllBytes("D:\\32xrb2\\comptest\\CANDA0_jagData.lmp", jagData, jagDataSize);
 
 	int outSize;
 	byte *png = JagSpriteToPNG(jagHeader, jagData, jagHeaderSize, jagDataSize, &outSize);
