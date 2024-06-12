@@ -65,11 +65,12 @@ static byte *DecompressWADEntry(WADEntry *entry)
 
 static void ConvertPCSpriteEntryToJagSprite(WADEntry *entry, WADEntry **list)
 {
-	byte *jagHeader = (byte *)malloc(1 * 1024); // 1k
+	byte *jagHeader = (byte *)malloc(8 * 1024); // 1k
 	byte *jagData = (byte *)malloc(64 * 1024); // 64k (impossible to be bigger than this)
 	int jagHeaderSize, jagDataSize;
 
 	PCSpriteToJag(entry->GetData(), entry->GetDataLength(), jagHeader, &jagHeaderSize, jagData, &jagDataSize);
+	printf("%s: %d : %d\n", entry->GetName(), jagHeaderSize, jagDataSize);
 
 	// TODO: Compress identical columns.
 
@@ -77,6 +78,9 @@ static void ConvertPCSpriteEntryToJagSprite(WADEntry *entry, WADEntry **list)
 
 	WADEntry *dotEntry = new WADEntry(".", jagData, jagDataSize);
 	Listable::AddAfter(dotEntry, entry, (Listable**)&list);
+
+	free(jagHeader);
+	free(jagData);
 }
 
 void GfxTests()
@@ -252,28 +256,16 @@ static void JagSpriteTest()
 
 static void MyFunTest()
 {
-	JagSpriteTest();
-	return;
-	int fSize1, fSize2, outSize;
+//	JagSpriteTest();
+//	return;
 
-	byte *candHeader = ReadAllBytes("D:\\32xrb2\\comptest\\CANDA0.lmp", &fSize1);
-	byte *candData = ReadAllBytes("D:\\32xrb2\\comptest\\CANDA0_dot.lmp", &fSize2);
+	FILE *f = fopen("D:\\32xrb2\\srb32x-edit.wad", "rb");
 
-	byte *png = JagSpriteToPNG(candHeader, candData, fSize1, fSize2, &outSize);
-
-	WriteAllBytes("D:\\32xrb2\\comptest\\cand.png", png, outSize);
-	return;
-
-	FILE *f = fopen("D:\\32xrb2\\d32xr31.wad", "rb");
-
-	Importer_Jaguar *ij = new Importer_Jaguar(f);
+	Importer_PC *ij = new Importer_PC(f);
 	WADEntry *importedEntries = ij->Execute();
 	delete ij;
 
 	SpitWAD(importedEntries);
-
-	WADEntry *soundsWad = NULL;
-	WADEntry *mapWad = NULL;
 
 	bool insideSprites = false;
 	bool insideTextures = false;
@@ -354,14 +346,10 @@ static void MyFunTest()
 			insideFlats = false;
 		if (!strcmp(node->GetName(), "DS_START"))
 		{
-			Listable::RemoveNoFree(node, (Listable **)&importedEntries);
-			Listable::Add(node, (Listable **)&soundsWad);
 			insideSounds = true;
 		}
 		if (!strcmp(node->GetName(), "DS_END"))
 		{
-			Listable::RemoveNoFree(node, (Listable **)&importedEntries);
-			Listable::Add(node, (Listable **)&soundsWad);
 			insideSounds = false;
 		}
 		/*
@@ -397,47 +385,17 @@ static void MyFunTest()
 			ReplaceWithFile(node, "D:\\32xrb2\\comptest\\DMAPINFO.txt");
 		}
 
-		if (insideSounds && strcmp(node->GetName(), "DS_START"))
+		if (insideSprites && strcmp(node->GetName(), "S_START"))
 		{
-			Listable::RemoveNoFree(node, (Listable **)&importedEntries);
-			Listable::Add(node, (Listable **)&soundsWad);
+			ConvertPCSpriteEntryToJagSprite(node, &importedEntries);
 		}
-		else if (strcmp(node->GetName(), "VGM_E1M1") && strstr(node->GetName(), "VGM_E"))
-		{
-			Listable::Remove(node, (Listable **)&importedEntries);
-		}
-		else if (!strcmp(node->GetName(), "VGM_END"))
-			Listable::Remove(node, (Listable **)&importedEntries);
 	}
 
-	InsertLevelFromFolder(importedEntries, "MAP01", "D:\\32xrb2\\Levels\\MAP01\\Jag");
-
-	WADEntry *entry = new WADEntry();
-	entry->SetName("M_START");
-	entry->SetUnCompressedDataLength(0);
-	Listable::Add(entry, (Listable **)&importedEntries);
-
-	entry = new WADEntry();
-	int entryDataSize;
-	byte *entryData = ReadAllBytes("D:\\32xrb2\\acb.zgm", &entryDataSize);
-	entry->SetName("VGM_NTRO");
-	entry->SetIsCompressed(true);
-	entry->SetData(entryData, entryDataSize);
-	Listable::Add(entry, (Listable **)&importedEntries);
-
-	entry = new WADEntry();
-	entry->SetName("M_END");
-	entry->SetUnCompressedDataLength(0);
-	Listable::Add(entry, (Listable **)&importedEntries);
+//	InsertLevelFromFolder(importedEntries, "MAP01", "D:\\32xrb2\\Levels\\MAP01\\Jag");
 
 	// Write it out
-	FILE *expF = fopen("D:\\32xrb2\\doom32x.wad", "wb");
+	FILE *expF = fopen("D:\\32xrb2\\srb32x.wad", "wb");
 	Exporter_Jaguar *ex = new Exporter_Jaguar(importedEntries, expF);
-	ex->Execute();
-	delete ex;
-
-	expF = fopen("D:\\32xrb2\\CDImage\\SOUNDS.WAD", "wb");
-	ex = new Exporter_Jaguar(soundsWad, expF);
 	ex->Execute();
 	delete ex;
 

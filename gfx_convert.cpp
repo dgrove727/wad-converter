@@ -658,85 +658,34 @@ void PCSpriteToJag(const byte *lumpData, int lumpSize, byte *jagHeader, int *jag
 	unsigned short headerSize = 8 + (header->width * 2);
 	byte *headerPtr = jagHeader + headerSize;
 
-	byte prevPosts[256][512];
-	short prevPostsLen[256];
-	unsigned short prevPostsOfs[256];
-	int prevPostCount = 0;
-
 	// 'Draw' the PC Doom graphic into the Jaguar one
 	for (int i = 0; i < header->width; i++)
 	{
 		unsigned short colOffset = (unsigned short)header->columnofs[i];
 		const post_t *post = (post_t *)(lumpData + colOffset);
-		/*
-		// Scan ahead and store the column data into a temporary buffer. We will then compare it to
-		// previously stored columns, and re-use offsets if an identical one is found.
-		byte tempbuffer[1024];
-		int tempBufferLen = 0;
+
+		jagPatchHeader->columnofs[i] = swap_endian16((unsigned short)(headerPtr - jagHeader));
+
 		while (post->topdelta != 255)
 		{
 			byte len = post->length;
+			jagPost_t *jagPost = (jagPost_t *)headerPtr;
+			jagPost->topdelta = post->topdelta;
+			jagPost->length = len;
+			jagPost->dataofs = swap_endian16(dataPtr - jagData);
+
 			const byte *pixel = post->data;
 
 			for (int j = 0; j < post->length; j++)
-			{
-				tempbuffer[j] = *pixel++;
-				tempBufferLen++;
-			}
+				*dataPtr++ = *pixel++;
 
 			pixel++; // dummy value in PC gfx
 			post = (const post_t *)pixel;
-		}
-
-		// Is this 'tempBuffer' the same as a previous post?
-		bool foundPreviousPost = false;
-		for (int j = 0; j < prevPostCount; j++)
-		{
-			if (prevPostsLen[j] != tempBufferLen)
-				continue;
-
-			if (!memcmp(&prevPosts[j][0], tempbuffer, tempBufferLen))
-			{
-				foundPreviousPost = true;
-				jagPatchHeader->columnofs[i] = swap_endian16(prevPostsOfs[j]);
-				*headerPtr++ = 0xff;
-				*headerPtr++ = 0xff;
-			}
-		}*/
-
-//		if (!foundPreviousPost)
-		{
-			// This is a new, unique column, so keep it in our cache to check future columns
-/*			for (int j = 0; j < tempBufferLen; j++)
-				prevPosts[prevPostCount][j] = tempbuffer[j];
-			prevPostsLen[prevPostCount] = tempBufferLen;
-			*/
-			jagPatchHeader->columnofs[i] = swap_endian16((unsigned short)(headerPtr - jagHeader));
-			prevPostsOfs[prevPostCount] = swap_endian16(jagPatchHeader->columnofs[i]);
-			prevPostCount++;
-
-			jagPost_t *jagPost = (jagPost_t *)headerPtr;
-
-			while (post->topdelta != 255)
-			{
-				byte len = post->length;
-				jagPost->topdelta = post->topdelta;
-				jagPost->length = len;
-				jagPost->dataofs = swap_endian16(dataPtr - jagData);
-
-				const byte *pixel = post->data;
-
-				for (int j = 0; j < post->length; j++)
-					*dataPtr++ = *pixel++;
-
-				pixel++; // dummy value in PC gfx
-				post = (const post_t *)pixel;
-			}
-
 			headerPtr += sizeof(jagPost_t);
-			*headerPtr++ = 0xff;
-			*headerPtr++ = 0xff;
 		}
+
+		*headerPtr++ = 0xff;
+		*headerPtr++ = 0xff;
 	}
 
 	*jagHeaderLen = headerPtr - jagHeader;
