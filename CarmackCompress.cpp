@@ -113,8 +113,10 @@ unsigned char *encode(unsigned char *input, int inputlen, int *size)
         hashtarget[i].prev = 0;
     }
 
+    size_t allocSize = (inputlen * 9) / 8 + 1;
+
     // create the output
-    ostart = output = (unsigned char *)malloc((inputlen * 9) / 8 + 1);
+    ostart = output = (unsigned char *)malloc(allocSize);
 
     // initialize the window & lookahead
     lookahead = window = input;
@@ -187,7 +189,7 @@ unsigned char *encode(unsigned char *input, int inputlen, int *size)
         pacifier -= encodedlen;
         if (pacifier <= 0)
         {
-            fprintf(stdout, ".");
+//            fprintf(stdout, ".");
             pacifier += 10000;
         }
 
@@ -218,6 +220,9 @@ unsigned char *encode(unsigned char *input, int inputlen, int *size)
       fprintf(stdout, "ave code length = %f\n", (double) codelencount/numcodes);
       fprintf(stdout, "size = %d\n", *size);
     */
+
+    if (*size > allocSize)
+        printf("Oops...\n");
 
     return ostart;
 

@@ -9,8 +9,268 @@ typedef struct
 	byte r, g, b;
 } palentry_t;
 
-// SRB2 2.0 palette
+// SRB2 2.2 palette
 palentry_t palette[256] = {
+	{ 255, 255, 255 },
+{ 246, 246, 246 },
+{ 237, 237, 237 },
+{ 228, 228, 228 },
+{ 218, 218, 218 },
+{ 209, 209, 209 },
+{ 200, 200, 200 },
+{ 191, 191, 191 },
+{ 183, 183, 183 },
+{ 175, 175, 175 },
+{ 167, 167, 167 },
+{ 159, 159, 159 },
+{ 151, 151, 151 },
+{ 143, 143, 143 },
+{ 135, 135, 135 },
+{ 127, 127, 127 },
+{ 119, 119, 119 },
+{ 111, 111, 111 },
+{ 103, 103, 103 },
+{ 95, 95, 95 },
+{ 87, 87, 87 },
+{ 79, 79, 79 },
+{ 71, 71, 71 },
+{ 63, 63, 63 },
+{ 55, 55, 55 },
+{ 47, 47, 47 },
+{ 39, 39, 39 },
+{ 31, 31, 31 },
+{ 23, 23, 23 },
+{ 15, 15, 15 },
+{ 7, 7, 7 },
+{ 0, 0, 0 },
+{ 255, 127, 127 },
+{ 255, 95, 95 },
+{ 255, 63, 63 },
+{ 255, 0, 0 },
+{ 239, 0, 0 },
+{ 223, 0, 0 },
+{ 207, 0, 0 },
+{ 191, 0, 0 },
+{ 175, 0, 0 },
+{ 159, 0, 0 },
+{ 143, 0, 0 },
+{ 127, 0, 0 },
+{ 111, 0, 0 },
+{ 95, 0, 0 },
+{ 71, 0, 0 },
+{ 55, 0, 0 },
+{ 255, 219, 192 },
+{ 255, 203, 151 },
+{ 255, 185, 117 },
+{ 255, 168, 85 },
+{ 255, 151, 54 },
+{ 255, 134, 25 },
+{ 255, 117, 0 },
+{ 236, 105, 0 },
+{ 221, 94, 0 },
+{ 208, 88, 0 },
+{ 196, 79, 0 },
+{ 181, 68, 0 },
+{ 159, 56, 0 },
+{ 138, 41, 0 },
+{ 129, 32, 0 },
+{ 121, 24, 0 },
+{ 235, 219, 87 },
+{ 215, 187, 67 },
+{ 195, 155, 47 },
+{ 175, 123, 31 },
+{ 155, 91, 19 },
+{ 135, 67, 7 },
+{ 117, 41, 0 },
+{ 85, 0, 0 },
+{ 255, 255, 79 },
+{ 255, 255, 0 },
+{ 227, 217, 15 },
+{ 201, 187, 14 },
+{ 170, 155, 11 },
+{ 136, 120, 9 },
+{ 112, 96, 7 },
+{ 90, 73, 5 },
+{ 255, 255, 207 },
+{ 255, 255, 175 },
+{ 255, 255, 143 },
+{ 255, 255, 115 },
+{ 235, 222, 129 },
+{ 208, 194, 128 },
+{ 183, 169, 119 },
+{ 150, 131, 93 },
+{ 222, 255, 168 },
+{ 199, 228, 148 },
+{ 173, 200, 128 },
+{ 149, 173, 107 },
+{ 124, 146, 88 },
+{ 100, 119, 68 },
+{ 74, 90, 48 },
+{ 50, 63, 29 },
+{ 119, 255, 79 },
+{ 112, 240, 75 },
+{ 105, 224, 70 },
+{ 97, 208, 65 },
+{ 90, 192, 60 },
+{ 82, 176, 55 },
+{ 75, 160, 50 },
+{ 67, 144, 45 },
+{ 60, 128, 40 },
+{ 53, 112, 35 },
+{ 45, 96, 30 },
+{ 38, 80, 25 },
+{ 30, 64, 20 },
+{ 23, 48, 15 },
+{ 15, 32, 10 },
+{ 7, 15, 4 },
+{ 0, 255, 0 },
+{ 0, 223, 0 },
+{ 0, 191, 0 },
+{ 0, 159, 0 },
+{ 0, 127, 0 },
+{ 0, 95, 0 },
+{ 0, 63, 0 },
+{ 0, 45, 0 },
+{ 183, 251, 231 },
+{ 102, 247, 203 },
+{ 21, 242, 176 },
+{ 11, 210, 151 },
+{ 3, 177, 128 },
+{ 2, 147, 107 },
+{ 2, 115, 84 },
+{ 1, 86, 63 },
+{ 206, 250, 255 },
+{ 166, 241, 255 },
+{ 117, 231, 255 },
+{ 87, 213, 255 },
+{ 79, 199, 255 },
+{ 71, 185, 255 },
+{ 55, 165, 255 },
+{ 32, 138, 225 },
+{ 24, 111, 182 },
+{ 21, 83, 134 },
+{ 14, 53, 86 },
+{ 7, 30, 48 },
+{ 116, 209, 201 },
+{ 66, 179, 179 },
+{ 23, 136, 136 },
+{ 0, 95, 95 },
+{ 231, 231, 255 },
+{ 198, 198, 255 },
+{ 173, 173, 255 },
+{ 140, 140, 255 },
+{ 115, 115, 255 },
+{ 82, 82, 255 },
+{ 49, 49, 255 },
+{ 24, 24, 255 },
+{ 0, 0, 255 },
+{ 0, 0, 223 },
+{ 0, 0, 196 },
+{ 0, 0, 172 },
+{ 0, 0, 149 },
+{ 0, 0, 128 },
+{ 0, 0, 102 },
+{ 0, 0, 82 },
+{ 216, 183, 255 },
+{ 199, 153, 255 },
+{ 173, 106, 255 },
+{ 152, 68, 255 },
+{ 127, 22, 255 },
+{ 107, 0, 238 },
+{ 91, 0, 201 },
+{ 72, 0, 159 },
+{ 51, 0, 113 },
+{ 36, 0, 81 },
+{ 151, 151, 213 },
+{ 119, 119, 187 },
+{ 84, 84, 167 },
+{ 65, 65, 131 },
+{ 46, 46, 92 },
+{ 33, 34, 78 },
+{ 255, 202, 255 },
+{ 255, 170, 255 },
+{ 255, 138, 255 },
+{ 255, 106, 255 },
+{ 255, 74, 255 },
+{ 255, 0, 255 },
+{ 221, 0, 221 },
+{ 191, 0, 191 },
+{ 162, 0, 162 },
+{ 121, 0, 121 },
+{ 85, 0, 85 },
+{ 53, 0, 53 },
+{ 197, 232, 0 },
+{ 167, 202, 4 },
+{ 140, 168, 11 },
+{ 108, 124, 18 },
+{ 207, 127, 207 },
+{ 183, 111, 183 },
+{ 159, 95, 159 },
+{ 135, 79, 135 },
+{ 111, 63, 111 },
+{ 87, 47, 87 },
+{ 64, 32, 64 },
+{ 43, 21, 43 },
+{ 255, 196, 224 },
+{ 255, 153, 192 },
+{ 245, 112, 165 },
+{ 221, 87, 140 },
+{ 199, 61, 116 },
+{ 177, 52, 102 },
+{ 157, 47, 91 },
+{ 133, 39, 77 },
+{ 255, 230, 219 },
+{ 255, 191, 191 },
+{ 255, 159, 159 },
+{ 225, 133, 133 },
+{ 204, 113, 113 },
+{ 194, 99, 99 },
+{ 181, 83, 83 },
+{ 167, 63, 63 },
+{ 255, 207, 179 },
+{ 255, 193, 158 },
+{ 255, 183, 139 },
+{ 247, 171, 123 },
+{ 239, 163, 115 },
+{ 227, 151, 103 },
+{ 215, 139, 91 },
+{ 207, 131, 83 },
+{ 191, 123, 75 },
+{ 179, 115, 71 },
+{ 171, 111, 67 },
+{ 163, 107, 63 },
+{ 155, 99, 59 },
+{ 143, 95, 55 },
+{ 135, 87, 51 },
+{ 127, 83, 47 },
+{ 119, 79, 43 },
+{ 107, 71, 39 },
+{ 95, 67, 35 },
+{ 83, 63, 31 },
+{ 75, 55, 27 },
+{ 63, 47, 23 },
+{ 51, 43, 19 },
+{ 43, 35, 15 },
+{ 191, 167, 143 },
+{ 175, 152, 128 },
+{ 159, 137, 113 },
+{ 146, 125, 101 },
+{ 134, 114, 90 },
+{ 126, 106, 82 },
+{ 117, 98, 74 },
+{ 109, 90, 66 },
+{ 101, 83, 59 },
+{ 93, 75, 51 },
+{ 87, 69, 45 },
+{ 75, 60, 35 },
+{ 255, 231, 246 },
+{ 0, 0, 63 },
+{ 0, 0, 32 },
+{ 0, 255, 255 },
+};
+
+// SRB2 2.0 palette
+/*palentry_t palette[256] = {
 	{247, 247, 247},
 	{239, 239, 239},
 	{231, 231, 231},
@@ -267,7 +527,7 @@ palentry_t palette[256] = {
 	{87, 47, 87},
 	{63, 31, 63},
 	{39, 15, 39},
-};
+};*/
 
 /*
 * Doom palette
@@ -582,7 +842,21 @@ byte *RGBToIndexed(byte *rgbData, int width, int height)
 	return indexedImage;
 }
 
-byte *FlatToPNG(byte *flatData, int width, int height, int *outputLen)
+byte GetPixel(const byte *rawData, int width, int x, int y)
+{
+	size_t pixelLocation = (y * width) + x;
+
+	return rawData[pixelLocation];
+}
+
+void SetPixel(byte *rawData, int width, int x, int y, byte pixel)
+{
+	size_t pixelLocation = (y * width) + x;
+
+	rawData[pixelLocation] = pixel;
+}
+
+byte *FlatToPNG(const byte *flatData, int width, int height, int *outputLen)
 {
 	return stbi_write_png_to_mem(flatData, 0, width, height, 1, outputLen);
 }
@@ -599,15 +873,13 @@ byte *PNGToFlat(byte *pngData, int pngLength, int *width, int *height)
 	return indexedImage;
 }
 
-// Works for patches, sprites, all of the transparency-format Doom graphics
-// Returns an allocated representation of the 8-bit PNG data (albeit without palette information).
-// Up to you to manage the memory lifetime of it!
-byte *PatchToPNG(byte *patchData, size_t dataLen, int *outputLen)
+// PC patch to a raw image
+byte *PatchToRaw(const byte *patchData, size_t dataLen, int *outputLen, byte transparentIndex)
 {
-	patchHeader_t *header = (patchHeader_t *)patchData;
+	const patchHeader_t *header = (patchHeader_t *)patchData;
 
 	byte *rawImage = (byte *)malloc(header->width * header->height * 1);
-	memset(rawImage, 247, header->width * header->height * 1); // Transparent value
+	memset(rawImage, transparentIndex, header->width * header->height * 1); // Transparent value
 
 	for (int i = 0; i < header->width; i++)
 	{
@@ -628,14 +900,190 @@ byte *PatchToPNG(byte *patchData, size_t dataLen, int *outputLen)
 				pixel++;
 				yPos++;
 			}
-			
+
 			pixel++; // dummy value
 			post = (const post_t *)pixel;
 		}
 	}
 
-	return stbi_write_png_to_mem(rawImage, 0, header->width, header->height, 1, outputLen);
+	*outputLen = header->width * header->height;
+	return rawImage;
 }
+
+byte *PatchToJagTexture(const byte *patchData, size_t dataLen, int *outputLen)
+{
+	const patchHeader_t *header = (patchHeader_t *)patchData;
+
+	// I'm lazy... convert to a regular raw image first.
+	byte *rawImage = PatchToRaw(patchData, dataLen, outputLen, 255);
+	byte *rotatedImage = (byte *)malloc(header->width * header->height);
+
+	// Re-draw the raw image as row-major
+	for (int y = 0, destinationColumn = header->height - 1; y < header->height; y++, --destinationColumn)
+	{
+		int offset = y * header->width;
+
+		for (int x = 0; x < header->width; x++)
+			rotatedImage[(x * header->height) + destinationColumn] = rawImage[offset + x];
+	}
+
+	free(rawImage);
+
+	return rotatedImage;
+}
+
+// Careful! Returns NULL if nothing was cropped!
+byte *CropPCPatch(const byte *patchData, size_t dataLen, int *outputLen, byte transparentIndex)
+{
+	const patchHeader_t *header = (patchHeader_t *)patchData;
+	int cropTop = 0; // heh...
+	int cropLeft = 0;
+	int cropRight = 0;
+	int cropBottom = 0;
+
+	// First, convert it to a raw image
+	byte *rawImage = PatchToRaw(patchData, dataLen, outputLen, transparentIndex);
+
+	// Check if we should crop anything from the top
+	for (int y = 0; y < header->height; y++)
+	{
+		bool keep = false;
+		for (int x = 0; x < header->width; x++)
+		{
+			byte pixel = GetPixel(rawImage, header->width, x, y);
+			if (pixel != transparentIndex)
+			{
+				keep = true;
+				break;
+			}
+		}
+
+		if (keep)
+			break;
+
+		cropTop++;
+	}
+
+	// Crop anything from the bottom?
+	for (int y = header->height - 1; y >= 0; y--)
+	{
+		bool keep = false;
+		for (int x = 0; x < header->width; x++)
+		{
+			byte pixel = GetPixel(rawImage, header->width, x, y);
+			if (pixel != transparentIndex)
+			{
+				keep = true;
+				break;
+			}
+		}
+
+		if (keep)
+			break;
+
+		cropBottom++;
+	}
+	
+	// Crop anything from the left?
+	for (int x = 0; x < header->width; x++)
+	{
+		bool keep = false;
+		for (int y = 0; y < header->height; y++)
+		{
+			byte pixel = GetPixel(rawImage, header->width, x, y);
+			if (pixel != transparentIndex)
+			{
+				keep = true;
+				break;
+			}
+		}
+
+		if (keep)
+			break;
+		
+		cropLeft++;
+	}
+
+	// Crop anything from the right?
+	for (int x = header->width - 1; x >= 0; x--)
+	{
+		bool keep = false;
+		for (int y = 0; y < header->height; y++)
+		{
+			byte pixel = GetPixel(rawImage, header->width, x, y);
+			if (pixel != transparentIndex)
+			{
+				keep = true;
+				break;
+			}
+		}
+
+		if (keep)
+			break;
+
+		cropRight++;
+	}
+
+	if (cropLeft == 0 && cropTop == 0 && cropRight == 0 && cropBottom == 0)
+		return NULL;
+
+	printf("Crop %d, %d, %d, %d ", cropLeft, cropTop, cropRight, cropBottom);
+
+	short newWidth = header->width - cropLeft;
+	newWidth -= cropRight;
+	short newHeight = header->height - cropTop;
+	newHeight -= cropBottom;
+	byte *newImage = (byte*)malloc(newWidth * newHeight);
+	memset(newImage, transparentIndex, newWidth * newHeight);
+
+	int newX = 0;
+	int newY = 0;
+	for (int x = cropLeft; x < header->width - cropRight; x++)
+	{
+		newY = 0;
+		for (int y = cropTop; y < header->height - cropBottom; y++)
+		{
+			byte srcPixel = GetPixel(rawImage, header->width, x, y);
+
+			SetPixel(newImage, newWidth, newX, newY, srcPixel);
+			newY++;
+		}
+		newX++;
+	}
+
+	free(rawImage);
+
+	// Convert back to PC patch, adjust offsets
+	byte *newPatch = RawToPatch(newImage, newWidth, newHeight, outputLen, transparentIndex);
+	patchHeader_t *newHeader = (patchHeader_t *)newPatch;
+	newHeader->leftoffset = header->leftoffset;
+	newHeader->topoffset = header->topoffset;
+	newHeader->leftoffset -= cropLeft;
+	newHeader->topoffset -= cropTop;
+
+	return newPatch;
+}
+
+// Works for patches, sprites, all of the transparency-format Doom graphics
+// Returns an allocated representation of the 8-bit PNG data (albeit without palette information).
+// Up to you to manage the memory lifetime of it!
+byte *PatchToPNG(byte *patchData, size_t dataLen, int *outputLen, byte transparentIndex)
+{
+	const patchHeader_t *header = (patchHeader_t *)patchData;
+	byte *rawImage = PatchToRaw(patchData, dataLen, outputLen, transparentIndex);
+
+	byte *pngData = stbi_write_png_to_mem(rawImage, 0, header->width, header->height, 1, outputLen);
+	free(rawImage);
+
+	return pngData;
+}
+
+typedef struct
+{
+	unsigned short address; // We keep this un-swapped for easier debugging
+	int length;
+	byte data[512]; // Because memory is cheap now
+} jagPostCache_t;
 
 //
 // Allocate sufficient space in 'jagHeader' and 'jagData' before calling.
@@ -658,6 +1106,11 @@ void PCSpriteToJag(const byte *lumpData, int lumpSize, byte *jagHeader, int *jag
 	unsigned short headerSize = 8 + (header->width * 2);
 	byte *headerPtr = jagHeader + headerSize;
 
+	// Keep a cache of posts already drawn. If we come across one that matches one of the previous, re-use it.
+	// This can make a file size significantly smaller if there are lots of repeating posts.
+	jagPostCache_t jagPostCache[256];
+	int numJagPostCache = 0;
+
 	// 'Draw' the PC Doom graphic into the Jaguar one
 	for (int i = 0; i < header->width; i++)
 	{
@@ -676,11 +1129,49 @@ void PCSpriteToJag(const byte *lumpData, int lumpSize, byte *jagHeader, int *jag
 
 			const byte *pixel = post->data;
 
+			// First, draw into a temporary buffer. See if we already have this data previously
+			byte tempBuffer[2048];
 			for (int j = 0; j < post->length; j++)
-				*dataPtr++ = *pixel++;
+				tempBuffer[j] = *pixel++;
 
-			pixel++; // dummy value in PC gfx
-			post = (const post_t *)pixel;
+			bool foundDuplicate = false;
+			for (int j = 0; j < numJagPostCache; j++)
+			{
+				if (jagPostCache[j].length != jagPost->length)
+					continue;
+
+				if (!memcmp(jagPostCache[j].data, tempBuffer, jagPost->length))
+				{
+					foundDuplicate = true;
+					jagPost->dataofs = swap_endian16(jagPostCache[j].address);
+
+					// Advance the PC graphic
+					pixel = post->data;
+					for (int k = 0; k < post->length; k++)
+						pixel++;
+					pixel++; // dummy value in PC gfx
+					post = (const post_t *)pixel;
+					break;
+				}
+			}
+
+			if (!foundDuplicate)
+			{
+				pixel = post->data;
+				for (int j = 0; j < post->length; j++)
+				{
+					*dataPtr++ = *pixel;
+					jagPostCache[numJagPostCache].data[j] = *pixel;
+					pixel++;
+				}
+
+				jagPostCache[numJagPostCache].length = jagPost->length;
+				jagPostCache[numJagPostCache].address = swap_endian16(jagPost->dataofs);
+				numJagPostCache++;
+
+				pixel++; // dummy value in PC gfx
+				post = (const post_t *)pixel;
+			}
 			headerPtr += sizeof(jagPost_t);
 		}
 
@@ -734,12 +1225,8 @@ byte *JagSpriteToPNG(byte *jagHeader, byte *jagData, size_t headerLen, size_t da
 	return stbi_write_png_to_mem(rawImage, 0, width, height, 1, outputLen);
 }
 
-byte *PNGToPatch(byte *pngData, size_t dataLen, int *outputLen)
+byte *RawToPatch(byte *rawImage, int width, int height, int *outputLen, byte transparentIndex)
 {
-	const byte transparentIndex = 247;
-	int width, height;
-	byte *indexedImage = PNGToFlat(pngData, dataLen, &width, &height);
-
 	// Modern memory is cheap, so let's just allocate 1mb as workspace.
 	byte *postData = (byte *)malloc(1 * 1024 * 1024);
 	size_t postDataSize = 0;
@@ -768,8 +1255,7 @@ byte *PNGToPatch(byte *pngData, size_t dataLen, int *outputLen)
 		while (y < height)
 		{
 			// Get pixel value
-			size_t pixelLocation = (y * width) + x;
-			byte pixel = indexedImage[pixelLocation];
+			byte pixel = GetPixel(rawImage, width, x, y);
 
 			if (pixel == transparentIndex && !lookingForColStart)
 			{
@@ -866,6 +1352,18 @@ byte *PNGToPatch(byte *pngData, size_t dataLen, int *outputLen)
 	*outputLen = lumpSize;
 
 	return patchImage;
+}
+
+byte *PNGToPatch(byte *pngData, size_t dataLen, int *outputLen, byte transparentIndex)
+{
+	int width, height;
+	byte *indexedImage = PNGToFlat(pngData, dataLen, &width, &height);
+
+	byte *png = RawToPatch(indexedImage, width, height, outputLen, transparentIndex);
+
+	free(indexedImage);
+
+	return png;
 }
 /*
 void *PNGToJagSprite(byte *pngData, size_t pngLen, byte *sprHeader, int *headerLen, byte *sprData, int *dataLen)
