@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// Taken from DMUtils, released by id Software to the public with no license attached
 #define WINDOW_SIZE	4096
 #define LENSHIFT 4		// this must be log2(LOOKAHEAD_SIZE)
 #define LOOKAHEAD_SIZE	(1<<LENSHIFT)
@@ -82,7 +83,6 @@ void derror(char *msg)
 
 unsigned char *encode(unsigned char *input, int inputlen, int *size)
 {
-
     int putidbyte = 0;
     unsigned char *encodedpos = NULL;
     int encodedlen;
@@ -222,7 +222,7 @@ unsigned char *encode(unsigned char *input, int inputlen, int *size)
     */
 
     if (*size > allocSize)
-        printf("Oops...\n");
+        return NULL; // Compressed size is larger than uncompressed size... this is not allowed.
 
     return ostart;
 

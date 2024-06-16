@@ -49,3 +49,6 @@ bool strStartsWith(const char *base, const char *str);
 bool strEndsWith(const char *str, const char *suffix);
 
 bool SetEntryName(char *entryName, const char *data);
+
+byte *ReadAllBytes(const char *filename, int *file_size);
+void WriteAllBytes(const char *filename, const byte *data, size_t len);

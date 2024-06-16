@@ -28,7 +28,15 @@ public:
 	void SetUnCompressedDataLength(size_t value);
 	const size_t GetUnCompressedDataLength() const;
 
+	byte *Decompress() const;
+	void ReplaceWithFile(const char *filename);
+	void DumpToFile(const char *filename) const;
+
 	WADEntry();
 	WADEntry(const char *name, const byte *data, size_t length);
 	virtual ~WADEntry();
+
+	// Static functions
+	static WADEntry *FindEntry(WADEntry *head, const char *name);
+	static void PrintList(WADEntry *head);
 };

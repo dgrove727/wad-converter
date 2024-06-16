@@ -1,6 +1,7 @@
 #include "common.h"
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 void *memdup(const void *mem, size_t size)
 {
@@ -50,4 +51,26 @@ bool SetEntryName(char *entryName, const char *data)
     entryName[0] = entryName[0] & 127;
 
     return isCompressed;
+}
+
+byte *ReadAllBytes(const char *filename, int *file_size)
+{
+    FILE *f = fopen(filename, "rb");
+    fseek(f, 0, SEEK_END);
+    *file_size = (int)ftell(f);
+    rewind(f);
+
+    byte *buffer = (byte *)malloc(*file_size);
+    fread(buffer, *file_size, 1, f);
+
+    fclose(f);
+
+    return buffer;
+}
+
+void WriteAllBytes(const char *filename, const byte *data, size_t len)
+{
+    FILE *f = fopen(filename, "wb");
+    fwrite(data, len, 1, f);
+    fclose(f);
 }
