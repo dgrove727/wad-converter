@@ -910,26 +910,62 @@ byte *PatchToRaw(const byte *patchData, size_t dataLen, int *outputLen, byte tra
 	return rawImage;
 }
 
+//
+// VerticalFlip
+//
+// Vertically flips an image
+// destImage must already be allocated to the proper size!
+//
+// bpp - BYTES per pixel
+//
+void VerticalFlip(byte *srcImage, byte *destImage, const short width, const short height, const byte bpp)
+{
+	destImage += width * height * bpp;
+	destImage -= width * bpp;
+
+	int i;
+	for (i = 0; i < height; i++)
+	{
+		memcpy(destImage, srcImage, width * bpp);
+		srcImage += width * bpp;
+		destImage -= width * bpp;
+	}
+}
+
+byte *RawToJagTexture(const byte *rawImage, unsigned short width, unsigned short height)
+{
+	byte *rotatedImage = (byte *)malloc(width * height);
+
+	// Re-draw the raw image as row-major
+	for (int y = 0, destinationColumn = height - 1; y < height; y++, --destinationColumn)
+	{
+		int offset = y * width;
+
+		for (int x = 0; x < width; x++)
+			rotatedImage[(x * height) + destinationColumn] = rawImage[offset + x];
+	}
+
+	// Now we have to flip it.. ugh
+	byte *flippedImage = (byte *)malloc(width * height);
+	VerticalFlip(rotatedImage, flippedImage, width, height, 1);
+	free(rotatedImage);
+
+	return flippedImage;
+}
+
 byte *PatchToJagTexture(const byte *patchData, size_t dataLen, int *outputLen)
 {
 	const patchHeader_t *header = (patchHeader_t *)patchData;
 
 	// I'm lazy... convert to a regular raw image first.
 	byte *rawImage = PatchToRaw(patchData, dataLen, outputLen, 255);
-	byte *rotatedImage = (byte *)malloc(header->width * header->height);
 
-	// Re-draw the raw image as row-major
-	for (int y = 0, destinationColumn = header->height - 1; y < header->height; y++, --destinationColumn)
-	{
-		int offset = y * header->width;
-
-		for (int x = 0; x < header->width; x++)
-			rotatedImage[(x * header->height) + destinationColumn] = rawImage[offset + x];
-	}
+	byte *jagTexture = RawToJagTexture(rawImage, header->width, header->height);
 
 	free(rawImage);
 
-	return rotatedImage;
+	*outputLen = header->width * header->height;
+	return jagTexture;
 }
 
 // Careful! Returns NULL if nothing was cropped!
