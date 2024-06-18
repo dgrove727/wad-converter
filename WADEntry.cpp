@@ -24,7 +24,7 @@ const byte *WADEntry::GetData() const
 	return _data;
 }
 
-void WADEntry::SetData(const byte *value, size_t length)
+void WADEntry::SetDataInternal(const byte *value, size_t length)
 {
 	if (_data)
 		free(_data);
@@ -32,6 +32,34 @@ void WADEntry::SetData(const byte *value, size_t length)
 	_data = (byte*)memdup(value, length);
 	_dataLength = length;
 	_uncompressedDataLength = length;
+}
+
+// Sets the data of this WAD entry. If IsCompressed(), then it will
+// automatically compress it for you.
+void WADEntry::SetData(const byte *value, size_t length)
+{
+	int filesize = (int)length;
+
+	if (this->IsCompressed())
+	{
+		int compressedSize = 0;
+		byte *recompressFinal = encode(value, filesize, &compressedSize);
+		if (compressedSize > filesize)
+		{
+			printf("Compressed size is larger than uncompressed size. This is not allowed. Saving as uncompressed.\n");
+			this->SetIsCompressed(false);
+			this->SetDataInternal(value, filesize);
+		}
+		else
+		{
+			this->SetDataInternal(recompressFinal, compressedSize);
+			free(recompressFinal);
+		}
+
+		this->SetUnCompressedDataLength(filesize);
+	}
+	else
+		this->SetDataInternal(value, filesize);
 }
 
 const size_t WADEntry::GetDataLength() const

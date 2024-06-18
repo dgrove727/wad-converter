@@ -918,7 +918,7 @@ byte *PatchToRaw(const byte *patchData, size_t dataLen, int *outputLen, byte tra
 //
 // bpp - BYTES per pixel
 //
-void VerticalFlip(byte *srcImage, byte *destImage, const short width, const short height, const byte bpp)
+void VerticalFlip(const byte *srcImage, byte *destImage, const short width, const short height, const byte bpp)
 {
 	destImage += width * height * bpp;
 	destImage -= width * bpp;
@@ -934,6 +934,10 @@ void VerticalFlip(byte *srcImage, byte *destImage, const short width, const shor
 
 byte *RawToJagTexture(const byte *rawImage, unsigned short width, unsigned short height)
 {
+	// Now we have to flip it.. ugh
+	byte *flippedImage = (byte *)malloc(width * height);
+	VerticalFlip(rawImage, flippedImage, width, height, 1);
+
 	byte *rotatedImage = (byte *)malloc(width * height);
 
 	// Re-draw the raw image as row-major
@@ -942,15 +946,12 @@ byte *RawToJagTexture(const byte *rawImage, unsigned short width, unsigned short
 		int offset = y * width;
 
 		for (int x = 0; x < width; x++)
-			rotatedImage[(x * height) + destinationColumn] = rawImage[offset + x];
+			rotatedImage[(x * height) + destinationColumn] = flippedImage[offset + x];
 	}
 
-	// Now we have to flip it.. ugh
-	byte *flippedImage = (byte *)malloc(width * height);
-	VerticalFlip(rotatedImage, flippedImage, width, height, 1);
-	free(rotatedImage);
+	free(flippedImage);
 
-	return flippedImage;
+	return rotatedImage;
 }
 
 byte *PatchToJagTexture(const byte *patchData, size_t dataLen, int *outputLen)

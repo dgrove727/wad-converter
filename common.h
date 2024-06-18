@@ -3,6 +3,7 @@
 #include <stddef.h>
 
 typedef unsigned char byte;
+#define FRACBITS 16
 
 // Doom GFX has a header, and then pieces of data called
 // 'posts', which are offset (topdelta) from the TOP of the image (ALWAYS, even if it's a mid-column post!)

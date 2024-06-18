@@ -14,7 +14,7 @@ typedef struct node_struct node_t;
 
 struct node_struct
 {
-    unsigned char *pointer;
+    const unsigned char *pointer;
     node_t *prev;
     node_t *next;
     int	pad;
@@ -34,7 +34,7 @@ static node_t hashtarget[WINDOW_SIZE]; // what the hash points to
 //  Removes the node in its place before.
 //
 
-void addnode(unsigned char *pointer)
+void addnode(const unsigned char *pointer)
 {
 
     list_t *list;
@@ -81,17 +81,17 @@ void derror(char *msg)
     fprintf(stdout, "\nerror: %s\n\n", msg);
 }
 
-unsigned char *encode(unsigned char *input, int inputlen, int *size)
+unsigned char *encode(const unsigned char *input, int inputlen, int *size)
 {
     int putidbyte = 0;
-    unsigned char *encodedpos = NULL;
+    const unsigned char *encodedpos = NULL;
     int encodedlen;
     int i, pacifier = 0;
     int len;
     int numbytes, numcodes;
     int codelencount;
-    unsigned char *window;
-    unsigned char *lookahead;
+    const unsigned char *window;
+    const unsigned char *lookahead;
     unsigned char *idbyte = NULL;
     unsigned char *output, *ostart;
     node_t *hashp;
