@@ -92,6 +92,12 @@ typedef struct
 
 struct WADMap
 {
+private:
+	void UpdateLinedefSidedefRefs(int16_t oldSidenum, int16_t newSidenum);
+
+public:
+	char *name;
+
 	mapthing_t *things;
 	linedef_t *linedefs;
 	sidedef_t *sidedefs;
@@ -99,7 +105,7 @@ struct WADMap
 	seg_t *segs;
 	subsector_t *subsectors;
 	node_t *nodes;
-	node_t *jagNodes;
+	jagnode_t *jagNodes;
 	sector_t *sectors;
 	uint8_t *reject;
 	uint8_t *blockmap;
@@ -114,6 +120,8 @@ struct WADMap
 	int16_t numsectors;
 	size_t rejectSize;
 	size_t blockmapSize;
+
+	void CompressSidedefs();
 
 	WADEntry *CreateJaguar(const char *mapname);
 	WADEntry *CreatePC(const char *mapname);

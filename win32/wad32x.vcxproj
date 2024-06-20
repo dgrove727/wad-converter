@@ -31,6 +31,7 @@
     <ClCompile Include="..\Listable.cpp" />
     <ClCompile Include="..\lzss.cpp" />
     <ClCompile Include="..\main.cpp" />
+    <ClCompile Include="..\SRB2LevelConv.cpp" />
     <ClCompile Include="..\WADEntry.cpp" />
     <ClCompile Include="..\WADMap.cpp" />
   </ItemGroup>
@@ -47,6 +48,7 @@
     <ClInclude Include="..\Importer_PC.h" />
     <ClInclude Include="..\Listable.h" />
     <ClInclude Include="..\lzss.h" />
+    <ClInclude Include="..\SRB2LevelConv.h" />
     <ClInclude Include="..\WADMap.h" />
     <ClInclude Include="..\stb_image.h" />
     <ClInclude Include="..\stb_image_write.h" />

@@ -9,6 +9,7 @@
 #include "Exporter_PC.h"
 #include "lzss.h"
 #include "CarmackCompress.h"
+#include "SRB2LevelConv.h"
 
 #define		VERSION			1.10
 #define		WAD_FORMAT		1
@@ -187,13 +188,88 @@ static void DumpJagMap(const char *wadFile)
 	}
 }
 
+static void ConvertMapToJaguar(const char *filename, const char *exportFilename)
+{
+	FILE *f = fopen(filename, "rb");
+	Importer_PC *ipc = new Importer_PC(f);
+	WADEntry *entries = ipc->Execute();
+	delete ipc;
+	fclose(f);
+
+	WADMap *map = new WADMap(entries);
+	WADEntry *converted = map->CreateJaguar(map->name);
+
+	f = fopen(exportFilename, "wb");
+	Exporter_PC *epc = new Exporter_PC(converted, f);
+	epc->Execute();
+	fclose(f);
+
+	delete map;
+	Listable::RemoveAll((Listable **)&entries);
+	Listable::RemoveAll((Listable **)&converted);
+}
+
+static void SRB2MapConv(const char *filename, const char *exportFilename)
+{
+	FILE *f = fopen(filename, "rb");
+	Importer_PC *ipc = new Importer_PC(f);
+	WADEntry *entries = ipc->Execute();
+	delete ipc;
+	fclose(f);
+
+	WADMap *map = new WADMap(entries);
+	WADEntry *converted = ConvertSRB2Map(map);
+
+	f = fopen(exportFilename, "wb");
+	Exporter_PC *epc = new Exporter_PC(converted, f);
+	epc->Execute();
+	fclose(f);
+
+	delete map;
+	Listable::RemoveAll((Listable **)&entries);
+	Listable::RemoveAll((Listable **)&converted);
+}
+
+void InsertPCLevelFromWAD(const char *wadfile, WADEntry *entries)
+{
+	FILE *f = fopen(wadfile, "rb");
+	Importer_PC *ipc = new Importer_PC(f);
+	WADEntry *mapEntries = ipc->Execute();
+	delete ipc;
+
+	WADMap *map = new WADMap(mapEntries);
+
+	WADEntry *jagEntries = map->CreateJaguar(map->name);
+
+	WADEntry *node;
+	WADEntry *next;
+	for (node = jagEntries; node; node = next)
+	{
+		next = (WADEntry *)node->next;
+		Listable::RemoveNoFree(node, (Listable **)&jagEntries);
+		Listable::Add(node, (Listable **)&entries);
+	}
+
+	delete map;
+	delete mapEntries;
+}
+
 static void MyFunTest()
 {
+//	SRB2MapConv("D:\\SRB2-v2213-Full\\MAP01.wad", "D:\\32xrb2\\Levels\\MAP01.wad");
+//	return;
+//	ConvertMapToJaguar("D:\\32xrb2\\Levels\\MAP03-conv.wad", "D:\\32xrb2\\Levels\\MAP03-jag.wad");
+//	return;
 	FILE *f = fopen("D:\\32xrb2\\srb32x-edit.wad", "rb");
 
-	Importer_PC *ij = new Importer_PC(f);
-	WADEntry *importedEntries = ij->Execute();
-	delete ij;
+	Importer_PC *ipc = new Importer_PC(f);
+	WADEntry *importedEntries = ipc->Execute();
+	delete ipc;
+
+	f = fopen("D:\\32xrb2\\leveleditor.wad", "rb"); // Where to get textures/flats/TEXTURE1
+	ipc = new Importer_PC(f);
+	WADEntry *lvleditorEntries = ipc->Execute();
+	delete ipc;
 
 	bool insideSprites = false;
 	bool insideTextures = false;
@@ -211,11 +287,51 @@ static void MyFunTest()
 		if (!strcmp(node->GetName(), "S_END"))
 			insideSprites = false;
 		if (!strcmp(node->GetName(), "T_START"))
+		{
 			insideTextures = true;
+
+			// Copy in the textures
+			WADEntry *lvlTextures = (WADEntry*)WADEntry::FindEntry(lvleditorEntries, "P_START")->next;
+			WADEntry *lastAdded = node;
+			while (strcmp(lvlTextures->GetName(), "P_END"))
+			{
+				WADEntry *next = (WADEntry*)lvlTextures->next;
+
+				// Just straight-up steal 'em, since we're working with RAM copies.
+				Listable::RemoveNoFree(lvlTextures, (Listable **)&lvleditorEntries);
+				Listable::AddAfter(lvlTextures, lastAdded, (Listable **)&importedEntries);
+
+				// Convert to everyone's favorite lovable row-major Jaguar format
+				int texLen;
+				byte *texData = PatchToJagTexture(lvlTextures->GetData(), lvlTextures->GetDataLength(), &texLen);
+				lvlTextures->SetData(texData, texLen);
+				free(texData);
+
+				lastAdded = lvlTextures;
+				lvlTextures = next;
+			}
+		}
 		if (!strcmp(node->GetName(), "T_END"))
 			insideTextures = false;
 		if (!strcmp(node->GetName(), "F_START"))
+		{
 			insideFlats = true;
+
+			// Copy in the flats
+			WADEntry *lvlFlats = (WADEntry *)WADEntry::FindEntry(lvleditorEntries, "F_START")->next;
+			WADEntry *lastAdded = node;
+			while (strcmp(lvlFlats->GetName(), "F_END"))
+			{
+				WADEntry *next = (WADEntry *)lvlFlats->next;
+
+				// Just straight-up steal 'em, since we're working with RAM copies.
+				Listable::RemoveNoFree(lvlFlats, (Listable **)&lvleditorEntries);
+				Listable::AddAfter(lvlFlats, lastAdded, (Listable **)&importedEntries);
+
+				lastAdded = lvlFlats;
+				lvlFlats = next;
+			}
+		}
 		if (!strcmp(node->GetName(), "F_END"))
 			insideFlats = false;
 		if (!strcmp(node->GetName(), "DS_START"))
@@ -249,7 +365,10 @@ static void MyFunTest()
 		}*/
 
 		if (!strcmp(node->GetName(), "TEXTURE1"))
-			node->ReplaceWithFile("D:\\32xrb2\\Patches\\TEXTURE1.lmp");
+		{
+			WADEntry *texture1lump = WADEntry::FindEntry(lvleditorEntries, "TEXTURE1");
+			node->SetData(texture1lump->GetData(), texture1lump->GetDataLength());
+		}
 
 		if (!strcmp(node->GetName(), "DEMO1"))
 			node->ReplaceWithFile("D:\\32xrb2\\DEMO1.lmp");
@@ -285,18 +404,11 @@ static void MyFunTest()
 		{
 			ConvertPCSpriteEntryToJagSprite(node, &importedEntries);
 		}
-
-		if (insideTextures && strcmp(node->GetName(), "T_START"))
-		{
-			int texLen;
-			byte *texData = PatchToJagTexture(node->GetData(), node->GetDataLength(), &texLen);
-			node->SetData(texData, texLen);
-			free(texData);
-		}
 	}
 
-	InsertLevelFromFolder(importedEntries, "MAP01", "D:\\32xrb2\\Levels\\MAP01\\Jag");
-	InsertLevelFromFolder(importedEntries, "MAP30", "D:\\32xrb2\\Levels\\MAP30\\Jag");
+	InsertPCLevelFromWAD("D:\\32xrb2\\Levels\\MAP01.wad", importedEntries);
+	InsertPCLevelFromWAD("D:\\32xrb2\\Levels\\MAP03.wad", importedEntries);
+	InsertPCLevelFromWAD("D:\\32xrb2\\Levels\\MAP30.wad", importedEntries);
 
 	int dummySize;
 	byte *dummy = ReadAllBytes("D:\\32xrb2\\22pal.txt", &dummySize);
