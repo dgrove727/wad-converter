@@ -145,7 +145,7 @@ static void CropSprites()
 		if (insideSprites && strcmp(node->GetName(), "S_START"))
 		{
 			int outputLen;
-			byte *newPatch = CropPCPatch(node->GetData(), node->GetDataLength(), &outputLen, 255);
+			byte *newPatch = CropPCPatch(node->GetData(), node->GetDataLength(), &outputLen, 0);
 
 			if (newPatch) // Something was cropped
 				node->SetData(newPatch, outputLen);

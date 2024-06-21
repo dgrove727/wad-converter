@@ -9,9 +9,9 @@ typedef struct
 	byte r, g, b;
 } palentry_t;
 
-// SRB2 2.2 palette
+// SRB 32X palette
 palentry_t palette[256] = {
-	{ 255, 255, 255 },
+	{ 0, 0, 0 },
 { 246, 246, 246 },
 { 237, 237, 237 },
 { 228, 228, 228 },
@@ -266,7 +266,7 @@ palentry_t palette[256] = {
 { 255, 231, 246 },
 { 0, 0, 63 },
 { 0, 0, 32 },
-{ 0, 255, 255 },
+{ 255, 255, 255 },
 };
 
 // SRB2 2.0 palette
@@ -970,7 +970,7 @@ byte *PatchToJagTexture(const byte *patchData, size_t dataLen, int *outputLen)
 	const patchHeader_t *header = (patchHeader_t *)patchData;
 
 	// I'm lazy... convert to a regular raw image first.
-	byte *rawImage = PatchToRaw(patchData, dataLen, outputLen, 255);
+	byte *rawImage = PatchToRaw(patchData, dataLen, outputLen, 0);
 
 	byte *jagTexture = RawToJagTexture(rawImage, header->width, header->height);
 

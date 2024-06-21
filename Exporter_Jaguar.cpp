@@ -125,18 +125,19 @@ void Exporter_Jaguar::SetMaskedInTexture1()
 				memcpy(entryName, mt->name, 8);
 				if (!strcmp(node->GetName(), mt->name))
 				{
+					mt->masked = 0;
 					// Check this texture if it contains any transparent pixels.
 					// If so, we need to set masked to 1.
 					if (node->IsCompressed())
 					{
 						byte *decomp = node->Decompress();
-						if (ContainsPixel(decomp, mt->width, mt->height, 255))
+						if (ContainsPixel(decomp, mt->width, mt->height, 0))
 							mt->masked = 1;
 						free(decomp);
 					}
 					else
 					{
-						if (ContainsPixel(node->GetData(), mt->width, mt->height, 255))
+						if (ContainsPixel(node->GetData(), mt->width, mt->height, 0))
 							mt->masked = 1;
 					}
 				}
