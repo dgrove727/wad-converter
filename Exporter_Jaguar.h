@@ -10,6 +10,8 @@ protected:
 public:
 	virtual void Execute();
 
+	void SetMaskedInTexture1();
+
 	Exporter_Jaguar(WADEntry *entries, FILE *f);
 	virtual ~Exporter_Jaguar();
 };

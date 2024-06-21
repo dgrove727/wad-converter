@@ -60,6 +60,9 @@
     <ClCompile Include="..\SRB2LevelConv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Texture1.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Listable.h">
@@ -111,6 +114,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\SRB2LevelConv.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Texture1.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

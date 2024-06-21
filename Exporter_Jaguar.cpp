@@ -1,4 +1,6 @@
 #include "Exporter_Jaguar.h"
+#include "Texture1.h"
+#include "gfx_convert.h"
 #include <string.h>
 
 const char *exclusionList[] = {
@@ -83,6 +85,68 @@ void Exporter_Jaguar::Execute()
 		if (node->GetDataLength() > 0)
 			fwrite(node->GetData(), node->GetDataLength(), 1, f);
 	}
+}
+
+void Exporter_Jaguar::SetMaskedInTexture1()
+{
+	WADEntry *texture1 = WADEntry::FindEntry(entries, "TEXTURE1");
+
+	Texture1 *t1;
+	if (texture1->IsCompressed())
+	{
+		byte *decomp = texture1->Decompress();
+		t1 = new Texture1(decomp, texture1->GetUnCompressedDataLength());
+		free(decomp);
+	}
+	else
+		t1 = new Texture1(texture1->GetData(), texture1->GetUnCompressedDataLength());
+
+	for (MapTexture *mt = t1->mapTextures; mt; mt = (MapTexture *)mt->next)
+	{
+		bool inTextures = false;
+		for (WADEntry *node = entries; node; node = (WADEntry *)node->next)
+		{
+			if (!strcmp(node->GetName(), "T_START"))
+			{
+				inTextures = true;
+				continue;
+			}
+
+			if (!strcmp(node->GetName(), "T_END"))
+			{
+				inTextures = false;
+				break;
+			}
+
+			if (inTextures)
+			{
+				char entryName[9];
+				memset(entryName, 0, 9);
+				memcpy(entryName, mt->name, 8);
+				if (!strcmp(node->GetName(), mt->name))
+				{
+					// Check this texture if it contains any transparent pixels.
+					// If so, we need to set masked to 1.
+					if (node->IsCompressed())
+					{
+						byte *decomp = node->Decompress();
+						if (ContainsPixel(decomp, mt->width, mt->height, 255))
+							mt->masked = 1;
+						free(decomp);
+					}
+					else
+					{
+						if (ContainsPixel(node->GetData(), mt->width, mt->height, 255))
+							mt->masked = 1;
+					}
+				}
+			}
+		}
+	}
+
+	int newLumpLength;
+	byte *newLump = t1->CreateLump(&newLumpLength);
+	texture1->SetData(newLump, newLumpLength);
 }
 
 Exporter_Jaguar::Exporter_Jaguar(WADEntry *entries, FILE *f)

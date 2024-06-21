@@ -4,6 +4,7 @@
 byte *FlatToPNG(const byte *flatData, int width, int height, int *outputLen);
 byte *PNGToFlat(byte *pngData, int pngLength, int *width, int *height);
 
+bool ContainsPixel(const byte *rawImage, unsigned short width, unsigned short height, byte index);
 byte *RawToJagTexture(const byte *rawImage, unsigned short width, unsigned short height);
 byte *PatchToJagTexture(const byte *patchData, size_t dataLen, int *outputLen);
 

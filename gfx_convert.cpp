@@ -932,6 +932,17 @@ void VerticalFlip(const byte *srcImage, byte *destImage, const short width, cons
 	}
 }
 
+bool ContainsPixel(const byte *rawImage, unsigned short width, unsigned short height, byte index)
+{
+	for (int i = 0; i < width * height; i++)
+	{
+		if (rawImage[i] == index)
+			return true;
+	}
+
+	return false;
+}
+
 byte *RawToJagTexture(const byte *rawImage, unsigned short width, unsigned short height)
 {
 	// Now we have to flip it.. ugh

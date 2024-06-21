@@ -256,8 +256,6 @@ void InsertPCLevelFromWAD(const char *wadfile, WADEntry *entries)
 
 static void MyFunTest()
 {
-//	SRB2MapConv("D:\\SRB2-v2213-Full\\MAP01.wad", "D:\\32xrb2\\Levels\\MAP01.wad");
-//	return;
 //	ConvertMapToJaguar("D:\\32xrb2\\Levels\\MAP03-conv.wad", "D:\\32xrb2\\Levels\\MAP03-jag.wad");
 //	return;
 	FILE *f = fopen("D:\\32xrb2\\srb32x-edit.wad", "rb");
@@ -407,6 +405,7 @@ static void MyFunTest()
 	}
 
 	InsertPCLevelFromWAD("D:\\32xrb2\\Levels\\MAP01.wad", importedEntries);
+	InsertPCLevelFromWAD("D:\\32xrb2\\Levels\\MAP02.wad", importedEntries);
 	InsertPCLevelFromWAD("D:\\32xrb2\\Levels\\MAP03.wad", importedEntries);
 	InsertPCLevelFromWAD("D:\\32xrb2\\Levels\\MAP30.wad", importedEntries);
 
@@ -437,6 +436,8 @@ static void MyFunTest()
 	// Write it out
 	FILE *expF = fopen("D:\\32xrb2\\doom32x.wad", "wb");
 	Exporter_Jaguar *ex = new Exporter_Jaguar(importedEntries, expF);
+	// Set masked bit in TEXTURE1 lump if necessary.
+	ex->SetMaskedInTexture1();
 	ex->Execute();
 	delete ex;
 

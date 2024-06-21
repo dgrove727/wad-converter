@@ -32,6 +32,7 @@
     <ClCompile Include="..\lzss.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\SRB2LevelConv.cpp" />
+    <ClCompile Include="..\Texture1.cpp" />
     <ClCompile Include="..\WADEntry.cpp" />
     <ClCompile Include="..\WADMap.cpp" />
   </ItemGroup>
@@ -49,6 +50,7 @@
     <ClInclude Include="..\Listable.h" />
     <ClInclude Include="..\lzss.h" />
     <ClInclude Include="..\SRB2LevelConv.h" />
+    <ClInclude Include="..\Texture1.h" />
     <ClInclude Include="..\WADMap.h" />
     <ClInclude Include="..\stb_image.h" />
     <ClInclude Include="..\stb_image_write.h" />
