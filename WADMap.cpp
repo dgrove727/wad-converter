@@ -3,6 +3,13 @@
 #include <stdio.h>
 #include <string.h>
 
+typedef struct
+{
+	short v1, v2;
+	short sideoffset;
+	short linedef;
+} srb32xseg_t;
+
 bool IdenticalSidedefs(const sidedef_t *side1, const sidedef_t *side2)
 {
 	if (side1->rowoffset != side2->rowoffset)
@@ -97,7 +104,7 @@ void WADMap::CompressSidedefs()
 	numsidedefs = numNewSidedefs;
 }
 
-WADEntry *WADMap::CreateJaguar(const char *mapname)
+WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs)
 {
 	WADEntry *head = NULL;
 
@@ -147,8 +154,37 @@ WADEntry *WADMap::CreateJaguar(const char *mapname)
 	entry = new WADEntry();
 	Listable::Add(entry, (Listable **)&head);
 	entry->SetName("SEGS");
-	entry->SetIsCompressed(true);
-	entry->SetData((byte *)segs, numsegs * sizeof(seg_t));
+	if (srb32xsegs)
+	{
+		entry->SetIsCompressed(false);
+
+		srb32xseg_t *newSegs = (srb32xseg_t *)malloc(sizeof(srb32xseg_t) * numsegs);
+		seg_t *origSegs = segs;
+
+		for (int i = 0; i < numsegs; i++)
+		{
+			newSegs[i].v1 = swap_endian16(origSegs[i].v1);
+			newSegs[i].v2 = swap_endian16(origSegs[i].v2);
+			newSegs[i].sideoffset = origSegs[i].offset; // Swap it later... you'll see
+			newSegs[i].linedef = swap_endian16(origSegs[i].linedef);
+
+			int16_t side = origSegs[i].side;
+			side &= 1;
+
+			newSegs[i].sideoffset <<= 1;
+			newSegs[i].sideoffset |= side;
+
+			newSegs[i].sideoffset = swap_endian16(newSegs[i].sideoffset);
+		}
+
+		entry->SetData((byte*)newSegs, numsegs * sizeof(srb32xseg_t));
+		free(newSegs);
+	}
+	else
+	{
+		entry->SetIsCompressed(true);
+		entry->SetData((byte *)segs, numsegs * sizeof(seg_t));
+	}
 
 	// SSECTORS
 	entry = new WADEntry();

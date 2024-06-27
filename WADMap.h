@@ -123,7 +123,7 @@ public:
 
 	void CompressSidedefs();
 
-	WADEntry *CreateJaguar(const char *mapname);
+	WADEntry *CreateJaguar(const char *mapname, bool srb32xsegs = false);
 	WADEntry *CreatePC(const char *mapname);
 
 	WADMap(WADEntry *head);

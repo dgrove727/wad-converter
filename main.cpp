@@ -239,7 +239,7 @@ void InsertPCLevelFromWAD(const char *wadfile, WADEntry *entries)
 
 	WADMap *map = new WADMap(mapEntries);
 
-	WADEntry *jagEntries = map->CreateJaguar(map->name);
+	WADEntry *jagEntries = map->CreateJaguar(map->name, true);
 
 	WADEntry *node;
 	WADEntry *next;
@@ -371,11 +371,6 @@ static void MyFunTest()
 		if (!strcmp(node->GetName(), "DEMO1"))
 			node->ReplaceWithFile("D:\\32xrb2\\DEMO1.lmp");
 
-		if (!strcmp(node->GetName(), "DMAPINFO"))
-		{
-			node->ReplaceWithFile("D:\\32xrb2\\DMAPINFO.txt");
-		}
-
 		// Rename entries that SLADE doesn't support
 		if (!strcmp(node->GetName(), "PLAYz1"))
 		{
@@ -404,8 +399,8 @@ static void MyFunTest()
 		}
 	}
 
-	InsertPCLevelFromWAD("D:\\32xrb2\\Levels\\MAP01.wad", importedEntries);
-	InsertPCLevelFromWAD("D:\\32xrb2\\Levels\\MAP02.wad", importedEntries);
+	InsertPCLevelFromWAD("D:\\32xrb2\\Levels\\MAP01-noflowers.wad", importedEntries);
+	InsertPCLevelFromWAD("D:\\32xrb2\\Levels\\MAP02o.wad", importedEntries);
 	InsertPCLevelFromWAD("D:\\32xrb2\\Levels\\MAP03.wad", importedEntries);
 	InsertPCLevelFromWAD("D:\\32xrb2\\Levels\\MAP30.wad", importedEntries);
 
