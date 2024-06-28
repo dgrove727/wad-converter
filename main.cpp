@@ -10,9 +10,24 @@
 #include "lzss.h"
 #include "CarmackCompress.h"
 #include "SRB2LevelConv.h"
+#include <stdarg.h>
 
 #define		VERSION			1.10
 #define		WAD_FORMAT		1
+
+const char *basePath = "D:\\32xrb2";
+
+char *va(const char *format, ...)
+{
+	va_list      argptr;
+	static char  string[1024];
+
+	va_start(argptr, format);
+	vsprintf(string, format, argptr);
+	va_end(argptr);
+
+	return string;
+}
 
 static void ConvertPCSpriteEntryToJagSprite(WADEntry *entry, WADEntry **list)
 {
@@ -256,15 +271,13 @@ void InsertPCLevelFromWAD(const char *wadfile, WADEntry *entries)
 
 static void MyFunTest()
 {
-//	ConvertMapToJaguar("D:\\32xrb2\\Levels\\MAP03-conv.wad", "D:\\32xrb2\\Levels\\MAP03-jag.wad");
-//	return;
-	FILE *f = fopen("D:\\32xrb2\\srb32x-edit.wad", "rb");
+	FILE *f = fopen(va("%s\\srb32x-edit.wad", basePath), "rb");
 
 	Importer_PC *ipc = new Importer_PC(f);
 	WADEntry *importedEntries = ipc->Execute();
 	delete ipc;
 
-	f = fopen("D:\\32xrb2\\leveleditor.wad", "rb"); // Where to get textures/flats/TEXTURE1
+	f = fopen(va("%s\\leveleditor.wad", basePath), "rb"); // Where to get textures/flats/TEXTURE1
 	ipc = new Importer_PC(f);
 	WADEntry *lvleditorEntries = ipc->Execute();
 	delete ipc;
@@ -340,36 +353,12 @@ static void MyFunTest()
 		{
 			insideSounds = false;
 		}
-		/*
-		if (!strcmp("PLAYPALS", node->GetName()))
-		{
-			ReplaceWithFile(node, "D:\\32xrb2\\SRB2_PLAYPALS.lmp");
-		}
-		else if (!strcmp("TITLE", node->GetName()))
-		{
-			ReplaceWithFile(node, "D:\\32xrb2\\comptest\\secret.lmp");
-		}
-		else if (!strcmp("INTERPIC", node->GetName()))
-		{
-			Listable::Remove(node, (Listable **)&importedEntries);
-		}
-		else if (!strcmp("VGM_E1M1", node->GetName()))
-		{
-//			ReplaceWithFile(node, "D:\\32xrb2\\decision.zgm");
-		}
-		else if (!strcmp("OOF", node->GetName()))
-		{
-			ReplaceWithFile(node, "D:\\32xrb2\\S3K_5F.wav");
-		}*/
 
 		if (!strcmp(node->GetName(), "TEXTURE1"))
 		{
 			WADEntry *texture1lump = WADEntry::FindEntry(lvleditorEntries, "TEXTURE1");
 			node->SetData(texture1lump->GetData(), texture1lump->GetDataLength());
 		}
-
-		if (!strcmp(node->GetName(), "DEMO1"))
-			node->ReplaceWithFile("D:\\32xrb2\\DEMO1.lmp");
 
 		// Rename entries that SLADE doesn't support
 		if (!strcmp(node->GetName(), "PLAYz1"))
@@ -399,19 +388,19 @@ static void MyFunTest()
 		}
 	}
 
-	InsertPCLevelFromWAD("D:\\32xrb2\\Levels\\MAP01-noflowers.wad", importedEntries);
-	InsertPCLevelFromWAD("D:\\32xrb2\\Levels\\MAP02o.wad", importedEntries);
-	InsertPCLevelFromWAD("D:\\32xrb2\\Levels\\MAP03.wad", importedEntries);
-	InsertPCLevelFromWAD("D:\\32xrb2\\Levels\\MAP30.wad", importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP01.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP02.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP03.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP30.wad", basePath), importedEntries);
 
 	int dummySize;
-	byte *dummy = ReadAllBytes("D:\\32xrb2\\22pal.txt", &dummySize);
+	byte *dummy = ReadAllBytes(va("%s\\22pal.txt", basePath), &dummySize);
 	WADEntry *dummyEntry = new WADEntry("DUMMY", dummy, dummySize);
 	Listable::Add(dummyEntry, (Listable **)&importedEntries);
 	free(dummy);
 
 	// Grab O_assets for compatibility (for now)
-	f = fopen("D:\\32xrb2\\min_d32xr.wad", "rb");
+	f = fopen(va("%s\\min_d32xr.wad", basePath), "rb");
 	Importer_PC *iOj = new Importer_PC(f);
 	WADEntry *importedEntriesOld = iOj->Execute();
 	delete iOj;
@@ -429,7 +418,7 @@ static void MyFunTest()
 	}
 
 	// Write it out
-	FILE *expF = fopen("D:\\32xrb2\\doom32x.wad", "wb");
+	FILE *expF = fopen(va("%s\\doom32x.wad", basePath), "wb");
 	Exporter_Jaguar *ex = new Exporter_Jaguar(importedEntries, expF);
 	// Set masked bit in TEXTURE1 lump if necessary.
 	ex->SetMaskedInTexture1();
@@ -437,35 +426,6 @@ static void MyFunTest()
 	delete ex;
 
 	return;
-
-	// Sample on how to automatically merge WAD into a 32X ROM
-	const char *baseROM = "D:\\32xrb2\\D32XR-JumpBase.32x";
-	const char *outputROM = "D:\\32xrb2\\D32XR-Jump.32x";
-
-	int baseromFileSize;
-	byte *baseROMData = ReadAllBytes(baseROM, &baseromFileSize);
-
-	int wadFileSize;
-	byte *wadData = ReadAllBytes("D:\\32xrb2\\d32xr31-mod.wad", &wadFileSize);
-
-	FILE *of = fopen(outputROM, "wb");
-	fwrite(baseROMData, baseromFileSize, 1, of);
-	fwrite(wadData, wadFileSize, 1, of);
-	free(baseROMData);
-	free(wadData);
-
-	int targetSize = 5242880;
-	targetSize -= wadFileSize;
-	targetSize -= baseromFileSize;
-
-	if (targetSize > 0)
-	{
-		byte *fillData = (byte*)calloc(1, targetSize);
-		fwrite(fillData, targetSize, 1, of);
-		free(fillData);
-	}
-
-	fclose(of);
 }
 
 int main(int argc, char *argv[])
