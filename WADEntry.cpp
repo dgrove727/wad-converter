@@ -38,11 +38,11 @@ void WADEntry::SetDataInternal(const byte *value, size_t length)
 // automatically compress it for you.
 void WADEntry::SetData(const byte *value, size_t length)
 {
-	int filesize = (int)length;
+	int32_t filesize = (int32_t)length;
 
 	if (this->IsCompressed())
 	{
-		int compressedSize = 0;
+		int32_t compressedSize = 0;
 		byte *recompressFinal = encode(value, filesize, &compressedSize);
 		if (compressedSize > filesize)
 		{
@@ -89,7 +89,7 @@ const size_t WADEntry::GetUnCompressedDataLength() const
 
 byte *WADEntry::Decompress() const
 {
-	const int bufferSize = 0x1000;
+	const uint32_t bufferSize = 0x1000;
 
 	byte *uncompressed = (byte *)malloc(bufferSize);
 	lzss_state_t lzss;
@@ -102,7 +102,7 @@ byte *WADEntry::Decompress() const
 
 	while (uncompSize > 0)
 	{
-		int readSize = uncompSize > bufferSize ? bufferSize : uncompSize;
+		int32_t readSize = uncompSize > bufferSize ? bufferSize : uncompSize;
 
 		lzss_read(&lzss, readSize);
 		memcpy(writePtr, lzss.buf, readSize);
@@ -118,7 +118,7 @@ byte *WADEntry::Decompress() const
 
 void WADEntry::ReplaceWithFile(const char *filename)
 {
-	int filesize;
+	int32_t filesize;
 	byte *newData = ReadAllBytes(filename, &filesize);
 
 	if (this->IsCompressed())

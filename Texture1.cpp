@@ -3,24 +3,24 @@
 typedef struct
 {
 	char name[8];
-	int masked;
-	short width;
-	short height;
-	int columnDirectory;
-	short patchCount;
+	int32_t masked;
+	int16_t width;
+	int16_t height;
+	int32_t columnDirectory;
+	int16_t patchCount;
 } maptexturedata_t;
 
-byte *Texture1::CreateLump(int *lumpLength)
+byte *Texture1::CreateLump(int32_t *lumpLength)
 {
 	byte *data = (byte *)malloc(64 * 1024); // 64k of working space for our lump
 
-	int *ptr32 = (int*)data;
+	int32_t *ptr32 = (int32_t *)data;
 
 	numTextures = Listable::GetCount(mapTextures); // Just in case you didn't set it...
 
 	// TODO: Correctly build the offsets to allow adding/removing entries
 	*ptr32++ = numTextures;
-	for (int i = 0; i < numTextures; i++)
+	for (int32_t i = 0; i < numTextures; i++)
 		*ptr32++ = offsets[i];
 
 	byte *ptr8 = (byte *)ptr32;
@@ -49,18 +49,18 @@ byte *Texture1::CreateLump(int *lumpLength)
 	return data;
 }
 
-Texture1::Texture1(const byte *lumpData, int lumpLength)
+Texture1::Texture1(const byte *lumpData, int32_t lumpLength)
 {
-	const int *ptr32 = (const int *)lumpData;
+	const int32_t *ptr32 = (const int32_t *)lumpData;
 	numTextures = *ptr32++;
-	offsets = (int *)malloc(sizeof(int) * numTextures);
+	offsets = (int32_t *)malloc(sizeof(int32_t) * numTextures);
 
-	for (int i = 0; i < numTextures; i++)
+	for (int32_t i = 0; i < numTextures; i++)
 		offsets[i] = *ptr32++;
 
 	byte *ptr8 = (byte *)ptr32;
 
-	for (int i = 0; i < numTextures; i++)
+	for (int32_t i = 0; i < numTextures; i++)
 	{
 		maptexturedata_t *mtd = (maptexturedata_t *)ptr8;
 

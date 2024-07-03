@@ -3,8 +3,8 @@
 
 typedef struct
 {
-	int filepos;
-	int size;
+	int32_t filepos;
+	int32_t size;
 	char name[8];
 } directory_t;
 
@@ -13,11 +13,11 @@ void Exporter_PC::Execute()
 	size_t lump_count = Listable::GetCount(this->entries);
 
 	// Build our directory information first
-	size_t directorySize = 16 * lump_count;
+	uint32_t directorySize = (uint32_t)(16 * lump_count);
 	directory_t *directory = new directory_t[lump_count];
 
 	size_t i = 0;
-	size_t fileposCursor = 0xC + directorySize; // Start of entry data
+	uint32_t fileposCursor = 0xC + directorySize; // Start of entry data
 	for (WADEntry *node = entries; node; node = (WADEntry *)node->next, i++)
 	{
 		directory_t *dirEntry = &directory[i];

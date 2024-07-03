@@ -16,9 +16,9 @@ private:
 	size_t _uncompressedDataLength;
 	bool _isCompressed;
 
-	void SetDataInternal(const byte *value, size_t length);
 
 public:
+	void SetDataInternal(const byte *value, size_t length);
 	const char *GetName() const;
 	void SetName(const char *value);
 	const byte *GetData() const;

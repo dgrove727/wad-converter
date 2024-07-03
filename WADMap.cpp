@@ -5,9 +5,9 @@
 
 typedef struct
 {
-	short v1, v2;
-	short sideoffset;
-	short linedef;
+	int16_t v1, v2;
+	int16_t sideoffset;
+	int16_t linedef;
 } srb32xseg_t;
 
 bool IdenticalSidedefs(const sidedef_t *side1, const sidedef_t *side2)
@@ -47,15 +47,15 @@ void WADMap::UpdateLinedefSidedefRefs(int16_t oldSidenum, int16_t newSidenum)
 
 void WADMap::CompressSidedefs()
 {
-	int numNewSidedefs = 0;
+	int32_t numNewSidedefs = 0;
 
-	for (int i = 0; i < numsidedefs; i++)
+	for (int32_t i = 0; i < numsidedefs; i++)
 	{
 		if (sidedefs[i].sector == -1)
 			continue;
 
 		linedef_t *ld = this->linedefs;
-		for (int j = numlinedefs; j--; ld++)
+		for (int32_t j = numlinedefs; j--; ld++)
 		{
 			if (ld->sidenum[0] == i)
 				ld->sidenum[0] = numNewSidedefs;
@@ -64,7 +64,7 @@ void WADMap::CompressSidedefs()
 				ld->sidenum[1] = numNewSidedefs;
 		}
 
-		for (int j = i + 1; j < numsidedefs; j++)
+		for (int32_t j = i + 1; j < numsidedefs; j++)
 		{
 			if (sidedefs[j].sector == -1)
 				continue;
@@ -73,7 +73,7 @@ void WADMap::CompressSidedefs()
 			{
 				// Find the linedefs that belong to this one
 				ld = linedefs;
-				for (int k = numlinedefs; k--; ld++)
+				for (int32_t k = numlinedefs; k--; ld++)
 				{
 					if (ld->sidenum[0] == j)
 						ld->sidenum[0] = numNewSidedefs;
@@ -90,8 +90,8 @@ void WADMap::CompressSidedefs()
 	sidedef_t *newSidedefs = (sidedef_t *)malloc(numNewSidedefs * sizeof(sidedef_t));
 
 	// Copy the sidedefs to their new block of memory.
-	int z = 0;
-	for (int i = 0; i < numsidedefs; i++)
+	int32_t z = 0;
+	for (int32_t i = 0; i < numsidedefs; i++)
 	{
 		if (sidedefs[i].sector == -1)
 			continue;
@@ -142,7 +142,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs)
 	entry->SetName("VERTEXES");
 	entry->SetIsCompressed(false);
 	jagVertex_t *temp = (jagVertex_t *)malloc(sizeof(jagVertex_t) * numvertexes);
-	for (int i = 0; i < numvertexes; i++)
+	for (int32_t i = 0; i < numvertexes; i++)
 	{
 		temp[i].x = swap_endian32(vertexes[i].x << FRACBITS);
 		temp[i].y = swap_endian32(vertexes[i].y << FRACBITS);
@@ -161,7 +161,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs)
 		srb32xseg_t *newSegs = (srb32xseg_t *)malloc(sizeof(srb32xseg_t) * numsegs);
 		seg_t *origSegs = segs;
 
-		for (int i = 0; i < numsegs; i++)
+		for (int32_t i = 0; i < numsegs; i++)
 		{
 			newSegs[i].v1 = swap_endian16(origSegs[i].v1);
 			newSegs[i].v2 = swap_endian16(origSegs[i].v2);
@@ -204,16 +204,16 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs)
 	{
 		// Convert from PC to Jaguar format
 		jagnode_t *temp = (jagnode_t *)malloc(numnodes * sizeof(jagnode_t));
-		for (int i = 0; i < numnodes; i++)
+		for (int32_t i = 0; i < numnodes; i++)
 		{
 			temp[i].x = swap_endian32(nodes[i].x << FRACBITS);
 			temp[i].y = swap_endian32(nodes[i].y << FRACBITS);
 			temp[i].dx = swap_endian32(nodes[i].dx << FRACBITS);
 			temp[i].dy = swap_endian32(nodes[i].dy << FRACBITS);
 			
-			for (int j = 0; j < 2; j++)
+			for (int32_t j = 0; j < 2; j++)
 			{
-				for (int k = 0; k < 4; k++)
+				for (int32_t k = 0; k < 4; k++)
 					temp[i].bbox[j][k] = swap_endian32(nodes[i].bbox[j][k] << FRACBITS);
 			}
 
@@ -246,9 +246,9 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs)
 
 	{
 		// Gotta byteswap it all
-		unsigned short *blockmapPtr = (unsigned short *)blockmap;
-		unsigned short *temp = (unsigned short *)malloc(blockmapSize);
-		for (int i = 0; i < blockmapSize / 2; i++)
+		uint16_t *blockmapPtr = (uint16_t *)blockmap;
+		uint16_t *temp = (uint16_t *)malloc(blockmapSize);
+		for (int32_t i = 0; i < blockmapSize / 2; i++)
 			temp[i] = swap_endian16(blockmapPtr[i]);
 
 		entry->SetData((byte*)temp, blockmapSize);
@@ -318,16 +318,16 @@ WADEntry *WADMap::CreatePC(const char *mapname)
 	{
 		// Convert from Jaguar to PC format
 		node_t *temp = (node_t *)malloc(numnodes * sizeof(node_t));
-		for (int i = 0; i < numnodes; i++)
+		for (int32_t i = 0; i < numnodes; i++)
 		{
 			temp[i].x = (int16_t)(swap_endian32(jagNodes[i].x) >> FRACBITS);
 			temp[i].y = (int16_t)(swap_endian32(jagNodes[i].y) >> FRACBITS);
 			temp[i].dx = (int16_t)(swap_endian32(jagNodes[i].dx) >> FRACBITS);
 			temp[i].dy = (int16_t)(swap_endian32(jagNodes[i].dy) >> FRACBITS);
 
-			for (int j = 0; j < 2; j++)
+			for (int32_t j = 0; j < 2; j++)
 			{
-				for (int k = 0; k < 4; k++)
+				for (int32_t k = 0; k < 4; k++)
 					temp[i].bbox[j][k] = (int16_t)(swap_endian32(jagNodes[i].bbox[j][k]) >> FRACBITS);
 			}
 
@@ -405,7 +405,7 @@ WADMap::WADMap(WADEntry *head)
 	else
 		things = (mapthing_t*)memdup(entry->GetData(), entry->GetDataLength());
 
-	numthings = entry->GetUnCompressedDataLength() / sizeof(mapthing_t);
+	numthings = (int16_t)(entry->GetUnCompressedDataLength() / sizeof(mapthing_t));
 
 	// LINEDEFS
 	entry = (WADEntry *)entry->next;
@@ -417,7 +417,7 @@ WADMap::WADMap(WADEntry *head)
 	else
 		linedefs = (linedef_t *)memdup(entry->GetData(), entry->GetDataLength());
 
-	numlinedefs = entry->GetUnCompressedDataLength() / sizeof(linedef_t);
+	numlinedefs = (int16_t)(entry->GetUnCompressedDataLength() / sizeof(linedef_t));
 
 	// SIDEDEFS
 	entry = (WADEntry *)entry->next;
@@ -426,7 +426,7 @@ WADMap::WADMap(WADEntry *head)
 	else
 		sidedefs = (sidedef_t *)memdup(entry->GetData(), entry->GetDataLength());
 
-	numsidedefs = entry->GetUnCompressedDataLength() / sizeof(sidedef_t);
+	numsidedefs = (int16_t)(entry->GetUnCompressedDataLength() / sizeof(sidedef_t));
 
 	// VERTEXES
 	entry = (WADEntry *)entry->next;
@@ -438,7 +438,7 @@ WADMap::WADMap(WADEntry *head)
 		else
 			temp = (jagVertex_t *)memdup(entry->GetData(), entry->GetDataLength());
 
-		int16_t numjagVertexes = entry->GetUnCompressedDataLength() / sizeof(jagVertex_t);
+		int16_t numjagVertexes = (int16_t)(entry->GetUnCompressedDataLength() / sizeof(jagVertex_t));
 		vertexes = (vertex_t *)malloc(numjagVertexes * sizeof(vertex_t));
 
 		for (int i = 0; i < numjagVertexes; i++)
@@ -455,7 +455,7 @@ WADMap::WADMap(WADEntry *head)
 		else
 			vertexes = (vertex_t *)memdup(entry->GetData(), entry->GetDataLength());
 
-		numvertexes = entry->GetUnCompressedDataLength() / sizeof(vertex_t);
+		numvertexes = (int16_t)(entry->GetUnCompressedDataLength() / sizeof(vertex_t));
 	}
 
 	// SEGS
@@ -465,7 +465,7 @@ WADMap::WADMap(WADEntry *head)
 	else
 		segs = (seg_t *)memdup(entry->GetData(), entry->GetDataLength());
 
-	numsegs = entry->GetUnCompressedDataLength() / sizeof(seg_t);
+	numsegs = (int16_t)(entry->GetUnCompressedDataLength() / sizeof(seg_t));
 
 	// SSECTORS
 	entry = (WADEntry *)entry->next;
@@ -474,7 +474,7 @@ WADMap::WADMap(WADEntry *head)
 	else
 		subsectors = (subsector_t *)memdup(entry->GetData(), entry->GetDataLength());
 
-	numsubsectors = entry->GetUnCompressedDataLength() / sizeof(subsector_t);
+	numsubsectors = (int16_t)(entry->GetUnCompressedDataLength() / sizeof(subsector_t));
 
 	// NODES
 	entry = (WADEntry *)entry->next;
@@ -487,7 +487,7 @@ WADMap::WADMap(WADEntry *head)
 		else
 			jagNodes = (jagnode_t *)memdup(entry->GetData(), entry->GetDataLength());
 
-		numnodes = entry->GetUnCompressedDataLength() / sizeof(jagnode_t);		
+		numnodes = (int16_t)(entry->GetUnCompressedDataLength() / sizeof(jagnode_t));
 	}
 	else
 	{
@@ -496,7 +496,7 @@ WADMap::WADMap(WADEntry *head)
 		else
 			nodes = (node_t *)memdup(entry->GetData(), entry->GetDataLength());
 
-		numnodes = entry->GetUnCompressedDataLength() / sizeof(node_t);
+		numnodes = (int16_t)(entry->GetUnCompressedDataLength() / sizeof(node_t));
 	}
 
 	// SECTORS
@@ -506,7 +506,7 @@ WADMap::WADMap(WADEntry *head)
 	else
 		sectors = (sector_t *)memdup(entry->GetData(), entry->GetDataLength());
 
-	numsectors = entry->GetUnCompressedDataLength() / sizeof(sector_t);
+	numsectors = (int16_t)(entry->GetUnCompressedDataLength() / sizeof(sector_t));
 
 	// REJECT
 	entry = (WADEntry *)entry->next;
@@ -536,11 +536,11 @@ WADMap::WADMap(WADEntry *head)
 		if (isJaguar)
 		{
 			// Need to byte swap each entry
-			unsigned short *temp;
+			uint16_t *temp;
 			if (entry->IsCompressed())
-				temp = (unsigned short *)entry->Decompress();
+				temp = (uint16_t *)entry->Decompress();
 			else
-				temp = (unsigned short *)memdup(entry->GetData(), entry->GetDataLength());
+				temp = (uint16_t *)memdup(entry->GetData(), entry->GetDataLength());
 
 			for (int i = 0; i < blockmapSize / 2; i++)
 				temp[i] = swap_endian16(temp[i]);

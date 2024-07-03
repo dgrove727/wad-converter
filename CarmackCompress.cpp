@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "CarmackCompress.h"
 
 // Taken from DMUtils, released by id Software to the public with no license attached
 #define WINDOW_SIZE	4096
@@ -14,10 +15,10 @@ typedef struct node_struct node_t;
 
 struct node_struct
 {
-    const unsigned char *pointer;
+    const uint8_t *pointer;
     node_t *prev;
     node_t *next;
-    int	pad;
+    int32_t	pad;
 };
 
 typedef struct list_struct
@@ -34,14 +35,13 @@ static node_t hashtarget[WINDOW_SIZE]; // what the hash points to
 //  Removes the node in its place before.
 //
 
-void addnode(const unsigned char *pointer)
+void addnode(const uint8_t *pointer)
 {
-
     list_t *list;
-    int targetindex;
+    int32_t targetindex;
     node_t *target;
 
-    targetindex = (int)pointer & (WINDOW_SIZE - 1);
+    targetindex = (int32_t)pointer & (WINDOW_SIZE - 1);
 
     // remove the target node at this index
 
@@ -81,22 +81,22 @@ void derror(char *msg)
     fprintf(stdout, "\nerror: %s\n\n", msg);
 }
 
-unsigned char *encode(const unsigned char *input, int inputlen, int *size)
+uint8_t *encode(const uint8_t *input, int32_t inputlen, int32_t *size)
 {
-    int putidbyte = 0;
-    const unsigned char *encodedpos = NULL;
-    int encodedlen;
-    int i, pacifier = 0;
-    int len;
-    int numbytes, numcodes;
-    int codelencount;
-    const unsigned char *window;
-    const unsigned char *lookahead;
-    unsigned char *idbyte = NULL;
-    unsigned char *output, *ostart;
+    int32_t putidbyte = 0;
+    const uint8_t *encodedpos = NULL;
+    int32_t encodedlen;
+    int32_t i, pacifier = 0;
+    int32_t len;
+    int32_t numbytes, numcodes;
+    int32_t codelencount;
+    const uint8_t *window;
+    const uint8_t *lookahead;
+    uint8_t *idbyte = NULL;
+    uint8_t *output, *ostart;
     node_t *hashp;
-    int lookaheadlen;
-    int samelen;
+    int32_t lookaheadlen;
+    int32_t samelen;
 
     // initialize the hash table to the occurences of bytes
     for (i = 0; i < 256; i++)
@@ -113,10 +113,10 @@ unsigned char *encode(const unsigned char *input, int inputlen, int *size)
         hashtarget[i].prev = 0;
     }
 
-    size_t allocSize = (inputlen * 9) / 8 + 1;
+    int32_t allocSize = (inputlen * 9) / 8 + 1;
 
     // create the output
-    ostart = output = (unsigned char *)malloc(allocSize);
+    ostart = output = (uint8_t *)malloc(allocSize);
 
     // initialize the window & lookahead
     lookahead = window = input;
@@ -232,17 +232,13 @@ unsigned char *encode(const unsigned char *input, int inputlen, int *size)
 //  Return the size of compressed data
 //
 
-int decodedsize(unsigned char *input)
+int decodedsize(uint8_t *input)
 {
 
-    typedef unsigned short ushort;
-    typedef unsigned long ulong;
-    typedef unsigned char uchar;
-
-    ushort getidbyte = 0;
-    short len;
-    uchar idbyte;
-    int accum = 0;
+    uint16_t getidbyte = 0;
+    int16_t len;
+    uint8_t idbyte;
+    int32_t accum = 0;
 
     while (1)
     {
@@ -271,15 +267,15 @@ int decodedsize(unsigned char *input)
 
 }
 
-void decode(unsigned char *input, unsigned char *output)
+void decode(uint8_t *input, uint8_t *output)
 {
 
-    int getidbyte = 0;
-    int len;
-    int pos;
-    int i;
-    unsigned char *source;
-    int idbyte;
+    int32_t getidbyte = 0;
+    int32_t len;
+    int32_t pos;
+    int32_t i;
+    uint8_t *source;
+    int32_t idbyte;
 
     while (1)
     {

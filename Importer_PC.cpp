@@ -42,10 +42,10 @@ WADEntry *Importer_PC::Execute()
 	entryName[8] = '\0';
 	for (size_t i = 0; i < lump_count; i++)
 	{
-		unsigned int ptr;
+		uint32_t ptr;
 		fread(&ptr, 4, 1, in_file);		// ptr
 
-		unsigned int size;
+		uint32_t size;
 		fread(&size, 4, 1, in_file);		// size
 
 		fread(entryName, 1, 8, in_file);		// name

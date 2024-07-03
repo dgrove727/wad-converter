@@ -118,8 +118,8 @@ public:
 	int16_t numsubsectors;
 	int16_t numnodes;
 	int16_t numsectors;
-	size_t rejectSize;
-	size_t blockmapSize;
+	int32_t rejectSize;
+	int32_t blockmapSize;
 
 	void CompressSidedefs();
 

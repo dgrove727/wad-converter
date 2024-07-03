@@ -13,12 +13,12 @@ void *memdup(const void *mem, size_t size)
     return out;
 }
 
-unsigned int swap_endian32(unsigned int i)
+uint32_t swap_endian32(uint32_t i)
 {
     return (i >> 24) | ((i >> 8) & 0x0000FF00) | ((i << 8) & 0x00FF0000) | (i << 24);
 }
 
-unsigned short swap_endian16(unsigned short i)
+uint16_t swap_endian16(uint16_t i)
 {
     return (i >> 8) | (i << 8);
 }
@@ -53,7 +53,7 @@ bool SetEntryName(char *entryName, const char *data)
     return isCompressed;
 }
 
-byte *ReadAllBytes(const char *filename, int *file_size)
+byte *ReadAllBytes(const char *filename, int32_t *file_size)
 {
     FILE *f = fopen(filename, "rb");
     fseek(f, 0, SEEK_END);

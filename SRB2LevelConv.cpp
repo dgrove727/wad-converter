@@ -87,7 +87,7 @@ void CheckReplacementWall(char *srcData)
 {
 	char srcDataText[9];
 	memset(srcDataText, 0, sizeof(srcDataText));
-	for (int i = 0; i < 8; i++)
+	for (int32_t i = 0; i < 8; i++)
 		srcDataText[i] = srcData[i];
 
 	const remapName_t *remap = remapWalls;
@@ -98,7 +98,7 @@ void CheckReplacementWall(char *srcData)
 		{
 			memset(srcDataText, 0, sizeof(srcDataText));
 			strcpy(srcDataText, remap->newName);
-			for (int i = 0; i < 8; i++)
+			for (int32_t i = 0; i < 8; i++)
 				srcData[i] = srcDataText[i];
 			return;
 		}
@@ -110,7 +110,7 @@ void CheckReplacementWall(char *srcData)
 	printf("Unknown wall %s, replacing with GFZROCK.\n", srcDataText);
 	memset(srcDataText, 0, sizeof(srcDataText));
 	strcpy(srcDataText, "GFZROCK");
-	for (int i = 0; i < 8; i++)
+	for (int32_t i = 0; i < 8; i++)
 		srcData[i] = srcDataText[i];
 }
 
@@ -118,7 +118,7 @@ void CheckReplacementFlat(char *srcData)
 {
 	char srcDataText[9];
 	memset(srcDataText, 0, sizeof(srcDataText));
-	for (int i = 0; i < 8; i++)
+	for (int32_t i = 0; i < 8; i++)
 		srcDataText[i] = srcData[i];
 
 	const remapName_t *remap = remapFlats;
@@ -129,7 +129,7 @@ void CheckReplacementFlat(char *srcData)
 		{
 			memset(srcDataText, 0, sizeof(srcDataText));
 			strcpy(srcDataText, remap->newName);
-			for (int i = 0; i < 8; i++)
+			for (int32_t i = 0; i < 8; i++)
 				srcData[i] = srcDataText[i];
 			return;
 		}
@@ -141,13 +141,13 @@ void CheckReplacementFlat(char *srcData)
 	printf("Unknown flat %s, replacing with GFZFLR01.\n", srcDataText);
 	memset(srcDataText, 0, sizeof(srcDataText));
 	strcpy(srcDataText, "GFZFLR01");
-	for (int i = 0; i < 8; i++)
+	for (int32_t i = 0; i < 8; i++)
 		srcData[i] = srcDataText[i];
 }
 
 WADEntry *ConvertSRB2Map(WADMap *map)
 {
-	for (int i = 0; i < map->numsidedefs; i++)
+	for (int32_t i = 0; i < map->numsidedefs; i++)
 	{
 		sidedef_t *sidedef = &map->sidedefs[i];
 
@@ -156,7 +156,7 @@ WADEntry *ConvertSRB2Map(WADMap *map)
 		CheckReplacementWall(sidedef->bottomtexture);
 	}
 
-	for (int i = 0; i < map->numsectors; i++)
+	for (int32_t i = 0; i < map->numsectors; i++)
 	{
 		sector_t *sector = &map->sectors[i];
 

@@ -5,8 +5,8 @@
 
 typedef struct
 {
-	int filepos;
-	int size;
+	int32_t filepos;
+	int32_t size;
 	char name[8];
 } directory_t;
 
@@ -88,9 +88,9 @@ WADEntry *Importer_Jaguar::Execute()
 	entryName[8] = '\0';
 	for (size_t i = 0; i < lump_count; i++)
 	{
-		unsigned int ptr = directory[i].filepos;
+		uint32_t ptr = directory[i].filepos;
 
-		unsigned int size = directory[i].size;
+		uint32_t size = directory[i].size;
 
 		strncpy(entryName, directory[i].name, 8);
 
@@ -104,24 +104,24 @@ WADEntry *Importer_Jaguar::Execute()
 		{
 			if (i == lump_count - 1) // last entry, so we need to go by file size
 			{
-				unsigned int realSize = file_size;
+				uint32_t realSize = file_size;
 				realSize -= ptr;
 
-				entry->SetData(entryData, realSize);
+				entry->SetDataInternal(entryData, realSize);
 			}
 			else
 			{
 				directory_t *nextEntryInfo = &directory[i + 1];
-				unsigned int realSize = nextEntryInfo->filepos;
+				uint32_t realSize = nextEntryInfo->filepos;
 				realSize -= ptr;
 
-				entry->SetData(entryData, realSize);
+				entry->SetDataInternal(entryData, realSize);
 			}
 			entry->SetUnCompressedDataLength(size);
 		}
 		else
 		{
-			entry->SetData(entryData, size);
+			entry->SetDataInternal(entryData, size);
 			strcpy(prevEntry, entry->GetName());
 		}
 

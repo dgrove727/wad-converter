@@ -1,17 +1,17 @@
 #pragma once
 #include "common.h"
 
-byte *FlatToPNG(const byte *flatData, int width, int height, int *outputLen);
-byte *PNGToFlat(byte *pngData, int pngLength, int *width, int *height);
+byte *FlatToPNG(const byte *flatData, int32_t width, int32_t height, int32_t *outputLen);
+byte *PNGToFlat(byte *pngData, int32_t pngLength, int32_t *width, int32_t *height);
 
-bool ContainsPixel(const byte *rawImage, unsigned short width, unsigned short height, byte index);
-byte *RawToJagTexture(const byte *rawImage, unsigned short width, unsigned short height);
-byte *PatchToJagTexture(const byte *patchData, size_t dataLen, int *outputLen);
+bool ContainsPixel(const byte *rawImage, uint16_t width, uint16_t height, byte index);
+byte *RawToJagTexture(const byte *rawImage, uint16_t width, uint16_t height);
+byte *PatchToJagTexture(const byte *patchData, size_t dataLen, int32_t *outputLen);
 
-byte *CropPCPatch(const byte *patchData, size_t dataLen, int *outputLen, byte transparentIndex);
+byte *CropPCPatch(const byte *patchData, size_t dataLen, int32_t *outputLen, byte transparentIndex);
 
-void PCSpriteToJag(const byte *lumpData, int lumpSize, byte *jagHeader, int *jagHeaderLen, byte *jagData, int *jagDataLen);
-byte *PatchToPNG(byte *patchData, size_t dataLen, int *outputLen, byte transparentIndex);
-byte *JagSpriteToPNG(byte *jagHeader, byte *jagData, size_t headerLen, size_t dataLen, int *outputLen);
-byte *RawToPatch(byte *rawImage, int width, int height, int *outputLen, byte transparentIndex);
-byte *PNGToPatch(byte *pngData, size_t dataLen, int *outputLen, byte transparentIndex);
+void PCSpriteToJag(const byte *lumpData, int32_t lumpSize, byte *jagHeader, int32_t *jagHeaderLen, byte *jagData, int32_t *jagDataLen);
+byte *PatchToPNG(byte *patchData, size_t dataLen, int32_t *outputLen, byte transparentIndex);
+byte *JagSpriteToPNG(byte *jagHeader, byte *jagData, size_t headerLen, size_t dataLen, int32_t *outputLen);
+byte *RawToPatch(byte *rawImage, int32_t width, int32_t height, int32_t *outputLen, byte transparentIndex);
+byte *PNGToPatch(byte *pngData, size_t dataLen, int32_t *outputLen, byte transparentIndex);

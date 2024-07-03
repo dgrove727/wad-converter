@@ -27,7 +27,7 @@ const char *exclusionList[] = {
 
 static bool IsInExclusionList(const char *entryName)
 {
-	for (int i = 0; exclusionList[i] != NULL; i++)
+	for (int32_t i = 0; exclusionList[i] != NULL; i++)
 	{
 		if (!strcmp(entryName, exclusionList[i]))
 			return true;
@@ -38,8 +38,8 @@ static bool IsInExclusionList(const char *entryName)
 
 typedef struct
 {
-	int filepos;
-	int size;
+	int32_t filepos;
+	int32_t size;
 	char name[8];
 } directory_t;
 
@@ -48,11 +48,11 @@ void Exporter_Jaguar::Execute()
 	size_t lump_count = Listable::GetCount(this->entries);
 
 	// Build our directory information first
-	size_t directorySize = 16 * lump_count;
+	uint32_t directorySize = (uint32_t)(16 * lump_count);
 	directory_t *directory = new directory_t[lump_count];
 
 	size_t i = 0;
-	size_t fileposCursor = 0xC + directorySize; // Start of entry data
+	uint32_t fileposCursor = 0xC + directorySize; // Start of entry data
 	for (WADEntry *node = entries; node; node = (WADEntry *)node->next, i++)
 	{
 		directory_t *dirEntry = &directory[i];
@@ -72,9 +72,9 @@ void Exporter_Jaguar::Execute()
 	}
 
 	fwrite("IWAD", 1, 4, f);
-	unsigned int swapped_lump_count = swap_endian32(lump_count);
+	uint32_t swapped_lump_count = swap_endian32(lump_count);
 	fwrite(&swapped_lump_count, 4, 1, f);
-	unsigned int swapped_table_ptr = swap_endian32((unsigned int)0xC);
+	uint32_t swapped_table_ptr = swap_endian32((uint32_t)0xC);
 	fwrite(&swapped_table_ptr, 4, 1, f);
 
 	fwrite(directory, sizeof(directory_t), lump_count, f);
@@ -145,7 +145,7 @@ void Exporter_Jaguar::SetMaskedInTexture1()
 		}
 	}
 
-	int newLumpLength;
+	int32_t newLumpLength;
 	byte *newLump = t1->CreateLump(&newLumpLength);
 	texture1->SetData(newLump, newLumpLength);
 }

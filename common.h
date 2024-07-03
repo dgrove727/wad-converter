@@ -1,8 +1,9 @@
 #pragma once
 
 #include <stddef.h>
+#include <stdint.h>
 
-typedef unsigned char byte;
+typedef uint8_t byte;
 #define FRACBITS 16
 
 // Doom GFX has a header, and then pieces of data called
@@ -11,11 +12,11 @@ typedef unsigned char byte;
 // if a new row should be started or not
 typedef struct
 {
-	unsigned short width;
-	unsigned short height;
-	short leftoffset;
-	short topoffset;
-	unsigned int columnofs[8];
+	uint16_t width;
+	uint16_t height;
+	int16_t leftoffset;
+	int16_t topoffset;
+	uint32_t columnofs[8];
 } patchHeader_t;
 
 typedef struct
@@ -28,28 +29,28 @@ typedef struct
 
 typedef struct
 {
-	short width;
-	short height;
-	short leftoffset;
-	short topoffset;
-	unsigned short columnofs[8];
+	int16_t width;
+	int16_t height;
+	int16_t leftoffset;
+	int16_t topoffset;
+	uint16_t columnofs[8];
 } jagPatchHeader_t;
 
 typedef struct
 {
 	byte topdelta;
 	byte length;
-	unsigned short dataofs;
+	uint16_t dataofs;
 } jagPost_t;
 
 void *memdup(const void *mem, size_t size);
-unsigned int swap_endian32(unsigned int i);
-unsigned short swap_endian16(unsigned short i);
+uint32_t swap_endian32(uint32_t i);
+uint16_t swap_endian16(uint16_t i);
 
 bool strStartsWith(const char *base, const char *str);
 bool strEndsWith(const char *str, const char *suffix);
 
 bool SetEntryName(char *entryName, const char *data);
 
-byte *ReadAllBytes(const char *filename, int *file_size);
+byte *ReadAllBytes(const char *filename, int32_t *file_size);
 void WriteAllBytes(const char *filename, const byte *data, size_t len);
