@@ -41,7 +41,7 @@ void addnode(const uint8_t *pointer)
     int32_t targetindex;
     node_t *target;
 
-    targetindex = (int32_t)pointer & (WINDOW_SIZE - 1);
+    targetindex = reinterpret_cast<uintptr_t>(pointer) & (WINDOW_SIZE - 1);
 
     // remove the target node at this index
 
@@ -105,7 +105,7 @@ uint8_t *encode(const uint8_t *input, int32_t inputlen, int32_t *size)
         hashtable[i].end = 0;
     }
 
-    // initialize the hash table target 
+    // initialize the hash table target
     for (i = 0; i < WINDOW_SIZE; i++)
     {
         hashtarget[i].pointer = 0;

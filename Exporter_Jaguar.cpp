@@ -68,7 +68,8 @@ void Exporter_Jaguar::Execute()
 		dirEntry->filepos = swap_endian32(fileposCursor);
 		dirEntry->size = swap_endian32(node->GetUnCompressedDataLength());
 
-		fileposCursor += node->GetDataLength(); // The real size, uncompressed or not, dictates the file pointer
+		// Add the real size, uncompressed or not, to the file pointer.
+		fileposCursor += ((node->GetDataLength() - 1) & 0xFFFFFFFC) + 4; // Maintain 4-byte alignment.
 	}
 
 	fwrite("IWAD", 1, 4, f);
@@ -84,6 +85,11 @@ void Exporter_Jaguar::Execute()
 	{
 		if (node->GetDataLength() > 0)
 			fwrite(node->GetData(), node->GetDataLength(), 1, f);
+
+		// We need to maintain 4-byte alignments. Pad out the data with zeros as needed.
+		int32_t padding_size = ((node->GetDataLength() - 1) & 3) ^ 3;
+		for (int i=0; i < padding_size; i++)
+			putc(0, f);
 	}
 }
 

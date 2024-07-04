@@ -8,8 +8,8 @@ WADEntry *Importer_PC::Execute()
 	long file_size = ftell(in_file);
 	rewind(in_file);
 
-	size_t lump_count;
-	intptr_t table_ptr;
+	size_t lump_count = 0;
+	intptr_t table_ptr = 0;
 
 	char FOURCC[5];
 	FOURCC[4] = '\0';
