@@ -89,7 +89,7 @@ void Exporter_Jaguar::Execute()
 		// We need to maintain 4-byte alignments. Pad out the data with zeros as needed.
 		int32_t padding_size = ((node->GetDataLength() - 1) & 3) ^ 3;
 		for (int i=0; i < padding_size; i++)
-			putc(0, f);
+			fputc(0, f);
 	}
 }
 
