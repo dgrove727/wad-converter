@@ -256,13 +256,21 @@ void InsertPCLevelFromWAD(const char *wadfile, WADEntry *entries)
 
 	WADEntry *jagEntries = map->CreateJaguar(map->name, true);
 
+	WADEntry *insertPoint;
+	for (insertPoint = entries; insertPoint; insertPoint = (WADEntry *)insertPoint->next)
+	{
+		if (!strcmp(insertPoint->GetName(), "L_START"))
+			break;
+	}
+
 	WADEntry *node;
 	WADEntry *next;
 	for (node = jagEntries; node; node = next)
 	{
 		next = (WADEntry *)node->next;
 		Listable::RemoveNoFree(node, (Listable **)&jagEntries);
-		Listable::Add(node, (Listable **)&entries);
+		Listable::AddAfter(node, insertPoint, (Listable **)&entries);
+		insertPoint = node;
 	}
 
 	delete map;
