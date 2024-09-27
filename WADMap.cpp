@@ -106,6 +106,33 @@ static void P_EncodeNodesBBoxes(int16_t *bboxes)
 	P_EncodeNodeBBox_r(numnodes - 1, bboxes, worldbbox);
 }
 */
+
+bool IdenticalSectors(const sector_t *sec1, const sector_t *sec2)
+{
+	if (sec1->ceilingheight != sec2->ceilingheight)
+		return false;
+
+	if (strcmp(sec1->ceilingpic, sec2->ceilingpic))
+		return false;
+
+	if (sec1->floorheight != sec2->floorheight)
+		return false;
+
+	if (strcmp(sec1->floorpic, sec2->floorpic))
+		return false;
+
+	if (sec1->lightlevel != sec2->lightlevel)
+		return false;
+
+	if (sec1->special != sec2->special)
+		return false;
+
+	if (sec1->tag != sec2->tag)
+		return false;
+
+	return true;
+}
+
 bool IdenticalSidedefs(const sidedef_t *side1, const sidedef_t *side2)
 {
 	if (side1->rowoffset != side2->rowoffset)
@@ -129,6 +156,15 @@ bool IdenticalSidedefs(const sidedef_t *side1, const sidedef_t *side2)
 	return true;
 }
 
+void WADMap::UpdateSectorSidedefRefs(int16_t oldSectornum, int16_t newSectornum)
+{
+	for (int i = 0; i < numsidedefs; i++)
+	{
+		if (sidedefs[i].sector == oldSectornum)
+			sidedefs[i].sector = newSectornum;
+	}
+}
+
 void WADMap::UpdateLinedefSidedefRefs(int16_t oldSidenum, int16_t newSidenum)
 {
 	for (int i = 0; i < numlinedefs; i++)
@@ -139,6 +175,55 @@ void WADMap::UpdateLinedefSidedefRefs(int16_t oldSidenum, int16_t newSidenum)
 		if (linedefs[i].sidenum[1] == oldSidenum)
 			linedefs[i].sidenum[1] = newSidenum;
 	}
+}
+
+void WADMap::CompressSectors()
+{
+	int32_t numNewSectors = 0;
+
+	for (int32_t i = 0; i < numsectors; i++)
+	{
+		for (int32_t j = i + 1; j < numsectors; j++)
+		{
+			if (IdenticalSectors(&sectors[i], &sectors[j]))
+			{
+				// Flag for deletion
+				sectors[j].tag |= 32768;
+				numNewSectors++;
+			}
+		}
+	}
+
+	sector_t *newSectors = (sector_t *)malloc(numNewSectors * sizeof(sector_t));
+
+	// Copy the sectors to their new block of memory.
+	int32_t z = 0;
+	for (int32_t i = 0; i < numsectors; i++)
+	{
+		if (sectors[i].tag & 32768)
+		{
+			UpdateSectorSidedefRefs(i, z);
+			continue;
+		}
+
+		sector_t *newSec = &newSectors[z++];
+		sector_t *oldSec = &sectors[i];
+
+		newSec->ceilingheight = oldSec->ceilingheight;
+		for (int j = 0; j < 8; j++)
+			newSec->ceilingpic[j] = oldSec->ceilingpic[j];
+		newSec->floorheight = oldSec->floorheight;
+		for (int j = 0; j < 8; j++)
+			newSec->floorpic[j] = oldSec->floorpic[j];
+		newSec->lightlevel = oldSec->lightlevel;
+		newSec->special = oldSec->special;
+		newSec->tag = oldSec->tag;
+	}
+
+	free(sectors);
+	sectors = newSectors;
+	printf("Had %d sectors, now %d sectors.", numsectors, numNewSectors);
+	numsectors = numNewSectors;
 }
 
 void WADMap::CompressSidedefs()
@@ -204,6 +289,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs)
 {
 	WADEntry *head = NULL;
 
+//	CompressSectors();
 	CompressSidedefs();
 
 	// Header

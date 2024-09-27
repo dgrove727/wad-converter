@@ -15,7 +15,11 @@
 #define		VERSION			1.10
 #define		WAD_FORMAT		1
 
+#ifdef CHIBI
+const char *basePath = "D:\\32xrb2\\Chibi";
+#else
 const char *basePath = "D:\\32xrb2";
+#endif
 
 char *va(const char *format, ...)
 {
@@ -27,6 +31,59 @@ char *va(const char *format, ...)
 	va_end(argptr);
 
 	return string;
+}
+
+static void ConvertPCSpriteEntryToJagSpriteChibi(WADEntry *entry, WADEntry **list)
+{
+	// First, let's shrink it
+	int outputLen;
+	const patchHeader_t *header = (patchHeader_t *)entry->GetData();
+	byte *rawData = PatchToRaw(entry->GetData(), entry->GetUnCompressedDataLength(), &outputLen, 0);
+	short newWidth = header->width / 2;
+	short newHeight = header->height / 2;
+	byte *shrunkRaw = (byte *)malloc((newWidth) * (newHeight));
+
+	for (int x = 0, xd = 0; x < header->width && xd < newWidth; x += 2, xd++)
+	{
+		for (int y = 0, yd = 0; y < header->height && yd < newHeight; y += 2, yd++)
+		{
+			size_t srcPixelLocation = (y * header->width) + x;
+			size_t destPixelLocation = (yd * newWidth) + xd;
+
+			shrunkRaw[destPixelLocation] = rawData[srcPixelLocation];
+		}
+	}
+
+//	int pngOutputLen;
+//	byte *pngData = RawToPNG(shrunkRaw, newWidth, newHeight, &pngOutputLen);
+//	WriteAllBytes("D:\\32xrb2\\chibi\\test.png", pngData, pngOutputLen);
+
+	byte *dataToUse = shrunkRaw;
+	if (newWidth == 0 || newHeight == 0)
+	{
+		dataToUse = rawData;
+		newWidth = header->width;
+		newHeight = header->height;
+	}
+
+	byte *pcData = RawToPatch(dataToUse, newWidth, newHeight, &outputLen, 0);
+	patchHeader_t *pcDataHeader = (patchHeader_t *)pcData;
+	pcDataHeader->leftoffset = header->leftoffset / 2;
+	pcDataHeader->topoffset = header->topoffset / 2;
+
+	byte *jagHeader = (byte *)malloc(8 * 1024); // 8k
+	byte *jagData = (byte *)malloc(65 * 1024); // 65k (impossible to be bigger than this)
+	int jagHeaderSize, jagDataSize;
+
+	PCSpriteToJag(pcData, outputLen, jagHeader, &jagHeaderSize, jagData, &jagDataSize);
+
+	entry->SetData(jagHeader, jagHeaderSize);
+
+	WADEntry *dotEntry = new WADEntry(".", jagData, jagDataSize);
+	Listable::AddAfter(dotEntry, entry, (Listable **)&list);
+
+	free(jagHeader);
+	free(jagData);
 }
 
 static void ConvertPCSpriteEntryToJagSprite(WADEntry *entry, WADEntry **list)
@@ -392,13 +449,23 @@ static void MyFunTest()
 
 		if (insideSprites && strcmp(node->GetName(), "S_START"))
 		{
+#ifdef CHIBI
+			bool chibify = strcmp(node->GetName(), "GFZDA0") && strcmp(node->GetName(), "GFZFA0") && strcmp(node->GetName(), "GFZGA0") && strcmp(node->GetName(), "GFZQA0") && strcmp(node->GetName(), "GFZRA0") && strcmp(node->GetName(), "GFZWA0");
+
+			if (chibify)
+				ConvertPCSpriteEntryToJagSpriteChibi(node, &importedEntries);
+			else
+				ConvertPCSpriteEntryToJagSprite(node, &importedEntries);
+#else
 			ConvertPCSpriteEntryToJagSprite(node, &importedEntries);
+#endif
 		}
 	}
 
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP01.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP02.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP03.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\pcwad.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP30.wad", basePath), importedEntries);
 
 	int dummySize;
@@ -406,24 +473,6 @@ static void MyFunTest()
 	WADEntry *dummyEntry = new WADEntry("DUMMY", dummy, dummySize);
 	Listable::Add(dummyEntry, (Listable **)&importedEntries);
 	free(dummy);
-
-	// Grab O_assets for compatibility (for now)
-	f = fopen(va("%s\\min_d32xr.wad", basePath), "rb");
-	Importer_PC *iOj = new Importer_PC(f);
-	WADEntry *importedEntriesOld = iOj->Execute();
-	delete iOj;
-
-	for (node = importedEntriesOld; node; node = next)
-	{
-		next = (WADEntry *)node->next;
-		WADEntry *existing = WADEntry::FindEntry(importedEntries, node->GetName());
-
-		if (existing)
-			continue; // We replaced this entry already
-
-		Listable::RemoveNoFree(node, (Listable **)&importedEntriesOld);
-		Listable::Add(node, (Listable **)&importedEntries);
-	}
 
 	// Write it out
 	FILE *expF = fopen(va("%s\\doom32x.wad", basePath), "wb");
@@ -436,8 +485,51 @@ static void MyFunTest()
 	return;
 }
 
+void ChibiMap(const char *wadfile)
+{
+	FILE *f = fopen(wadfile, "rb");
+	Importer_PC *ipc = new Importer_PC(f);
+	WADEntry *mapEntries = ipc->Execute();
+	delete ipc;
+
+	WADMap *map = new WADMap(mapEntries);
+	for (int i = 0; i < map->numsectors; i++)
+	{
+		map->sectors[i].floorheight /= 2;
+		map->sectors[i].ceilingheight /= 2;
+	}
+
+	for (int i = 0; i < map->numthings; i++)
+	{
+		map->things[i].x /= 2;
+		map->things[i].y /= 2;
+	}
+
+	for (int i = 0; i < map->numvertexes; i++)
+	{
+		map->vertexes[i].x /= 2;
+		map->vertexes[i].y /= 2;
+	}
+
+	WADEntry *levelEntries = map->CreatePC(mapEntries->GetName());
+	f = fopen(wadfile, "wb");
+	Exporter_PC *exPC = new Exporter_PC(levelEntries, f);
+	exPC->Execute();
+	delete exPC;
+}
+
+void ChibiMaps()
+{
+	ChibiMap(va("%s\\Levels\\MAP01.wad", basePath));
+	ChibiMap(va("%s\\Levels\\MAP02.wad", basePath));
+	ChibiMap(va("%s\\Levels\\MAP03.wad", basePath));
+//	ChibiMap(va("%s\\Levels\\pcwad.wad", basePath));
+	ChibiMap(va("%s\\Levels\\MAP30.wad", basePath));
+}
+
 int main(int argc, char *argv[])
 {
+//	ChibiMaps();
 	MyFunTest();
 	return 0;
 	printf(

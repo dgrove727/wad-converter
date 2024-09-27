@@ -861,6 +861,11 @@ byte *FlatToPNG(const byte *flatData, int32_t width, int32_t height, int32_t *ou
 	return stbi_write_png_to_mem(flatData, 0, width, height, 1, outputLen);
 }
 
+byte *RawToPNG(const byte *rawData, int32_t width, int32_t height, int32_t *outputLen)
+{
+	return stbi_write_png_to_mem(rawData, 0, width, height, 1, outputLen);
+}
+
 byte *PNGToFlat(byte *pngData, int32_t pngLength, int32_t *width, int32_t *height)
 {
 	int32_t channels;
@@ -1115,10 +1120,11 @@ byte *CropPCPatch(const byte *patchData, size_t dataLen, int32_t *outputLen, byt
 // Works for patches, sprites, all of the transparency-format Doom graphics
 // Returns an allocated representation of the 8-bit PNG data (albeit without palette information).
 // Up to you to manage the memory lifetime of it!
-byte *PatchToPNG(byte *patchData, size_t dataLen, int32_t *outputLen, byte transparentIndex)
+byte *PatchToPNG(const byte *patchData, size_t dataLen, int32_t *outputLen, byte transparentIndex)
 {
 	const patchHeader_t *header = (patchHeader_t *)patchData;
 	byte *rawImage = PatchToRaw(patchData, dataLen, outputLen, transparentIndex);
+
 
 	byte *pngData = stbi_write_png_to_mem(rawImage, 0, header->width, header->height, 1, outputLen);
 	free(rawImage);
