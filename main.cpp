@@ -446,6 +446,10 @@ static void MyFunTest()
 		{
 			node->SetName("PLAY^5");
 		}
+		else if (!strcmp(node->GetName(), "IVSPz0"))
+		{
+			node->SetName("IVSP^0");
+		}
 
 		if (insideSprites && strcmp(node->GetName(), "S_START"))
 		{
