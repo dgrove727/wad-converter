@@ -1,7 +1,9 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include "stb_image.h"
 #include "stb_image_write.h"
+#include "stb_image_resize2.h"
 #include "gfx_convert.h"
 
 typedef struct
@@ -824,11 +826,11 @@ byte GetIndexFromRGB(byte r, byte g, byte b)
 	return (byte)closestIndex;
 }
 
-byte *RGBToIndexed(byte *rgbData, int32_t width, int32_t height)
+byte *RGBToIndexed(const byte *rgbData, int32_t length)
 {
-	byte *indexedImage = (byte *)malloc(width * height);
+	byte *indexedImage = (byte *)malloc(length / 3);
 	int32_t z = 0;
-	for (int32_t i = 0; i < width * height * 3; i += 3)
+	for (int32_t i = 0; i < length; i += 3)
 	{
 		byte r = rgbData[i];
 		byte g = rgbData[i + 1];
@@ -840,6 +842,28 @@ byte *RGBToIndexed(byte *rgbData, int32_t width, int32_t height)
 	}
 
 	return indexedImage;
+}
+
+byte *RGBToIndexed(const byte *rgbData, int32_t width, int32_t height)
+{
+	return RGBToIndexed(rgbData, width * height * 3);
+}
+
+byte *IndexedToRGB(const byte *indData, int32_t width, int32_t height)
+{
+	byte *rgbImage = (byte *)malloc(width * height * 3);
+	byte *cursor = rgbImage;
+	int32_t z = 0;
+	for (int32_t i = 0; i < width * height; i++)
+	{
+		palentry_t *palEntry = &palette[indData[i]];
+
+		*cursor++ = palEntry->r;
+		*cursor++ = palEntry->g;
+		*cursor++ = palEntry->b;
+	}
+
+	return rgbImage;
 }
 
 byte GetPixel(const byte *rawData, int32_t width, int32_t x, int32_t y)
@@ -854,6 +878,89 @@ void SetPixel(byte *rawData, int32_t width, int32_t x, int32_t y, byte pixel)
 	size_t pixelLocation = (y * width) + x;
 
 	rawData[pixelLocation] = pixel;
+}
+
+byte *FlatMipmaps(const byte *data, int dataLen, int numlevels, int *outputLen)
+{
+	int flatSize = (int)sqrt(dataLen);
+
+	byte *rgbImage = IndexedToRGB(data, flatSize, flatSize);
+	int fullSize = flatSize;
+
+	byte *totalBuffer = (byte *)malloc(1024 * 1024); // Will never be this big
+	int dataSize = 0;
+
+	memcpy(totalBuffer, rgbImage, flatSize * flatSize * 3);
+	dataSize += flatSize * flatSize * 3;
+	flatSize >>= 1;
+
+	for (int i = 0; i < numlevels-1; i++)
+	{
+		byte *resized = stbir_resize_uint8_linear(rgbImage, fullSize, fullSize, 0, NULL, flatSize, flatSize, 0, STBIR_RGB);
+
+		memcpy(&totalBuffer[dataSize], resized, flatSize * flatSize * 3);
+		dataSize += flatSize * flatSize * 3;
+
+		free(resized);
+
+		flatSize >>= 1;
+
+		if (flatSize < 1)
+			flatSize = 1;
+	}
+
+	// Convert back to indexed graphic
+	byte *indexedFinal = RGBToIndexed(totalBuffer, dataSize);
+	free(totalBuffer);
+
+	free(rgbImage);
+
+	// All done! Send it back.
+	*outputLen = dataSize / 3;
+	return indexedFinal;
+}
+
+byte *PatchMipmaps(const byte *data, int width, int height, int numlevels, int *outputLen)
+{
+	byte *rgbImage = IndexedToRGB(data, width, height);
+	int mipWidth = width;
+	int mipHeight = height;
+
+	byte *totalBuffer = (byte *)malloc(1024 * 1024); // Will never be this big
+	int dataSize = 0;
+
+	memcpy(totalBuffer, rgbImage, mipWidth * mipHeight * 3);
+	dataSize += mipWidth * mipHeight * 3;
+	mipWidth >>= 1;
+	mipHeight >>= 1;
+
+	for (int i = 0; i < numlevels - 1; i++)
+	{
+		byte *resized = stbir_resize_uint8_linear(rgbImage, width, height, 0, NULL, mipWidth, mipHeight, 0, STBIR_RGB);
+
+		memcpy(&totalBuffer[dataSize], resized, mipWidth * mipHeight * 3);
+		dataSize += mipWidth * mipHeight * 3;
+
+		free(resized);
+
+		mipWidth >>= 1;
+		if (mipWidth < 1)
+			mipWidth = 1;
+
+		mipHeight >>= 1;
+		if (mipHeight < 1)
+			mipHeight = 1;
+	}
+
+	// Convert back to indexed graphic
+	byte *indexedFinal = RGBToIndexed(totalBuffer, dataSize);
+	free(totalBuffer);
+
+	free(rgbImage);
+
+	// All done! Send it back.
+	*outputLen = dataSize / 3;
+	return indexedFinal;
 }
 
 byte *FlatToPNG(const byte *flatData, int32_t width, int32_t height, int32_t *outputLen)

@@ -12,6 +12,9 @@
 #include "SRB2LevelConv.h"
 #include <stdarg.h>
 
+#define MAKE_MIPMAPS
+#define MIPLEVELS 4
+
 #define		VERSION			1.10
 #define		WAD_FORMAT		1
 
@@ -403,8 +406,20 @@ static void MyFunTest()
 				// Convert to everyone's favorite lovable row-major Jaguar format
 				int texLen;
 				byte *texData = PatchToJagTexture(lvlTextures->GetData(), lvlTextures->GetDataLength(), &texLen);
+
+#ifdef MAKE_MIPMAPS
+				const patchHeader_t *header = (patchHeader_t *)lvlTextures->GetData(); // Need width/height info
+
+				int dataLen;
+				byte *mipData = PatchMipmaps(texData, header->width, header->height, MIPLEVELS, &dataLen);
+				free(texData);
+
+				lvlTextures->SetData(mipData, dataLen);
+				free(mipData);
+#else
 				lvlTextures->SetData(texData, texLen);
 				free(texData);
+#endif
 
 				lastAdded = lvlTextures;
 				lvlTextures = next;
@@ -426,6 +441,13 @@ static void MyFunTest()
 				// Just straight-up steal 'em, since we're working with RAM copies.
 				Listable::RemoveNoFree(lvlFlats, (Listable **)&lvleditorEntries);
 				Listable::AddAfter(lvlFlats, lastAdded, (Listable **)&importedEntries);
+
+#ifdef MAKE_MIPMAPS
+				int dataLen;
+				byte *mipData = FlatMipmaps(lvlFlats->GetData(), lvlFlats->GetUnCompressedDataLength(), MIPLEVELS, &dataLen);
+				lvlFlats->SetData(mipData, dataLen);
+				free(mipData);
+#endif
 
 				lastAdded = lvlFlats;
 				lvlFlats = next;

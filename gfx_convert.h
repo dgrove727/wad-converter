@@ -5,6 +5,9 @@ byte *FlatToPNG(const byte *flatData, int32_t width, int32_t height, int32_t *ou
 byte *PNGToFlat(byte *pngData, int32_t pngLength, int32_t *width, int32_t *height);
 byte *RawToPNG(const byte *rawData, int32_t width, int32_t height, int32_t *outputLen);
 
+byte *FlatMipmaps(const byte *data, int dataLen, int numlevels, int *outputLen);
+byte *PatchMipmaps(const byte *data, int width, int height, int numlevels, int *outputLen);
+
 bool ContainsPixel(const byte *rawImage, uint16_t width, uint16_t height, byte index);
 byte *RawToJagTexture(const byte *rawImage, uint16_t width, uint16_t height);
 byte *PatchToJagTexture(const byte *patchData, size_t dataLen, int32_t *outputLen);
