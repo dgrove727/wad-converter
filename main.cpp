@@ -347,10 +347,16 @@ static void MyFunTest()
 	WADEntry *lvleditorEntries = ipc->Execute();
 	delete ipc;
 
+	f = fopen(va("%s\\68k.wad", basePath), "rb"); // Where to get 68k entries (first bank)
+	ipc = new Importer_PC(f);
+	WADEntry *M68kEntries = ipc->Execute();
+	delete ipc;
+
 	bool insideSprites = false;
 	bool insideTextures = false;
 	bool insideFlats = false;
 	bool insideSounds = false;
+	bool inside68k = false;
 
 	WADEntry *node;
 	WADEntry *next;
@@ -358,6 +364,23 @@ static void MyFunTest()
 	{
 		next = (WADEntry*)node->next;
 
+		if (!strcmp(node->GetName(), "68_START"))
+		{
+			inside68k = true;
+			WADEntry *M68Next;
+			WADEntry *lastAdded = node;
+			for (WADEntry *M68Node = M68kEntries; M68Node; M68Node = M68Next)
+			{
+				M68Next = (WADEntry*)M68Node->next;
+
+				// Just straight-up steal 'em, since we're working with RAM copies.
+				Listable::RemoveNoFree(M68Node, (Listable **)&M68kEntries);
+				Listable::AddAfter(M68Node, lastAdded, (Listable **)&importedEntries);
+				lastAdded = M68Node;
+			}
+		}
+		if (!strcmp(node->GetName(), "68_END"))
+			inside68k = false;
 		if (!strcmp(node->GetName(), "S_START"))
 			insideSprites = true;
 		if (!strcmp(node->GetName(), "S_END"))
