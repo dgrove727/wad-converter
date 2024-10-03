@@ -12,8 +12,8 @@
 #include "SRB2LevelConv.h"
 #include <stdarg.h>
 
-#define MAKE_MIPMAPS
-#define MIPLEVELS 4
+//#define MAKE_MIPMAPS
+//#define MIPLEVELS 4
 
 #define		VERSION			1.10
 #define		WAD_FORMAT		1
