@@ -514,7 +514,6 @@ static void MyFunTest()
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP01.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP02.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP03.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\pcwad.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP30.wad", basePath), importedEntries);
 
 	int dummySize;
