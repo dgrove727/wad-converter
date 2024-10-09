@@ -1344,6 +1344,104 @@ void PCSpriteToJag(const byte *lumpData, int32_t lumpSize, byte *jagHeader, int3
 	*jagDataLen = dataPtr - jagData;
 }
 
+void PCSpriteToJagNarrow(const byte *lumpData, int32_t lumpSize, byte *jagHeader, int32_t *jagHeaderLen, byte *jagData, int32_t *jagDataLen)
+{
+	// Casting to a structure makes it easier to read
+	patchHeader_t *header = (patchHeader_t *)lumpData;
+	jagPatchHeader_t *jagPatchHeader = (jagPatchHeader_t *)jagHeader;
+	uint16_t headerWidth = header->width / 2;
+	jagPatchHeader->width = swap_endian16(headerWidth);
+	jagPatchHeader->height = swap_endian16(header->height);
+	jagPatchHeader->leftoffset = swap_endian16(header->leftoffset / 2);
+	jagPatchHeader->topoffset = swap_endian16(header->topoffset);
+
+	// Column pointers; Convert them from uint32_t to uint16_t
+	int32_t column = 0;
+	for (int32_t i = 0; column < headerWidth; i += 2)
+		jagPatchHeader->columnofs[column++] = swap_endian16((uint16_t)header->columnofs[i]);
+
+	byte *dataPtr = jagData;
+	uint16_t headerSize = 8 + (headerWidth * 2);
+	byte *headerPtr = jagHeader + headerSize;
+
+	// Keep a cache of posts already drawn. If we come across one that matches one of the previous, re-use it.
+	// This can make a file size significantly smaller if there are lots of repeating posts.
+	jagPostCache_t jagPostCache[256];
+	int32_t numJagPostCache = 0;
+
+	// 'Draw' the PC Doom graphic into the Jaguar one
+	int32_t jagColumn = 0;
+	for (int32_t i = 0; jagColumn < headerWidth; i += 2, jagColumn++)
+	{
+		uint16_t colOffset = (uint16_t)header->columnofs[i];
+		const post_t *post = (post_t *)(lumpData + colOffset);
+
+		jagPatchHeader->columnofs[jagColumn] = swap_endian16((uint16_t)(headerPtr - jagHeader));
+
+		while (post->topdelta != 255)
+		{
+			byte len = post->length;
+			jagPost_t *jagPost = (jagPost_t *)headerPtr;
+			jagPost->topdelta = post->topdelta;
+			jagPost->length = len;
+			jagPost->dataofs = swap_endian16(dataPtr - jagData);
+
+			const byte *pixel = post->data;
+
+			// First, draw into a temporary buffer. See if we already have this data previously
+			byte tempBuffer[2048];
+			for (int32_t j = 0; j < post->length; j++)
+				tempBuffer[j] = *pixel++;
+
+			bool foundDuplicate = false;
+			for (int32_t j = 0; j < numJagPostCache; j++)
+			{
+				if (jagPostCache[j].length != jagPost->length)
+					continue;
+
+				if (!memcmp(jagPostCache[j].data, tempBuffer, jagPost->length))
+				{
+					foundDuplicate = true;
+					jagPost->dataofs = swap_endian16(jagPostCache[j].address);
+
+					// Advance the PC graphic
+					pixel = post->data;
+					for (int32_t k = 0; k < post->length; k++)
+						pixel++;
+					pixel++; // dummy value in PC gfx
+					post = (const post_t *)pixel;
+					break;
+				}
+			}
+
+			if (!foundDuplicate)
+			{
+				pixel = post->data;
+				for (int32_t j = 0; j < post->length; j++)
+				{
+					*dataPtr++ = *pixel;
+					jagPostCache[numJagPostCache].data[j] = *pixel;
+					pixel++;
+				}
+
+				jagPostCache[numJagPostCache].length = jagPost->length;
+				jagPostCache[numJagPostCache].address = swap_endian16(jagPost->dataofs);
+				numJagPostCache++;
+
+				pixel++; // dummy value in PC gfx
+				post = (const post_t *)pixel;
+			}
+			headerPtr += sizeof(jagPost_t);
+		}
+
+		*headerPtr++ = 0xff;
+		*headerPtr++ = 0xff;
+	}
+
+	*jagHeaderLen = headerPtr - jagHeader;
+	*jagDataLen = dataPtr - jagData;
+}
+
 byte *JagSpriteToPNG(byte *jagHeader, byte *jagData, size_t headerLen, size_t dataLen, int32_t *outputLen)
 {
 	jagPatchHeader_t *header = (jagPatchHeader_t *)jagHeader;

@@ -89,13 +89,40 @@ static void ConvertPCSpriteEntryToJagSpriteChibi(WADEntry *entry, WADEntry **lis
 	free(jagData);
 }
 
+const char *halfSprites[] = {
+	"FWR1",
+	"FWR2",
+	"FWR3",
+	"BUS1",
+	"BUS2",
+	NULL,
+};
+
+static bool IsHalfSprite(const char *name)
+{
+	int i = 0;
+	const char *check = halfSprites[0];
+	while (check)
+	{
+		if (strstr(name, check) == name)
+			return true;
+
+		check = halfSprites[++i];
+	}
+
+	return false;
+}
+
 static void ConvertPCSpriteEntryToJagSprite(WADEntry *entry, WADEntry **list)
 {
 	byte *jagHeader = (byte *)malloc(8 * 1024); // 8k
 	byte *jagData = (byte *)malloc(65 * 1024); // 65k (impossible to be bigger than this)
 	int jagHeaderSize, jagDataSize;
 
-	PCSpriteToJag(entry->GetData(), entry->GetDataLength(), jagHeader, &jagHeaderSize, jagData, &jagDataSize);
+	if (IsHalfSprite(entry->GetName()))
+		PCSpriteToJagNarrow(entry->GetData(), entry->GetDataLength(), jagHeader, &jagHeaderSize, jagData, &jagDataSize);
+	else
+		PCSpriteToJag(entry->GetData(), entry->GetDataLength(), jagHeader, &jagHeaderSize, jagData, &jagDataSize);
 
 	entry->SetData(jagHeader, jagHeaderSize);
 

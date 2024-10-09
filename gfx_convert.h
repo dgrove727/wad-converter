@@ -15,6 +15,7 @@ byte *PatchToJagTexture(const byte *patchData, size_t dataLen, int32_t *outputLe
 byte *CropPCPatch(const byte *patchData, size_t dataLen, int32_t *outputLen, byte transparentIndex);
 
 void PCSpriteToJag(const byte *lumpData, int32_t lumpSize, byte *jagHeader, int32_t *jagHeaderLen, byte *jagData, int32_t *jagDataLen);
+void PCSpriteToJagNarrow(const byte *lumpData, int32_t lumpSize, byte *jagHeader, int32_t *jagHeaderLen, byte *jagData, int32_t *jagDataLen);
 byte *PatchToPNG(const byte *patchData, size_t dataLen, int32_t *outputLen, byte transparentIndex);
 byte *JagSpriteToPNG(byte *jagHeader, byte *jagData, size_t headerLen, size_t dataLen, int32_t *outputLen);
 byte *PatchToRaw(const byte *patchData, size_t dataLen, int32_t *outputLen, byte transparentIndex);
