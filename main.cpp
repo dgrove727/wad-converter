@@ -90,11 +90,35 @@ static void ConvertPCSpriteEntryToJagSpriteChibi(WADEntry *entry, WADEntry **lis
 }
 
 const char *halfSprites[] = {
+	// R_PrepScenery items
 	"FWR1",
 	"FWR2",
 	"FWR3",
 	"BUS1",
 	"BUS2",
+
+	// R_PrepMobj items
+	"BOM1",
+	"BOM2",
+	"BOM3",
+	"DUST",
+	"FL01",
+	"FL02",
+	"FL03",
+	"FL12",
+	"GFZC",
+	"JETF",
+	"LASR",
+	"LASF",
+	"MISL",
+
+	// Shields (experimental)
+	"ARMA",
+	"ELEM",
+	"FORC",
+	"MAGN",
+	"WIND",
+
 	NULL,
 };
 
