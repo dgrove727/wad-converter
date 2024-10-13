@@ -137,13 +137,13 @@ void Exporter_Jaguar::SetMaskedInTexture1()
 					if (node->IsCompressed())
 					{
 						byte *decomp = node->Decompress();
-						if (ContainsPixel(decomp, mt->width, mt->height, 0) || !strcmp(entryName, "GFZDA0") || !strcmp(entryName, "GFZWA0"))
+						if (ContainsPixel(decomp, mt->width, mt->height, 0) || !strcmp(entryName, "GFZDOOR") || !strcmp(entryName, "GFZWINDP"))
 							mt->masked = 1;
 						free(decomp);
 					}
 					else
 					{
-						if (ContainsPixel(node->GetData(), mt->width, mt->height, 0) || !strcmp(entryName, "GFZDA0") || !strcmp(entryName, "GFZWA0"))
+						if (ContainsPixel(node->GetData(), mt->width, mt->height, 0) || !strcmp(entryName, "GFZDOOR") || !strcmp(entryName, "GFZWINDP"))
 							mt->masked = 1;
 					}
 				}

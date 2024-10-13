@@ -550,7 +550,7 @@ static void MyFunTest()
 		if (insideSprites && strcmp(node->GetName(), "S_START"))
 		{
 #ifdef CHIBI
-			bool chibify = strcmp(node->GetName(), "GFZDA0") && strcmp(node->GetName(), "GFZFA0") && strcmp(node->GetName(), "GFZGA0") && strcmp(node->GetName(), "GFZQA0") && strcmp(node->GetName(), "GFZRA0") && strcmp(node->GetName(), "GFZWA0");
+			bool chibify = strcmp(node->GetName(), "GFZDOOR") && strcmp(node->GetName(), "GFZFENCE") && strcmp(node->GetName(), "GFZGRASS") && strcmp(node->GetName(), "GFZGATE") && strcmp(node->GetName(), "GFZRAIL") && strcmp(node->GetName(), "GFZWINDP");
 
 			if (chibify)
 				ConvertPCSpriteEntryToJagSpriteChibi(node, &importedEntries);
@@ -566,6 +566,14 @@ static void MyFunTest()
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP02.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP03.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP30.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP50.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP60.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP61.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP62.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP63.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP64.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP65.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP66.wad", basePath), importedEntries);
 
 	int dummySize;
 	byte *dummy = ReadAllBytes(va("%s\\22pal.txt", basePath), &dummySize);
