@@ -16,8 +16,9 @@ private:
 	size_t _uncompressedDataLength;
 	bool _isCompressed;
 
-
 public:
+	int32_t *dir_entry_filepos; // INTERNAL ONLY FOR USE DURING SAVE PROCESS
+
 	void SetDataInternal(const byte *value, size_t length);
 	const char *GetName() const;
 	void SetName(const char *value);

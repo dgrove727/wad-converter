@@ -1269,8 +1269,9 @@ void PCSpriteToJag(const byte *lumpData, int32_t lumpSize, byte *jagHeader, int3
 
 	// Keep a cache of posts already drawn. If we come across one that matches one of the previous, re-use it.
 	// This can make a file size significantly smaller if there are lots of repeating posts.
-	jagPostCache_t jagPostCache[256];
+	jagPostCache_t jagPostCache[1024];
 	int32_t numJagPostCache = 0;
+	int32_t numReusedPosts = 0;
 
 	// 'Draw' the PC Doom graphic into the Jaguar one
 	for (int32_t i = 0; i < header->width; i++)
@@ -1304,6 +1305,7 @@ void PCSpriteToJag(const byte *lumpData, int32_t lumpSize, byte *jagHeader, int3
 				if (!memcmp(jagPostCache[j].data, tempBuffer, jagPost->length))
 				{
 					foundDuplicate = true;
+					numReusedPosts++;
 					jagPost->dataofs = swap_endian16(jagPostCache[j].address);
 
 					// Advance the PC graphic
@@ -1342,6 +1344,9 @@ void PCSpriteToJag(const byte *lumpData, int32_t lumpSize, byte *jagHeader, int3
 
 	*jagHeaderLen = headerPtr - jagHeader;
 	*jagDataLen = dataPtr - jagData;
+
+	if (numReusedPosts > 0)
+		printf("Reused %d posts!\n", numReusedPosts);
 }
 
 void PCSpriteToJagNarrow(const byte *lumpData, int32_t lumpSize, byte *jagHeader, int32_t *jagHeaderLen, byte *jagData, int32_t *jagDataLen)

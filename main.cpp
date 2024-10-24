@@ -14,6 +14,7 @@
 
 //#define MAKE_MIPMAPS
 //#define MIPLEVELS 4
+#define WADPTRSTART 0//0x38000
 
 #define		VERSION			1.10
 #define		WAD_FORMAT		1
@@ -91,11 +92,19 @@ static void ConvertPCSpriteEntryToJagSpriteChibi(WADEntry *entry, WADEntry **lis
 
 const char *halfSprites[] = {
 	// R_PrepScenery items
+	"CORL",
+	"SEWE",
+	"KELP",
 	"FWR1",
 	"FWR2",
 	"FWR3",
+	"FWR4",
+	"FWR5",
+	"FWR6",
 	"BUS1",
 	"BUS2",
+	"THZP",
+	"THZT",
 
 	// R_PrepMobj items
 	"BOM1",
@@ -411,12 +420,25 @@ static void MyFunTest()
 	bool insideFlats = false;
 	bool insideSounds = false;
 	bool inside68k = false;
+	bool insideCompressedGraphics = false;
 
 	WADEntry *node;
 	WADEntry *next;
 	for (node = importedEntries; node; node = next)
 	{
+		printf("%s\n", node->GetName());
 		next = (WADEntry*)node->next;
+
+		if (!strcmp(node->GetName(), "GC_END"))
+			insideCompressedGraphics = false;
+
+		if (insideCompressedGraphics)
+		{
+			byte *data = (byte*)memdup(node->GetData(), node->GetDataLength());
+			node->SetIsCompressed(true);
+			node->SetData(data, node->GetDataLength());
+			free(data);
+		}
 
 		if (!strcmp(node->GetName(), "68_START"))
 		{
@@ -439,6 +461,8 @@ static void MyFunTest()
 			insideSprites = true;
 		if (!strcmp(node->GetName(), "S_END"))
 			insideSprites = false;
+		if (!strcmp(node->GetName(), "GC_START"))
+			insideCompressedGraphics = true;
 		if (!strcmp(node->GetName(), "T_START"))
 		{
 			insideTextures = true;
@@ -565,8 +589,10 @@ static void MyFunTest()
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP01.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP02.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP03.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP04a.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP06.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP07a.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP30.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP50.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP60.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP61.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP62.wad", basePath), importedEntries);
@@ -575,15 +601,14 @@ static void MyFunTest()
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP65.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP66.wad", basePath), importedEntries);
 
-	int dummySize;
-	byte *dummy = ReadAllBytes(va("%s\\22pal.txt", basePath), &dummySize);
+	int dummySize = 4;
+	byte dummy[] = { 0xaf, 0xaf, 0xaf, 0xaf };
 	WADEntry *dummyEntry = new WADEntry("DUMMY", dummy, dummySize);
 	Listable::Add(dummyEntry, (Listable **)&importedEntries);
-	free(dummy);
 
 	// Write it out
 	FILE *expF = fopen(va("%s\\doom32x.wad", basePath), "wb");
-	Exporter_Jaguar *ex = new Exporter_Jaguar(importedEntries, expF);
+	Exporter_Jaguar *ex = new Exporter_Jaguar(importedEntries, expF, WADPTRSTART);
 	// Set masked bit in TEXTURE1 lump if necessary.
 	ex->SetMaskedInTexture1();
 	ex->Execute();
