@@ -77,18 +77,23 @@ void Exporter_Jaguar::Execute()
 	}
 
 #define HALFMEG (512*1024)
+#define PADDING_SIZE(x) (((x->GetDataLength() - 1) & 3) ^ 3)
 
 	// Pre-scan the entries and set the filepos cursor
 	int32_t fauxPtr = wadPtrStart + 12 + (sizeof(directory_t) * lump_count);
 	bool insideSprites = false;
+	bool insideMap = false;
 	for (WADEntry *node = entries; node; node = (WADEntry *)node->next)
 	{
-		int32_t padding_size = ((node->GetDataLength() - 1) & 3) ^ 3;
+		int32_t padding_size = PADDING_SIZE(node);
 
 		if (!strcmp(node->GetName(), "S_START"))
 			insideSprites = true;
 		if (!strcmp(node->GetName(), "S_END"))
 			insideSprites = false;
+
+		if (strstr(node->GetName(), "MAP") && strlen(node->GetName()) == 5) // Should be a map...
+			insideMap = true;
 
 		if (bankSwitching)
 		{
@@ -100,7 +105,7 @@ void Exporter_Jaguar::Execute()
 				if (strcmp(node->GetName(), ".")) // Header entry (i.e., PLAYA1)
 				{
 					WADEntry *dataEntry = (WADEntry *)node->next;
-					int32_t dataEntry_padding_size = ((dataEntry->GetDataLength() - 1) & 3) ^ 3;
+					int32_t dataEntry_padding_size = PADDING_SIZE(dataEntry);
 
 					int32_t endOfPair = fauxPtr + node->GetDataLength() + padding_size + dataEntry->GetDataLength() + dataEntry_padding_size;
 
@@ -108,13 +113,51 @@ void Exporter_Jaguar::Execute()
 						fauxPtr = ((fauxPtrHalfMeg + 1) * HALFMEG);
 				}
 			}
+			else if (insideMap)
+			{
+				// Ensure all of the map is contained within one 512kb bank
+				// Several entries are streamed from the ROM (VERTEXES, SEGS, NODES, REJECT, BLOCKMAP)
+				if (strstr(node->GetName(), "MAP") && strlen(node->GetName()) == 5) // Header entry (MAPxx)
+				{
+					WADEntry *THINGSlump = (WADEntry *)node->next;
+					WADEntry *LINEDEFSlump = (WADEntry *)THINGSlump->next;
+					WADEntry *SIDEDEFSlump = (WADEntry *)LINEDEFSlump->next;
+					WADEntry *VERTEXESlump = (WADEntry *)SIDEDEFSlump->next;
+					WADEntry *SEGSlump = (WADEntry *)VERTEXESlump->next;
+					WADEntry *SSECTORSlump = (WADEntry *)SEGSlump->next;
+					WADEntry *NODESlump = (WADEntry *)SSECTORSlump->next;
+					WADEntry *SECTORSlump = (WADEntry *)NODESlump->next;
+					WADEntry *REJECTlump = (WADEntry *)SECTORSlump->next;
+					WADEntry *BLOCKMAPlump = (WADEntry *)REJECTlump->next;
+
+					int32_t endOfMap = fauxPtr;
+
+					endOfMap += node->GetDataLength() + PADDING_SIZE(node);
+					endOfMap += THINGSlump->GetDataLength() + PADDING_SIZE(THINGSlump);
+					endOfMap += LINEDEFSlump->GetDataLength() + PADDING_SIZE(LINEDEFSlump);
+					endOfMap += SIDEDEFSlump->GetDataLength() + PADDING_SIZE(SIDEDEFSlump);
+					endOfMap += VERTEXESlump->GetDataLength() + PADDING_SIZE(VERTEXESlump);
+					endOfMap += SEGSlump->GetDataLength() + PADDING_SIZE(SEGSlump);
+					endOfMap += SSECTORSlump->GetDataLength() + PADDING_SIZE(SSECTORSlump);
+					endOfMap += NODESlump->GetDataLength() + PADDING_SIZE(NODESlump);
+					endOfMap += SECTORSlump->GetDataLength() + PADDING_SIZE(SECTORSlump);
+					endOfMap += REJECTlump->GetDataLength() + PADDING_SIZE(REJECTlump);
+					endOfMap += BLOCKMAPlump->GetDataLength() + PADDING_SIZE(BLOCKMAPlump);
+
+					if (fauxPtrHalfMeg != (endOfMap / HALFMEG))
+						fauxPtr = ((fauxPtrHalfMeg + 1) * HALFMEG);
+				}
+			}
 			else if (fauxPtrHalfMeg != (fauxPtr + node->GetDataLength() + padding_size) / HALFMEG)
-					fauxPtr = ((fauxPtrHalfMeg + 1) * HALFMEG);
+				fauxPtr = ((fauxPtrHalfMeg + 1) * HALFMEG);
 		}
 
 		*node->dir_entry_filepos = swap_endian32(fauxPtr);
 		fauxPtr += node->GetDataLength();
 		fauxPtr += padding_size;
+
+		if (!strcmp(node->GetName(), "BLOCKMAP"))
+			insideMap = false;
 	}
 
 	fwrite("IWAD", 1, 4, f);

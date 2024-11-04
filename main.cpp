@@ -14,7 +14,7 @@
 
 //#define MAKE_MIPMAPS
 //#define MIPLEVELS 4
-#define WADPTRSTART 0//0x38000
+#define WADPTRSTART 0//0x3B000
 
 #define		VERSION			1.10
 #define		WAD_FORMAT		1
@@ -103,6 +103,9 @@ const char *halfSprites[] = {
 	"FWR6",
 	"BUS1",
 	"BUS2",
+	"JPLA",
+	"STLG",
+	"TFLO",
 	"THZP",
 	"THZT",
 
@@ -589,9 +592,10 @@ static void MyFunTest()
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP01.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP02.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP03.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP04a.wad", basePath), importedEntries);
+//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP04a.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP06.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP07a.wad", basePath), importedEntries);
+//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP07a.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP16a.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP30.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP60.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP61.wad", basePath), importedEntries);
