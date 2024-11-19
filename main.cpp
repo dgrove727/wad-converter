@@ -597,6 +597,7 @@ static void MyFunTest()
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP07a.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP16a.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP30.wad", basePath), importedEntries);
+//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP60.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP60.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP61.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP62.wad", basePath), importedEntries);

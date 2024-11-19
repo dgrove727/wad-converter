@@ -6,6 +6,8 @@
 #include "stb_image_resize2.h"
 #include "gfx_convert.h"
 
+#define REMOVE_MEGADRIVE_THRUCOLOR
+
 typedef struct
 {
 	byte r, g, b;
@@ -823,6 +825,11 @@ byte GetIndexFromRGB(byte r, byte g, byte b)
 		}
 	}
 
+#ifdef REMOVE_MEGADRIVE_THRUCOLOR
+	if (closestIndex == 0xfc)
+		closestIndex = 0xd0;
+#endif
+
 	return (byte)closestIndex;
 }
 
@@ -869,6 +876,11 @@ byte *IndexedToRGB(const byte *indData, int32_t width, int32_t height)
 byte GetPixel(const byte *rawData, int32_t width, int32_t x, int32_t y)
 {
 	size_t pixelLocation = (y * width) + x;
+
+#ifdef REMOVE_MEGADRIVE_THRUCOLOR
+	if (rawData[pixelLocation] == 0xfc)
+		return 0xd0;
+#endif
 
 	return rawData[pixelLocation];
 }
@@ -1008,7 +1020,13 @@ byte *PatchToRaw(const byte *patchData, size_t dataLen, int32_t *outputLen, byte
 			{
 				size_t pixelLocation = (yPos * header->width) + i;
 
-				rawImage[pixelLocation] = *pixel;
+#ifdef REMOVE_MEGADRIVE_THRUCOLOR
+				if (*pixel == 0xfc)
+					rawImage[pixelLocation] = 0xd0;
+				else
+#endif
+					rawImage[pixelLocation] = *pixel;
+
 				pixel++;
 				yPos++;
 			}
@@ -1323,6 +1341,11 @@ void PCSpriteToJag(const byte *lumpData, int32_t lumpSize, byte *jagHeader, int3
 				pixel = post->data;
 				for (int32_t j = 0; j < post->length; j++)
 				{
+#ifdef REMOVE_MEGADRIVE_THRUCOLOR
+					if (*pixel == 0xfc)
+						*dataPtr++ = 0xd0;
+					else
+#endif
 					*dataPtr++ = *pixel;
 					jagPostCache[numJagPostCache].data[j] = *pixel;
 					pixel++;
@@ -1424,6 +1447,11 @@ void PCSpriteToJagNarrow(const byte *lumpData, int32_t lumpSize, byte *jagHeader
 				pixel = post->data;
 				for (int32_t j = 0; j < post->length; j++)
 				{
+#ifdef REMOVE_MEGADRIVE_THRUCOLOR
+					if (*pixel == 0xfc)
+						*dataPtr++ = 0xd0;
+					else
+#endif
 					*dataPtr++ = *pixel;
 					jagPostCache[numJagPostCache].data[j] = *pixel;
 					pixel++;
