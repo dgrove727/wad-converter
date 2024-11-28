@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include "WADEntry.h"
+#include "Texture1.h"
 
 typedef struct
 {
@@ -125,7 +126,7 @@ public:
 	void CompressSectors();
 	void CompressSidedefs();
 
-	WADEntry *CreateJaguar(const char *mapname, bool srb32xsegs = false);
+	WADEntry *CreateJaguar(const char *mapname, bool srb32xsegs = false, Texture1 *t1 = NULL);
 	WADEntry *CreatePC(const char *mapname);
 
 	WADMap(WADEntry *head);

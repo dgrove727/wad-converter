@@ -27,6 +27,29 @@ typedef struct
 	uint8_t tag;
 } srb32xlinedef_t;
 
+typedef struct
+{
+	int16_t sector;
+	uint8_t toptexture, bottomtexture, midtexture;
+	uint8_t rowoffset;     // add this to the calculated texture top
+	int16_t textureoffset; // 8.4, add this to the calculated texture col
+} srb32xsidedef_t;
+
+static uint8_t FindTexture(Texture1 *t1, char name[8])
+{
+	MapTexture *node;
+	int count = 0;
+	for (node = t1->mapTextures; node; node = (MapTexture *)node->next)
+	{
+		if (!memcmp(node->name, name, 8))
+			return count;
+
+		count++;
+	}
+
+	return 0xff;
+}
+
 int16_t worldbbox[4];
 
 static srb32xnode_t *nodes;
@@ -360,7 +383,7 @@ void WADMap::CompressSidedefs()
 	numsidedefs = numNewSidedefs;
 }
 
-WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs)
+WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t1)
 {
 	WADEntry *head = NULL;
 
@@ -412,7 +435,25 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs)
 	Listable::Add(entry, (Listable **)&head);
 	entry->SetName("SIDEDEFS");
 	entry->SetIsCompressed(true);
-	entry->SetData((byte *)sidedefs, numsidedefs * sizeof(sidedef_t));
+
+	if (srb32xsegs && t1)
+	{
+		srb32xsidedef_t *compData = (srb32xsidedef_t *)malloc(numsidedefs * sizeof(srb32xsidedef_t));
+		for (int i = 0; i < numsidedefs; i++)
+		{
+			compData[i].sector = sidedefs[i].sector;
+			compData[i].rowoffset = sidedefs[i].rowoffset & 0xff;
+			compData[i].textureoffset = (sidedefs[i].textureoffset & 0xfff) | ((sidedefs[i].rowoffset & 0x0f00) << 4);
+			compData[i].toptexture = FindTexture(t1, sidedefs[i].toptexture);
+			compData[i].midtexture = FindTexture(t1, sidedefs[i].midtexture);
+			compData[i].bottomtexture = FindTexture(t1, sidedefs[i].bottomtexture);
+		}
+
+		entry->SetData((byte *)compData, numsidedefs * sizeof(srb32xsidedef_t));
+		free(compData);
+	}
+	else
+		entry->SetData((byte *)sidedefs, numsidedefs * sizeof(sidedef_t));
 
 	// VERTEXES
 	if (srb32xsegs)

@@ -11,6 +11,7 @@
 #include "CarmackCompress.h"
 #include "SRB2LevelConv.h"
 #include <stdarg.h>
+#include "Texture1.h"
 
 //#define MAKE_MIPMAPS
 //#define MIPLEVELS 4
@@ -375,9 +376,21 @@ void InsertPCLevelFromWAD(const char *wadfile, WADEntry *entries)
 	WADEntry *mapEntries = ipc->Execute();
 	delete ipc;
 
+	WADEntry *texture1 = WADEntry::FindEntry(entries, "TEXTURE1");
+
+	Texture1 *t1;
+	if (texture1->IsCompressed())
+	{
+		byte *decomp = texture1->Decompress();
+		t1 = new Texture1(decomp, texture1->GetUnCompressedDataLength());
+		free(decomp);
+	}
+	else
+		t1 = new Texture1(texture1->GetData(), texture1->GetUnCompressedDataLength());
+
 	WADMap *map = new WADMap(mapEntries);
 
-	WADEntry *jagEntries = map->CreateJaguar(map->name, true);
+	WADEntry *jagEntries = map->CreateJaguar(map->name, true, t1);
 
 	printf("%s breakdown:\n", wadfile);
 	WADEntry *node;
@@ -408,6 +421,7 @@ void InsertPCLevelFromWAD(const char *wadfile, WADEntry *entries)
 
 	delete map;
 	delete mapEntries;
+	delete t1;
 }
 
 static void MyFunTest()
