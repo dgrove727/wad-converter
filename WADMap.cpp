@@ -17,7 +17,24 @@ typedef struct
 	uint16_t encbbox[2]; // encoded bounding box for each child
 } srb32xnode_t;
 
+typedef struct
+{
+	int16_t v1;
+	int16_t v2;
+	int16_t sidenum[2];
+	uint16_t flags;
+	uint8_t special;
+	uint8_t tag;
+} srb32xlinedef_t;
+
 int16_t worldbbox[4];
+
+static srb32xnode_t *nodes;
+static int numnodes;
+
+#define NF_SUBSECTOR 0x8000
+
+enum { BOXTOP, BOXBOTTOM, BOXLEFT, BOXRIGHT };	/* bbox coordinates */
 
 static int P_EncodeBBoxSide(int16_t *b, int16_t *outerbbox, int pc, int nc)
 {
@@ -51,7 +68,7 @@ static int P_EncodeBBoxSide(int16_t *b, int16_t *outerbbox, int pc, int nc)
 
 	return (pu << 4) | nu;
 }
-/*
+
 // encodes bbox as the number of 1/16th units of parent bbox on each side
 static int P_EncodeBBox(int16_t *cb, int16_t *outerbbox)
 {
@@ -65,7 +82,7 @@ static int P_EncodeBBox(int16_t *cb, int16_t *outerbbox)
 static void P_EncodeNodeBBox_r(int nn, int16_t *bboxes, int16_t *outerbbox)
 {
 	int 		j;
-	node_t *n;
+	srb32xnode_t *n;
 
 	if (nn & NF_SUBSECTOR)
 		return;
@@ -105,7 +122,65 @@ static void P_EncodeNodesBBoxes(int16_t *bboxes)
 
 	P_EncodeNodeBBox_r(numnodes - 1, bboxes, worldbbox);
 }
-*/
+
+static void R_DecodeBBox(int16_t *bbox, const int16_t *outerbbox, uint16_t encbbox)
+{
+	uint16_t l;
+
+	l = outerbbox[BOXTOP] - outerbbox[BOXBOTTOM];
+	bbox[BOXBOTTOM] = outerbbox[BOXBOTTOM] + ((l * (encbbox & 0x0f)) >> 4);
+	bbox[BOXTOP] = outerbbox[BOXTOP] - ((l * (encbbox & 0xf0)) >> 8);
+
+	encbbox >>= 8;
+	l = outerbbox[BOXRIGHT] - outerbbox[BOXLEFT];
+	bbox[BOXLEFT] = outerbbox[BOXLEFT] + ((l * (encbbox & 0x0f)) >> 4);
+	bbox[BOXRIGHT] = outerbbox[BOXRIGHT] - ((l * (encbbox & 0xf0)) >> 8);
+}
+
+static srb32xnode_t *CompressNodes(node_t *data, int count)
+{
+	numnodes = count;
+	nodes = (srb32xnode_t*)malloc(numnodes * sizeof(srb32xnode_t));
+	int16_t *bboxes = (int16_t*)malloc(1024 * 256); // 256k
+
+	node_t *mn = data;
+	srb32xnode_t *no = (srb32xnode_t*)nodes;
+	for (int i = 0; i < numnodes; i++, no++, mn++)
+	{
+		no->x = mn->x;
+		no->y = mn->y;
+		no->dx = mn->dx;
+		no->dy = mn->dy;
+
+		for (int j = 0; j < 2; j++)
+		{
+			no->children[j] = mn->children[j];
+			for (int k = 0; k < 4; k++)
+				bboxes[i * 8 + j * 4 + k] = mn->bbox[j][k];
+		}
+	}
+
+	P_EncodeNodesBBoxes(bboxes);
+	free(bboxes);
+
+	// Now we gotta swap everything.
+	no = (srb32xnode_t *)nodes;
+	for (int i = 0; i < numnodes; i++, no++)
+	{
+		no->x = swap_endian16(no->x);
+		no->y = swap_endian16(no->y);
+		no->dx = swap_endian16(no->dx);
+		no->dy = swap_endian16(no->dy);
+
+		no->children[0] = swap_endian16(no->children[0]);
+		no->children[1] = swap_endian16(no->children[1]);
+
+		no->encbbox[0] = swap_endian16(no->encbbox[0]);
+		no->encbbox[1] = swap_endian16(no->encbbox[1]);
+	}
+
+	return nodes;
+}
 
 bool IdenticalSectors(const sector_t *sec1, const sector_t *sec2)
 {
@@ -309,7 +384,28 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs)
 	Listable::Add(entry, (Listable **)&head);
 	entry->SetName("LINEDEFS");
 	entry->SetIsCompressed(true);
-	entry->SetData((byte *)linedefs, numlinedefs * sizeof(linedef_t));
+
+	if (srb32xsegs)
+	{
+		srb32xlinedef_t *compData = (srb32xlinedef_t *)malloc(numlinedefs * sizeof(srb32xlinedef_t));
+		for (int i = 0; i < numlinedefs; i++)
+		{
+			compData[i].v1 = linedefs[i].v1;
+			compData[i].v2 = linedefs[i].v2;
+			compData[i].flags = linedefs[i].flags;
+			compData[i].special = (uint8_t)linedefs[i].special;
+			compData[i].tag = (uint8_t)linedefs[i].tag;
+			compData[i].sidenum[0] = linedefs[i].sidenum[0];
+			compData[i].sidenum[1] = linedefs[i].sidenum[1];
+		}
+
+		entry->SetData((byte *)compData, numlinedefs * sizeof(srb32xlinedef_t));
+		free(compData);
+	}
+	else
+	{
+		entry->SetData((byte *)linedefs, numlinedefs * sizeof(linedef_t));
+	}
 
 	// SIDEDEFS (compressed)
 	entry = new WADEntry();
@@ -319,18 +415,29 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs)
 	entry->SetData((byte *)sidedefs, numsidedefs * sizeof(sidedef_t));
 
 	// VERTEXES
-	entry = new WADEntry();
-	Listable::Add(entry, (Listable **)&head);
-	entry->SetName("VERTEXES");
-	entry->SetIsCompressed(false);
-	jagVertex_t *temp = (jagVertex_t *)malloc(sizeof(jagVertex_t) * numvertexes);
-	for (int32_t i = 0; i < numvertexes; i++)
+	if (srb32xsegs)
 	{
-		temp[i].x = swap_endian32(vertexes[i].x << FRACBITS);
-		temp[i].y = swap_endian32(vertexes[i].y << FRACBITS);
+		entry = new WADEntry();
+		Listable::Add(entry, (Listable **)&head);
+		entry->SetName("VERTEXES");
+		entry->SetIsCompressed(true);
+		entry->SetData((byte *)vertexes, numvertexes * sizeof(vertex_t));
 	}
-	entry->SetData((byte*)temp, sizeof(jagVertex_t) * numvertexes);
-	free(temp);
+	else
+	{
+		entry = new WADEntry();
+		Listable::Add(entry, (Listable **)&head);
+		entry->SetName("VERTEXES");
+		entry->SetIsCompressed(false);
+		jagVertex_t *temp = (jagVertex_t *)malloc(sizeof(jagVertex_t) * numvertexes);
+		for (int32_t i = 0; i < numvertexes; i++)
+		{
+			temp[i].x = swap_endian32(vertexes[i].x << FRACBITS);
+			temp[i].y = swap_endian32(vertexes[i].y << FRACBITS);
+		}
+		entry->SetData((byte *)temp, sizeof(jagVertex_t) * numvertexes);
+		free(temp);
+	}
 
 	// SEGS (compressed)
 	entry = new WADEntry();
@@ -342,6 +449,8 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs)
 
 		srb32xseg_t *newSegs = (srb32xseg_t *)malloc(sizeof(srb32xseg_t) * numsegs);
 		seg_t *origSegs = segs;
+
+		int numNotZero = 0;
 
 		for (int32_t i = 0; i < numsegs; i++)
 		{
@@ -355,6 +464,9 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs)
 
 			newSegs[i].sideoffset <<= 1;
 			newSegs[i].sideoffset |= side;
+
+			if (newSegs[i].sideoffset != 0)
+				numNotZero++;
 
 			newSegs[i].sideoffset = swap_endian16(newSegs[i].sideoffset);
 		}
@@ -372,8 +484,20 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs)
 	entry = new WADEntry();
 	Listable::Add(entry, (Listable **)&head);
 	entry->SetName("SSECTORS");
-	entry->SetIsCompressed(false);
-	entry->SetData((byte *)subsectors, numsubsectors * sizeof(subsector_t));
+
+	if (srb32xsegs)
+	{
+		int16_t *compData = (int16_t *)malloc(sizeof(int16_t) * numsubsectors);
+		for (int i = 0; i < numsubsectors; i++)
+			compData[i] = subsectors[i].firstseg;
+
+		entry->SetData((byte *)compData, numsubsectors * sizeof(int16_t));
+		free(compData);
+	}
+	else
+	{
+		entry->SetData((byte *)subsectors, numsubsectors * sizeof(subsector_t));
+	}
 
 	// NODES
 	entry = new WADEntry();
@@ -382,6 +506,24 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs)
 	entry->SetIsCompressed(false);
 	if (jagNodes)
 		entry->SetData((byte *)jagNodes, numnodes * sizeof(jagnode_t));
+	else if (srb32xsegs)
+	{
+/*		for (int i = 0; i < numnodes; i++)
+		{
+			nodes[i].dx = swap_endian16(nodes[i].dx);
+			nodes[i].dy = swap_endian16(nodes[i].dy);
+			nodes[i].x = swap_endian16(nodes[i].x);
+			nodes[i].y = swap_endian16(nodes[i].y);
+			nodes[i].children[0] = swap_endian16(nodes[i].children[0]);
+			nodes[i].children[1] = swap_endian16(nodes[i].children[1]);
+			
+			for (int x = 0; x < 2; x++)
+				for (int y = 0; y < 4; y++)
+					nodes[i].bbox[x][y] = swap_endian16(nodes[i].bbox[x][y]);
+		}*/
+		srb32xnode_t *newNodes = CompressNodes(nodes, numnodes);
+		entry->SetData((byte *)newNodes, numnodes * sizeof(srb32xnode_t));
+	}
 	else
 	{
 		// Convert from PC to Jaguar format
