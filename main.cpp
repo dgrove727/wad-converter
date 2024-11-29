@@ -388,9 +388,29 @@ void InsertPCLevelFromWAD(const char *wadfile, WADEntry *entries)
 	else
 		t1 = new Texture1(texture1->GetData(), texture1->GetUnCompressedDataLength());
 
+	FlatList *fList = NULL;
+	WADEntry *flatNode;
+	bool inFlats = false;
+	for (flatNode = entries; flatNode; flatNode = (WADEntry *)flatNode->next)
+	{
+		if (!strcmp(flatNode->GetName(), "F_START"))
+		{
+			inFlats = true;
+			continue;
+		}
+		else if (!strcmp(flatNode->GetName(), "F_END"))
+			break;
+
+		if (inFlats)
+		{
+			FlatList *fi = new FlatList(flatNode->GetName(), flatNode->GetUnCompressedDataLength());
+			Listable::Add(fi, (Listable **)&fList);
+		}
+	}
+
 	WADMap *map = new WADMap(mapEntries);
 
-	WADEntry *jagEntries = map->CreateJaguar(map->name, true, t1);
+	WADEntry *jagEntries = map->CreateJaguar(map->name, true, t1, fList);
 
 	printf("%s breakdown:\n", wadfile);
 	WADEntry *node;
@@ -419,6 +439,7 @@ void InsertPCLevelFromWAD(const char *wadfile, WADEntry *entries)
 		insertPoint = node;
 	}
 
+	delete fList;
 	delete map;
 	delete mapEntries;
 	delete t1;

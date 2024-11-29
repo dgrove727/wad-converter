@@ -35,10 +35,37 @@ typedef struct
 	int16_t textureoffset; // 8.4, add this to the calculated texture col
 } srb32xsidedef_t;
 
+typedef struct
+{
+	int16_t		floorheight, ceilingheight;
+	uint8_t		floorpic, ceilingpic;
+	uint8_t     lightlevel;
+	uint8_t     special, tag;
+} srb32xsector_t;
+
+static uint8_t FindFlat(FlatList *fList, char name[8])
+{
+	char checkName[9];
+	memcpy(checkName, name, 8);
+	checkName[8] = '\0';
+
+	FlatList *node;
+	uint8_t count = 0;
+	for (node = fList; node; node = (FlatList *)node->next)
+	{
+		if (!strcmp(node->name, checkName))
+			return count;
+
+		count++;
+	}
+
+	return 0xff;
+}
+
 static uint8_t FindTexture(Texture1 *t1, char name[8])
 {
 	MapTexture *node;
-	int count = 0;
+	uint8_t count = 0;
 	for (node = t1->mapTextures; node; node = (MapTexture *)node->next)
 	{
 		if (!memcmp(node->name, name, 8))
@@ -383,7 +410,7 @@ void WADMap::CompressSidedefs()
 	numsidedefs = numNewSidedefs;
 }
 
-WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t1)
+WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t1, FlatList *fList)
 {
 	WADEntry *head = NULL;
 
@@ -525,6 +552,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t
 	entry = new WADEntry();
 	Listable::Add(entry, (Listable **)&head);
 	entry->SetName("SSECTORS");
+	entry->SetIsCompressed(true);
 
 	if (srb32xsegs)
 	{
@@ -594,7 +622,25 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t
 	Listable::Add(entry, (Listable **)&head);
 	entry->SetName("SECTORS");
 	entry->SetIsCompressed(true);
-	entry->SetData((byte *)sectors, numsectors * sizeof(sector_t));
+
+	if (srb32xsegs)
+	{
+		srb32xsector_t *compData = (srb32xsector_t *)malloc(numsectors * sizeof(srb32xsector_t));
+		for (int i = 0; i < numsectors; i++)
+		{
+			compData[i].floorheight = sectors[i].floorheight;
+			compData[i].ceilingheight = sectors[i].ceilingheight;
+			compData[i].floorpic = FindFlat(fList, sectors[i].floorpic);
+			compData[i].ceilingpic = FindFlat(fList, sectors[i].ceilingpic);
+			compData[i].lightlevel = (uint8_t)sectors[i].lightlevel;
+			compData[i].special = (uint8_t)sectors[i].special;
+			compData[i].tag = (uint8_t)sectors[i].tag;
+		}
+
+		entry->SetData((byte *)compData, numsectors * sizeof(srb32xsector_t));
+	}
+	else
+		entry->SetData((byte *)sectors, numsectors * sizeof(sector_t));
 
 	// REJECT
 	entry = new WADEntry();

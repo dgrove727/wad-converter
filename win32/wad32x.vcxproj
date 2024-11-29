@@ -40,6 +40,7 @@
     <ClInclude Include="..\Exporter.h" />
     <ClInclude Include="..\Exporter_Jaguar.h" />
     <ClInclude Include="..\Exporter_PC.h" />
+    <ClInclude Include="..\FlatList.h" />
     <ClInclude Include="..\gfx_convert.h" />
     <ClInclude Include="..\Importer_Jaguar.h" />
     <ClInclude Include="..\Importer_PC.h" />

@@ -44,9 +44,9 @@ void WADEntry::SetData(const byte *value, size_t length)
 	{
 		int32_t compressedSize = 0;
 		byte *recompressFinal = encode(value, filesize, &compressedSize);
-		if (compressedSize > filesize)
+		if (compressedSize >= filesize)
 		{
-			printf("Compressed size is larger than uncompressed size. This is not allowed. Saving as uncompressed.\n");
+			printf("Compressed size is larger or equal to uncompressed size. This is not allowed. Saving as uncompressed.\n");
 			this->SetIsCompressed(false);
 			this->SetDataInternal(value, filesize);
 		}

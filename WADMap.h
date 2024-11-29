@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include "WADEntry.h"
 #include "Texture1.h"
+#include "FlatList.h"
 
 typedef struct
 {
@@ -126,7 +127,7 @@ public:
 	void CompressSectors();
 	void CompressSidedefs();
 
-	WADEntry *CreateJaguar(const char *mapname, bool srb32xsegs = false, Texture1 *t1 = NULL);
+	WADEntry *CreateJaguar(const char *mapname, bool srb32xsegs = false, Texture1 *t1 = NULL, FlatList *fList = NULL);
 	WADEntry *CreatePC(const char *mapname);
 
 	WADMap(WADEntry *head);
