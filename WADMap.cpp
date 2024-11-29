@@ -498,8 +498,15 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t
 		entry = new WADEntry();
 		Listable::Add(entry, (Listable **)&head);
 		entry->SetName("VERTEXES");
-		entry->SetIsCompressed(true);
-		entry->SetData((byte *)vertexes, numvertexes * sizeof(vertex_t));
+		entry->SetIsCompressed(false);
+		vertex_t *temp = (vertex_t *)malloc(sizeof(vertex_t) * numvertexes);
+		for (int32_t i = 0; i < numvertexes; i++)
+		{
+			temp[i].x = swap_endian16(vertexes[i].x);
+			temp[i].y = swap_endian16(vertexes[i].y);
+		}
+		entry->SetData((byte *)temp, sizeof(vertex_t) * numvertexes);
+		free(temp);
 	}
 	else
 	{
