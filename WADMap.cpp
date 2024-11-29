@@ -49,6 +49,9 @@ static uint8_t FindFlat(FlatList *fList, char name[8])
 	memcpy(checkName, name, 8);
 	checkName[8] = '\0';
 
+	if (!strcmp(checkName, "F_SKY1"))
+		return 0xff;
+
 	FlatList *node;
 	uint8_t count = 0;
 	for (node = fList; node; node = (FlatList *)node->next)
@@ -59,16 +62,23 @@ static uint8_t FindFlat(FlatList *fList, char name[8])
 		count++;
 	}
 
-	return 0xff;
+	return 0;
 }
 
 static uint8_t FindTexture(Texture1 *t1, char name[8])
 {
+	char checkName[9];
+	memcpy(checkName, name, 8);
+	checkName[8] = '\0';
+
+	if (name[0] == '-')
+		return 0;
+
 	MapTexture *node;
 	uint8_t count = 0;
 	for (node = t1->mapTextures; node; node = (MapTexture *)node->next)
 	{
-		if (!memcmp(node->name, name, 8))
+		if (!strcmp(node->name, checkName))
 			return count;
 
 		count++;

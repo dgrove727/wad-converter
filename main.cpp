@@ -477,6 +477,9 @@ static void MyFunTest()
 		printf("%s\n", node->GetName());
 		next = (WADEntry*)node->next;
 
+		if (!strcmp(node->GetName(), "F_SKY1"))
+			continue;
+
 		if (!strcmp(node->GetName(), "GC_END"))
 			insideCompressedGraphics = false;
 
