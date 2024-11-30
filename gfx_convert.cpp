@@ -1362,7 +1362,7 @@ void PCSpriteToJag(const byte *lumpData, int32_t lumpSize, byte *jagHeader, int3
 		}
 
 		*headerPtr++ = 0xff;
-		*headerPtr++ = 0xff;
+//		*headerPtr++ = 0xff;
 	}
 
 	*jagHeaderLen = headerPtr - jagHeader;
@@ -1468,7 +1468,7 @@ void PCSpriteToJagNarrow(const byte *lumpData, int32_t lumpSize, byte *jagHeader
 		}
 
 		*headerPtr++ = 0xff;
-		*headerPtr++ = 0xff;
+//		*headerPtr++ = 0xff;
 	}
 
 	*jagHeaderLen = headerPtr - jagHeader;

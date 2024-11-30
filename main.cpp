@@ -150,7 +150,7 @@ static bool IsHalfSprite(const char *name)
 	return false;
 }
 
-static void ConvertPCSpriteEntryToJagSprite(WADEntry *entry, WADEntry **list)
+static size_t ConvertPCSpriteEntryToJagSprite(WADEntry *entry, WADEntry **list)
 {
 	byte *jagHeader = (byte *)malloc(8 * 1024); // 8k
 	byte *jagData = (byte *)malloc(65 * 1024); // 65k (impossible to be bigger than this)
@@ -168,6 +168,8 @@ static void ConvertPCSpriteEntryToJagSprite(WADEntry *entry, WADEntry **list)
 
 	free(jagHeader);
 	free(jagData);
+
+	return jagHeaderSize + jagDataSize;
 }
 
 static void InsertLevelFromFolder(WADEntry *list, const char *levelname, const char *folder)
@@ -463,12 +465,19 @@ static void MyFunTest()
 	WADEntry *M68kEntries = ipc->Execute();
 	delete ipc;
 
+	size_t sizeSprites = 0;
+	size_t sizeTextures = 0;
+	size_t sizeFlats = 0;
+	size_t sizeGraphics = 0;
+	size_t sizeCompGraphics = 0;
+
 	bool insideSprites = false;
 	bool insideTextures = false;
 	bool insideFlats = false;
 	bool insideSounds = false;
 	bool inside68k = false;
 	bool insideCompressedGraphics = false;
+	bool insideRegularGraphics = false;
 
 	WADEntry *node;
 	WADEntry *next;
@@ -483,12 +492,19 @@ static void MyFunTest()
 		if (!strcmp(node->GetName(), "GC_END"))
 			insideCompressedGraphics = false;
 
+		if (!strcmp(node->GetName(), "G_END"))
+			insideRegularGraphics = false;
+
+		if (!strcmp(node->GetName(), "G_START"))
+			insideRegularGraphics = true;
+
 		if (insideCompressedGraphics)
 		{
 			byte *data = (byte*)memdup(node->GetData(), node->GetDataLength());
 			node->SetIsCompressed(true);
 			node->SetData(data, node->GetDataLength());
 			free(data);
+			sizeCompGraphics += node->GetDataLength();
 		}
 
 		if (!strcmp(node->GetName(), "68_START"))
@@ -546,6 +562,7 @@ static void MyFunTest()
 				lvlTextures->SetData(texData, texLen);
 				free(texData);
 #endif
+				sizeTextures += lvlTextures->GetDataLength();
 
 				lastAdded = lvlTextures;
 				lvlTextures = next;
@@ -574,6 +591,7 @@ static void MyFunTest()
 				lvlFlats->SetData(mipData, dataLen);
 				free(mipData);
 #endif
+				sizeFlats += lvlFlats->GetDataLength();
 
 				lastAdded = lvlFlats;
 				lvlFlats = next;
@@ -628,13 +646,16 @@ static void MyFunTest()
 			bool chibify = strcmp(node->GetName(), "GFZDOOR") && strcmp(node->GetName(), "GFZFENCE") && strcmp(node->GetName(), "GFZGRASS") && strcmp(node->GetName(), "GFZGATE") && strcmp(node->GetName(), "GFZRAIL") && strcmp(node->GetName(), "GFZWINDP");
 
 			if (chibify)
-				ConvertPCSpriteEntryToJagSpriteChibi(node, &importedEntries);
+				sizeSprites += ConvertPCSpriteEntryToJagSpriteChibi(node, &importedEntries);
 			else
-				ConvertPCSpriteEntryToJagSprite(node, &importedEntries);
+				sizeSprites += ConvertPCSpriteEntryToJagSprite(node, &importedEntries);
 #else
-			ConvertPCSpriteEntryToJagSprite(node, &importedEntries);
+			sizeSprites += ConvertPCSpriteEntryToJagSprite(node, &importedEntries);
 #endif
 		}
+
+		if (insideRegularGraphics)
+			sizeGraphics += node->GetDataLength();
 	}
 
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP01a.wad", basePath), importedEntries);
@@ -665,6 +686,13 @@ static void MyFunTest()
 	ex->SetMaskedInTexture1();
 	ex->Execute();
 	delete ex;
+
+	printf("Total sizes:\n");
+	printf("Sprites: %0.2fkb\n", sizeSprites / 1024.0f);
+	printf("Flats: %0.2fkb\n", sizeFlats / 1024.0f);
+	printf("Textures: %0.2fkb\n", sizeTextures / 1024.0f);
+	printf("Graphics: %0.2fkb\n", sizeGraphics / 1024.0f);
+	printf("Compressed Graphics: %0.2fkb\n", sizeCompGraphics / 1024.0f);
 
 	return;
 }
@@ -713,6 +741,29 @@ void ChibiMaps()
 
 int main(int argc, char *argv[])
 {
+	if (argc > 1)
+	{
+		// PNG -> flat conversion mode
+		char newfileName[2048];
+		strcpy(newfileName, argv[1]);
+		int len = strlen(newfileName);
+		newfileName[len - 1] = 'p';
+		newfileName[len - 2] = 'm';
+		newfileName[len - 3] = 'l';
+
+		int32_t pngSize;
+		byte *png = ReadAllBytes(argv[1], &pngSize);
+
+		int32_t flatWidth, flatHeight;
+		byte *flat = PNGToFlat(png, pngSize, &flatWidth, &flatHeight);
+
+		WriteAllBytes(newfileName, flat, flatWidth * flatHeight);
+		free(flat);
+		free(png);
+
+		printf("Converted %s to flat graphic.\n", argv[1]);
+		return 0;
+	}
 //	ChibiMaps();
 	MyFunTest();
 	return 0;
