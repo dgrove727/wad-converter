@@ -12,6 +12,7 @@
 #include "SRB2LevelConv.h"
 #include <stdarg.h>
 #include "Texture1.h"
+#include "MapThing.h"
 
 //#define MAKE_MIPMAPS
 //#define MIPLEVELS 4
@@ -371,6 +372,11 @@ static void SRB2MapConv(const char *filename, const char *exportFilename)
 	Listable::RemoveAll((Listable **)&converted);
 }
 
+void AddSingularItemRow(MapThing *list, const mapthing_t *origin, int16_t type, int count, int16_t horizontalspacing, int16_t verticalspacing, int16_t fixedangle)
+{
+
+}
+
 void InsertPCLevelFromWAD(const char *wadfile, WADEntry *entries)
 {
 	FILE *f = fopen(wadfile, "rb");
@@ -411,7 +417,62 @@ void InsertPCLevelFromWAD(const char *wadfile, WADEntry *entries)
 	}
 
 	WADMap *map = new WADMap(mapEntries);
+	/*
+	// Check for special items, like vertical lines of rings, etc. and generate new mapthings in their place
+	MapThing *things = NULL;
+	for (int i = 0; i < map->numthings; i++)
+	{
+		mapthing_t *mapthing = &map->things[i];
 
+		if (mtNode->thing.type == 600) // 5 vertical rings (yellow spring)
+		{
+			AddSingularItemRow(things, mapthing, 300, 5, 0, 64, 0);
+		}
+		else if (mtNode->thing.type == 601) // 5 vertical rings (red spring)
+		{
+			AddSingularItemRow(things, mapthing, 300, 5, 0, 128, 0);
+		}
+		else if (mtNode->thing.type == 602) // 5 diagonal rings (yellow spring)
+		{
+			AddSingularItemRow(things, mapthing, 300, 5, 64, 64, 0);
+		}
+		else if (mtNode->thing.type == 603) // 10 diagonal rings (red spring)
+		{
+			AddSingularItemRow(things, mapthing, 300, 10, 64, 64, 0);
+		}
+		else if (mtNode->thing.type == 604) // Circle of rings (8)
+		{
+		}
+		else if (mtNode->thing.type == 605) // Circle of rings (16)
+		{
+		}
+		else
+		{
+			MapThing *thing = new MapThing();
+			thing->thing.angle = mapthing->angle;
+			thing->thing.options = mapthing->options;
+			thing->thing.type = mapthing->type;
+			thing->thing.x = mapthing->x;
+			thing->thing.y = mapthing->y;
+			Listable::Add(thing, (Listable **)&things);
+		}
+	}
+
+	// Write out the list of things
+	free(map->things);
+	map->numthings = 0;
+	MapThing *mtNode;
+	map->things = (mapthing_t *)malloc(sizeof(mapthing_t) * Listable::GetCount(things));
+	for (mtNode = things; mtNode; mtNode = (MapThing *)mtNode->next)
+	{
+		map->things[map->numthings].angle = mtNode->thing.angle;
+		map->things[map->numthings].options = mtNode->thing.options;
+		map->things[map->numthings].type = mtNode->thing.type;
+		map->things[map->numthings].x = mtNode->thing.x;
+		map->things[map->numthings].y = mtNode->thing.y;
+		map->numthings++;
+	}
+	*/
 	WADEntry *jagEntries = map->CreateJaguar(map->name, true, t1, fList);
 
 	printf("%s breakdown:\n", wadfile);
@@ -497,6 +558,25 @@ static void MyFunTest()
 
 		if (!strcmp(node->GetName(), "G_START"))
 			insideRegularGraphics = true;
+
+		if (insideRegularGraphics || insideCompressedGraphics)
+		{
+			// Scan for the MEGADRIVE_THRU_COLOR and replace it 
+			const byte MEGADRIVE_THRU_COLOR = 0xfc;
+
+			byte *newData = (byte *)memdup(node->GetData(), node->GetDataLength());
+			for (int i = 16; i < node->GetDataLength(); i++)
+			{
+				if (newData[i] == MEGADRIVE_THRU_COLOR)
+				{
+					newData[i] = 0xd0;
+					printf("Found MD_THRU_COLOR in %s\n", node->GetName());
+				}
+			}
+
+			node->SetData(newData, node->GetDataLength());
+			free(newData);
+		}
 
 		if (insideCompressedGraphics)
 		{
@@ -659,12 +739,13 @@ static void MyFunTest()
 	}
 
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP01a.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP02a.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP02.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP03a.wad", basePath), importedEntries);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP04a.wad", basePath), importedEntries);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP06.wad", basePath), importedEntries);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP07a.wad", basePath), importedEntries);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP16a.wad", basePath), importedEntries);
+//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP17.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP30a.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP60a.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP61a.wad", basePath), importedEntries);
