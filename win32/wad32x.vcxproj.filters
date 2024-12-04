@@ -113,5 +113,11 @@
     <ClInclude Include="..\FlatList.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\MapThing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SpriteColumn.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

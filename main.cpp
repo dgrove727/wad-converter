@@ -13,6 +13,7 @@
 #include <stdarg.h>
 #include "Texture1.h"
 #include "MapThing.h"
+#include "SpriteColumn.h"
 
 //#define MAKE_MIPMAPS
 //#define MIPLEVELS 4
@@ -156,6 +157,11 @@ static size_t ConvertPCSpriteEntryToJagSprite(WADEntry *entry, WADEntry **list)
 	byte *jagHeader = (byte *)malloc(8 * 1024); // 8k
 	byte *jagData = (byte *)malloc(65 * 1024); // 65k (impossible to be bigger than this)
 	int jagHeaderSize, jagDataSize;
+
+	int32_t outputLen;
+	byte *cropData = CropPCPatch(entry->GetData(), entry->GetDataLength(), &outputLen, 0);
+	if (cropData)
+		entry->SetData(cropData, outputLen);
 
 	if (IsHalfSprite(entry->GetName()))
 		PCSpriteToJagNarrow(entry->GetData(), entry->GetDataLength(), jagHeader, &jagHeaderSize, jagData, &jagDataSize);
@@ -508,6 +514,88 @@ void InsertPCLevelFromWAD(const char *wadfile, WADEntry *entries)
 	delete t1;
 }
 
+static void FindDuplicateColumns(WADEntry *entries)
+{
+	size_t savedBytes = 0;
+
+	SpriteColumn *columns = NULL;
+
+	bool insideSprites = false;
+	WADEntry *node;
+	for (node = entries; node; node = (WADEntry *)node->next)
+	{
+		if (!strcmp(node->GetName(), "S_START"))
+		{
+			insideSprites = true;
+			continue;
+		}
+		if (!strcmp(node->GetName(), "S_END"))
+			break;
+
+		if (!insideSprites)
+			continue;
+
+		if (strcmp(node->GetName(), "."))
+		{
+			WADEntry *postData = (WADEntry*)node->next;
+
+			jagPatchHeader_t *header = (jagPatchHeader_t *)node->GetData();
+			uint16_t width = swap_endian16(header->width);
+			uint16_t height = swap_endian16(header->height);
+			uint16_t leftOffset = swap_endian16(header->leftoffset);
+			uint16_t topOffset = swap_endian16(header->topoffset);
+
+			for (int i = 0; i < width; i++)
+			{
+				uint16_t colOffset = swap_endian16(header->columnofs[i]);
+				const jagPost_t *post = (jagPost_t *)(node->GetData() + colOffset);
+				uint16_t dataOffset = swap_endian16(post->dataofs);
+				const byte *pixel = &postData->GetData()[dataOffset];
+
+				if (post->topdelta == 255 && post->length == 255)
+					continue;
+
+				int z = 0;
+				for (int i = 0; i < post->length; i++) // Verify the pixel data
+				{
+					z += pixel[i];
+				}
+
+				SpriteColumn *sCol = new SpriteColumn(pixel, post->length);
+				Listable::Add(sCol, (Listable **)&columns);
+			}
+
+			node = postData;
+		}
+	}
+
+	printf("There are %d sprite columns.\n", Listable::GetCount(columns));
+
+	SpriteColumn *colNode;
+	int nodeIndex = 0;
+	for (colNode = columns; colNode; colNode = (SpriteColumn *)colNode->next, nodeIndex++)
+	{
+		if (colNode->duplicate)
+			continue;
+
+		SpriteColumn *checkNode;
+		int checkIndex = 0;
+		for (checkNode = (SpriteColumn*)colNode->next; checkNode; checkNode = (SpriteColumn *)checkNode->next, checkIndex++)
+		{
+			if (checkNode->duplicate)
+				continue;
+
+			if (colNode->Equals(checkNode))
+			{
+				savedBytes += checkNode->length;
+				checkNode->duplicate = true;
+			}
+		}
+	}
+
+	printf("If sprite columns were compressed, it would save %d bytes.\n", savedBytes);
+}
+
 static void MyFunTest()
 {
 	FILE *f = fopen(va("%s\\srb32x-edit.wad", basePath), "rb");
@@ -738,7 +826,7 @@ static void MyFunTest()
 			sizeGraphics += node->GetDataLength();
 	}
 
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP01a.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP01.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP02.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP03a.wad", basePath), importedEntries);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP04a.wad", basePath), importedEntries);
@@ -759,6 +847,8 @@ static void MyFunTest()
 	byte dummy[] = { 0xaf, 0xaf, 0xaf, 0xaf };
 	WADEntry *dummyEntry = new WADEntry("DUMMY", dummy, dummySize);
 	Listable::Add(dummyEntry, (Listable **)&importedEntries);
+
+//	FindDuplicateColumns(importedEntries);
 
 	// Write it out
 	FILE *expF = fopen(va("%s\\doom32x.wad", basePath), "wb");

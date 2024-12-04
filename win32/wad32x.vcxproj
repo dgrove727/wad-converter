@@ -47,6 +47,7 @@
     <ClInclude Include="..\Listable.h" />
     <ClInclude Include="..\lzss.h" />
     <ClInclude Include="..\MapThing.h" />
+    <ClInclude Include="..\SpriteColumn.h" />
     <ClInclude Include="..\SRB2LevelConv.h" />
     <ClInclude Include="..\stb_image_resize2.h" />
     <ClInclude Include="..\Texture1.h" />
