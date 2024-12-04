@@ -158,10 +158,14 @@ static size_t ConvertPCSpriteEntryToJagSprite(WADEntry *entry, WADEntry **list)
 	byte *jagData = (byte *)malloc(65 * 1024); // 65k (impossible to be bigger than this)
 	int jagHeaderSize, jagDataSize;
 
-	int32_t outputLen;
-	byte *cropData = CropPCPatch(entry->GetData(), entry->GetDataLength(), &outputLen, 0);
-	if (cropData)
-		entry->SetData(cropData, outputLen);
+	if (strcmp(entry->GetName(), "GFZGATE") && strcmp(entry->GetName(), "GFZRAIL")
+		&& strcmp(entry->GetName(), "GFZFENCE"))
+	{
+		int32_t outputLen;
+		byte *cropData = CropPCPatch(entry->GetData(), entry->GetDataLength(), &outputLen, 0);
+		if (cropData)
+			entry->SetData(cropData, outputLen);
+	}
 
 	if (IsHalfSprite(entry->GetName()))
 		PCSpriteToJagNarrow(entry->GetData(), entry->GetDataLength(), jagHeader, &jagHeaderSize, jagData, &jagDataSize);
