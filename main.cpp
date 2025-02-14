@@ -830,20 +830,20 @@ static void MyFunTest()
 			sizeGraphics += node->GetDataLength();
 	}
 
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP01.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP02.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP01a.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP02a.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP03a.wad", basePath), importedEntries);
-//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP04a.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP04b.wad", basePath), importedEntries);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP06.wad", basePath), importedEntries);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP07a.wad", basePath), importedEntries);
-//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP16a.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP16a.wad", basePath), importedEntries);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP17.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP30a.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP60a.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP61a.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP62a.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP63a.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP64a.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP60b.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP61b.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP62b.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP63b.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP64b.wad", basePath), importedEntries);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP65.wad", basePath), importedEntries);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP66.wad", basePath), importedEntries);
 
@@ -868,6 +868,11 @@ static void MyFunTest()
 	printf("Textures: %0.2fkb\n", sizeTextures / 1024.0f);
 	printf("Graphics: %0.2fkb\n", sizeGraphics / 1024.0f);
 	printf("Compressed Graphics: %0.2fkb\n", sizeCompGraphics / 1024.0f);
+
+	expF = fopen(va("%s\\doom32x.wad", basePath), "rb");
+	fseek(expF, 0, SEEK_END);
+	printf("Total file size: %02fkb\n", ftell(expF) / 1024.0f);
+	fclose(expF);
 
 	return;
 }
