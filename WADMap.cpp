@@ -30,7 +30,7 @@ typedef struct
 typedef struct
 {
 	int16_t sector;
-	uint8_t toptexture, bottomtexture, midtexture;
+	uint8_t texIndex;
 	uint8_t rowoffset;     // add this to the calculated texture top
 	int16_t textureoffset; // 8.4, add this to the calculated texture col
 } srb32xsidedef_t;
@@ -42,6 +42,13 @@ typedef struct
 	uint8_t     lightlevel;
 	uint8_t     special, tag;
 } srb32xsector_t;
+
+typedef struct
+{
+	uint8_t top;
+	uint8_t mid;
+	uint8_t bottom;
+} sidetex_t;
 
 static uint8_t FindFlat(FlatList *fList, char name[8])
 {
@@ -420,6 +427,29 @@ void WADMap::CompressSidedefs()
 	numsidedefs = numNewSidedefs;
 }
 
+uint8_t FindSidetexIndex(sidetex_t *sidetexes, int *numsidetexes, sidetex_t findSidetex)
+{
+	for (size_t i = 0; i < *numsidetexes; i++)
+	{
+		if (sidetexes[i].top == findSidetex.top
+			&& sidetexes[i].mid == findSidetex.mid
+			&& sidetexes[i].bottom == findSidetex.bottom)
+		{
+			// Found it!
+			return (uint8_t)i;
+		}
+	}
+
+	// If we got here, we didn't find it. So make a new one!
+	sidetexes[*numsidetexes].top = findSidetex.top;
+	sidetexes[*numsidetexes].mid = findSidetex.mid;
+	sidetexes[*numsidetexes].bottom = findSidetex.bottom;
+	
+	uint8_t retVal = *numsidetexes;
+	*numsidetexes = (*numsidetexes) + 1;
+	return retVal;
+}
+
 WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t1, FlatList *fList)
 {
 	WADEntry *head = NULL;
@@ -454,7 +484,15 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t
 			compData[i].v2 = linedefs[i].v2;
 			compData[i].flags = linedefs[i].flags;
 			compData[i].special = (uint8_t)linedefs[i].special;
-			compData[i].tag = (uint8_t)linedefs[i].tag;
+
+			if (linedefs[i].tag > 255)
+			{
+				compData[i].tag = 0;
+				printf("Linedef %d has tag %d which is > 255.\n", i, linedefs[i].tag);
+			}
+			else
+				compData[i].tag = (uint8_t)linedefs[i].tag;
+
 			compData[i].sidenum[0] = linedefs[i].sidenum[0];
 			compData[i].sidenum[1] = linedefs[i].sidenum[1];
 		}
@@ -473,6 +511,9 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t
 	entry->SetName("SIDEDEFS");
 	entry->SetIsCompressed(true);
 
+	sidetex_t sidetexes[256];
+	int numsidetexes = 0;
+
 	if (srb32xsegs && t1)
 	{
 		srb32xsidedef_t *compData = (srb32xsidedef_t *)malloc(numsidedefs * sizeof(srb32xsidedef_t));
@@ -481,9 +522,13 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t
 			compData[i].sector = sidedefs[i].sector;
 			compData[i].rowoffset = sidedefs[i].rowoffset & 0xff;
 			compData[i].textureoffset = (sidedefs[i].textureoffset & 0xfff) | ((sidedefs[i].rowoffset & 0x0f00) << 4);
-			compData[i].toptexture = FindTexture(t1, sidedefs[i].toptexture);
-			compData[i].midtexture = FindTexture(t1, sidedefs[i].midtexture);
-			compData[i].bottomtexture = FindTexture(t1, sidedefs[i].bottomtexture);
+
+			sidetex_t sidetex;
+			sidetex.top = FindTexture(t1, sidedefs[i].toptexture);
+			sidetex.mid = FindTexture(t1, sidedefs[i].midtexture);
+			sidetex.bottom = FindTexture(t1, sidedefs[i].bottomtexture);
+
+			compData[i].texIndex = FindSidetexIndex(sidetexes, &numsidetexes, sidetex);
 		}
 
 		entry->SetData((byte *)compData, numsidedefs * sizeof(srb32xsidedef_t));
@@ -491,6 +536,17 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t
 	}
 	else
 		entry->SetData((byte *)sidedefs, numsidedefs * sizeof(sidedef_t));
+
+	if (srb32xsegs)
+	{
+		// SIDETEX
+		entry = new WADEntry();
+		Listable::Add(entry, (Listable **)&head);
+		entry->SetName("SIDETEX");
+		entry->SetIsCompressed(true);
+
+		entry->SetData((byte*)sidetexes, sizeof(sidetex_t) * numsidetexes);
+	}
 
 	// VERTEXES
 	if (srb32xsegs)
@@ -651,7 +707,14 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t
 			compData[i].ceilingpic = FindFlat(fList, sectors[i].ceilingpic);
 			compData[i].lightlevel = (uint8_t)sectors[i].lightlevel;
 			compData[i].special = (uint8_t)sectors[i].special;
-			compData[i].tag = (uint8_t)sectors[i].tag;
+
+			if (sectors[i].tag > 255)
+			{
+				printf("Sector %d has tag %d, which is > 255.\n", i, sectors[i].tag);
+				compData[i].tag = 0;
+			}
+			else
+				compData[i].tag = (uint8_t)sectors[i].tag;
 		}
 
 		entry->SetData((byte *)compData, numsectors * sizeof(srb32xsector_t));
