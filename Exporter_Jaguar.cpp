@@ -121,7 +121,8 @@ void Exporter_Jaguar::Execute()
 				{
 					WADEntry *THINGSlump = (WADEntry *)node->next;
 					WADEntry *LINEDEFSlump = (WADEntry *)THINGSlump->next;
-					WADEntry *SIDEDEFSlump = (WADEntry *)LINEDEFSlump->next;
+					WADEntry *LDFLAGSlump = (WADEntry *)LINEDEFSlump->next;
+					WADEntry *SIDEDEFSlump = (WADEntry *)LDFLAGSlump->next;
 					WADEntry *SIDETEXESlump = (WADEntry *)SIDEDEFSlump->next;
 					WADEntry *VERTEXESlump = (WADEntry *)SIDETEXESlump->next;
 					WADEntry *SEGSlump = (WADEntry *)VERTEXESlump->next;
@@ -136,6 +137,7 @@ void Exporter_Jaguar::Execute()
 					endOfMap += node->GetDataLength() + PADDING_SIZE(node);
 					endOfMap += THINGSlump->GetDataLength() + PADDING_SIZE(THINGSlump);
 					endOfMap += LINEDEFSlump->GetDataLength() + PADDING_SIZE(LINEDEFSlump);
+					endOfMap += LDFLAGSlump->GetDataLength() + PADDING_SIZE(LDFLAGSlump);
 					endOfMap += SIDEDEFSlump->GetDataLength() + PADDING_SIZE(SIDEDEFSlump);
 					endOfMap += SIDETEXESlump->GetDataLength() + PADDING_SIZE(SIDETEXESlump);
 					endOfMap += VERTEXESlump->GetDataLength() + PADDING_SIZE(VERTEXESlump);
