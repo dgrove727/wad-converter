@@ -95,7 +95,7 @@ static uint8_t FindTexture(Texture1 *t1, char name[8])
 		count++;
 	}
 
-	return 0xff;
+	return 0;
 }
 
 int16_t worldbbox[4];
@@ -433,7 +433,7 @@ void WADMap::CompressSidedefs()
 
 uint8_t FindSidetexIndex(sidetex_t *sidetexes, int *numsidetexes, sidetex_t findSidetex)
 {
-	for (size_t i = 0; i < *numsidetexes; i++)
+	for (int i = 0; i < *numsidetexes; i++)
 	{
 		if (sidetexes[i].top == findSidetex.top
 			&& sidetexes[i].mid == findSidetex.mid
@@ -514,6 +514,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t
 
 			if (linedefs[i].tag > 255)
 			{
+				compData[i].special = 0;
 				compData[i].tag = 0;
 				printf("Linedef %d has tag %d which is > 255.\n", i, linedefs[i].tag);
 			}
@@ -738,6 +739,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t
 		}
 
 		entry->SetData((byte *)compData, numsectors * sizeof(srb32xsector_t));
+		free(compData);
 	}
 	else
 		entry->SetData((byte *)sectors, numsectors * sizeof(sector_t));
@@ -747,7 +749,50 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t
 	Listable::Add(entry, (Listable **)&head);
 	entry->SetName("REJECT");
 	entry->SetIsCompressed(false);
-	entry->SetData(reject, rejectSize);
+	
+	// Vic's 50% compression of the REJECT table technique
+	{
+		int i, j;
+		uint8_t *out;
+		int outsize;
+		unsigned outbit, outbyte;
+
+		// compress the reject table, assuming it is symmetrical
+		outsize = (numsectors + 1) * numsectors / 2;
+		outsize = (outsize + 7) / 8;
+
+		byte *rejectmatrix = (byte *)malloc(outsize);
+
+		memset(rejectmatrix, 0, outsize);
+		
+		outbit = 1;
+		outbyte = 0;
+		out = rejectmatrix;
+
+		for (i = 0; i < numsectors; i++) {
+			unsigned k = i * numsectors;
+			unsigned bit = 1 << ((k + i) & 7);
+			for (j = i; j < numsectors; j++) {
+				unsigned bytenum = (k + j) / 8;
+				if (rejectmatrix[bytenum] & bit)
+				{
+					out[outbyte] |= outbit;
+				}
+				bit <<= 1;
+				if (bit > 0xff) {
+					bit = 1;
+				}
+				outbit <<= 1;
+				if (outbit > 0xff) {
+					outbyte++;
+					outbit = 1;
+				}
+			}
+		}
+
+		entry->SetData(rejectmatrix, outsize);
+		free(rejectmatrix);
+	}
 
 	// BLOCKMAP
 	entry = new WADEntry();

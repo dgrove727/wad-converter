@@ -159,7 +159,7 @@ static size_t ConvertPCSpriteEntryToJagSprite(WADEntry *entry, WADEntry **list)
 	int jagHeaderSize, jagDataSize;
 
 	if (strcmp(entry->GetName(), "GFZGATE") && strcmp(entry->GetName(), "GFZRAIL")
-		&& strcmp(entry->GetName(), "GFZFENCE"))
+		&& strcmp(entry->GetName(), "GFZFENCE") && strcmp(entry->GetName(), "NULLA0"))
 	{
 		int32_t outputLen;
 		byte *cropData = CropPCPatch(entry->GetData(), entry->GetDataLength(), &outputLen, 0);
