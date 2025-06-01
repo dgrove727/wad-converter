@@ -454,6 +454,15 @@ uint8_t FindSidetexIndex(sidetex_t *sidetexes, int *numsidetexes, sidetex_t find
 	return retVal;
 }
 
+// Comparison function for qsort
+int compare_by_type(const void *a, const void *b) {
+	const mapthing_t *thing_a = (const mapthing_t *)a;
+	const mapthing_t *thing_b = (const mapthing_t *)b;
+
+	// Sort in ascending order by type
+	return (thing_a->type - thing_b->type);
+}
+
 WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t1, FlatList *fList)
 {
 	WADEntry *head = NULL;
@@ -471,6 +480,9 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t
 	Listable::Add(entry, (Listable **)&head);
 	entry->SetName("THINGS");
 	entry->SetIsCompressed(true);
+	// Order by mapnum
+	// Ideally, we want to order by MF_RINGMOBJ and then regular items.
+	qsort(things, numthings, sizeof(mapthing_t), compare_by_type);
 	entry->SetData((byte*)things, numthings * sizeof(mapthing_t));
 
 	// LINEDEFS
