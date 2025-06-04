@@ -376,6 +376,21 @@ void WADMap::CompressSidedefs()
 {
 	int32_t numNewSidedefs = 0;
 
+	int *sidedefLinedefnum = (int*)malloc(numsidedefs * sizeof(int));
+
+	for (int32_t i = 0; i < numsidedefs; i++)
+	{
+		for (int32_t j = 0; j < numlinedefs; j++)
+		{
+			if (linedefs[j].sidenum[0] == i
+				|| linedefs[j].sidenum[1] == i)
+			{
+				sidedefLinedefnum[i] = j;
+				break;
+			}
+		}
+	}
+
 	for (int32_t i = 0; i < numsidedefs; i++)
 	{
 		if (sidedefs[i].sector == -1)
@@ -391,9 +406,16 @@ void WADMap::CompressSidedefs()
 				ld->sidenum[1] = numNewSidedefs;
 		}
 
+		linedef_t *line1 = &linedefs[sidedefLinedefnum[i]];
+
 		for (int32_t j = i + 1; j < numsidedefs; j++)
 		{
 			if (sidedefs[j].sector == -1)
+				continue;
+
+			linedef_t *line2 = &linedefs[sidedefLinedefnum[j]];
+
+			if (line1->special == 249 || line2->special == 249)
 				continue;
 
 			if (IdenticalSidedefs(&sidedefs[i], &sidedefs[j]))
@@ -413,6 +435,8 @@ void WADMap::CompressSidedefs()
 		}
 		numNewSidedefs++;
 	}
+
+	free(sidedefLinedefnum);
 
 	sidedef_t *newSidedefs = (sidedef_t *)malloc(numNewSidedefs * sizeof(sidedef_t));
 
