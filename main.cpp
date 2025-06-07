@@ -654,7 +654,7 @@ static void MyFunTest()
 		if (insideRegularGraphics || insideCompressedGraphics)
 		{
 			// Scan for the MEGADRIVE_THRU_COLOR and replace it 
-			const byte MEGADRIVE_THRU_COLOR = 0xfc;
+			const byte MEGADRIVE_THRU_COLOR = 0xff;
 
 			byte *newData = (byte *)memdup(node->GetData(), node->GetDataLength());
 			for (int i = 16; i < node->GetDataLength(); i++)

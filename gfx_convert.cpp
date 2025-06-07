@@ -267,10 +267,10 @@ palentry_t palette[256] = {
 { 93, 75, 51 },
 { 87, 69, 45 },
 { 75, 60, 35 },
-{ 255, 231, 246 },
+{ 255, 255, 255 },
 { 0, 0, 63 },
 { 0, 0, 32 },
-{ 255, 255, 255 },
+{ 255, 231, 246 },
 };
 
 // SRB2 2.0 palette
@@ -826,7 +826,7 @@ byte GetIndexFromRGB(byte r, byte g, byte b)
 	}
 
 #ifdef REMOVE_MEGADRIVE_THRUCOLOR
-	if (closestIndex == 0xfc)
+	if (closestIndex == 0xff)
 		closestIndex = 0xd0;
 #endif
 
@@ -878,7 +878,7 @@ byte GetPixel(const byte *rawData, int32_t width, int32_t x, int32_t y)
 	size_t pixelLocation = (y * width) + x;
 
 #ifdef REMOVE_MEGADRIVE_THRUCOLOR
-	if (rawData[pixelLocation] == 0xfc)
+	if (rawData[pixelLocation] == 0xff)
 		return 0xd0;
 #endif
 
@@ -1021,7 +1021,7 @@ byte *PatchToRaw(const byte *patchData, size_t dataLen, int32_t *outputLen, byte
 				size_t pixelLocation = (yPos * header->width) + i;
 
 #ifdef REMOVE_MEGADRIVE_THRUCOLOR
-				if (*pixel == 0xfc)
+				if (*pixel == 0xff)
 					rawImage[pixelLocation] = 0xd0;
 				else
 #endif
@@ -1342,7 +1342,7 @@ void PCSpriteToJag(const byte *lumpData, int32_t lumpSize, byte *jagHeader, int3
 				for (int32_t j = 0; j < post->length; j++)
 				{
 #ifdef REMOVE_MEGADRIVE_THRUCOLOR
-					if (*pixel == 0xfc)
+					if (*pixel == 0xff)
 						*dataPtr++ = 0xd0;
 					else
 #endif
@@ -1448,7 +1448,7 @@ void PCSpriteToJagNarrow(const byte *lumpData, int32_t lumpSize, byte *jagHeader
 				for (int32_t j = 0; j < post->length; j++)
 				{
 #ifdef REMOVE_MEGADRIVE_THRUCOLOR
-					if (*pixel == 0xfc)
+					if (*pixel == 0xff)
 						*dataPtr++ = 0xd0;
 					else
 #endif
