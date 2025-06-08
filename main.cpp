@@ -657,12 +657,16 @@ static void MyFunTest()
 			const byte MEGADRIVE_THRU_COLOR = 0xff;
 
 			byte *newData = (byte *)memdup(node->GetData(), node->GetDataLength());
-			for (int i = 16; i < node->GetDataLength(); i++)
+
+			if (!strcmp(node->GetName(), "CHEVBLKU") && !strcmp(node->GetName(), "CHEVBLKD"))
 			{
-				if (newData[i] == MEGADRIVE_THRU_COLOR)
+				for (int i = 16; i < node->GetDataLength(); i++)
 				{
-					newData[i] = 0xd0;
-					printf("Found MD_THRU_COLOR in %s\n", node->GetName());
+					if (newData[i] == MEGADRIVE_THRU_COLOR)
+					{
+						newData[i] = 0xd0;
+						printf("Found MD_THRU_COLOR in %s\n", node->GetName());
+					}
 				}
 			}
 
