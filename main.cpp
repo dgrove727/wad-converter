@@ -111,6 +111,9 @@ const char *halfSprites[] = {
 	"TFLO",
 	"THZP",
 	"THZT",
+	"FLAM",
+	"BANR",
+	"ESTA",
 
 	// R_PrepMobj items
 	"BOM1",
