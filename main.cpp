@@ -111,7 +111,6 @@ const char *halfSprites[] = {
 	"TFLO",
 	"THZP",
 	"THZT",
-	"FLAM",
 	"BANR",
 	"ESTA",
 
