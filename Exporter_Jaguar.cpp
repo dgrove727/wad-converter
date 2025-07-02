@@ -43,6 +43,18 @@ typedef struct
 	char name[8];
 } directory_t;
 
+MapTexture *FindTexture(Texture1 *t1, const char *name)
+{
+	MapTexture *node;
+	for (MapTexture *mt = t1->mapTextures; mt; mt = (MapTexture *)mt->next)
+	{
+		if (!memcmp(mt->name, name, 8))
+			return mt;
+	}
+
+	return NULL;
+}
+
 void Exporter_Jaguar::Execute()
 {
 	size_t lump_count = Listable::GetCount(this->entries);
@@ -83,6 +95,7 @@ void Exporter_Jaguar::Execute()
 	int32_t fauxPtr = wadPtrStart + 12 + (sizeof(directory_t) * lump_count);
 	bool insideSprites = false;
 	bool insideMap = false;
+	bool insideFlats = false;
 	for (WADEntry *node = entries; node; node = (WADEntry *)node->next)
 	{
 		int32_t padding_size = PADDING_SIZE(node);
@@ -91,6 +104,10 @@ void Exporter_Jaguar::Execute()
 			insideSprites = true;
 		if (!strcmp(node->GetName(), "S_END"))
 			insideSprites = false;
+		if (!strcmp(node->GetName(), "F_START"))
+			insideFlats = true;
+		if (!strcmp(node->GetName(), "F_END"))
+			insideFlats = false;
 
 		if (strstr(node->GetName(), "MAP") && strlen(node->GetName()) == 5) // Should be a map...
 			insideMap = true;
@@ -156,6 +173,71 @@ void Exporter_Jaguar::Execute()
 				fauxPtr = ((fauxPtrHalfMeg + 1) * HALFMEG);
 		}
 
+		if (insideFlats && strcmp(node->GetName(), "F_START"))
+		{
+			WADEntry *texture1 = WADEntry::FindEntry(entries, "TEXTURE1");
+
+			Texture1 *t1;
+			if (texture1->IsCompressed())
+			{
+				byte *decomp = texture1->Decompress();
+				t1 = new Texture1(decomp, texture1->GetUnCompressedDataLength());
+				free(decomp);
+			}
+			else
+				t1 = new Texture1(texture1->GetData(), texture1->GetUnCompressedDataLength());
+
+			// Is there a patch that matches?
+			bool insidePatches = false;
+			bool identical = false;
+			WADEntry *snode;
+			for (snode = entries; snode; snode = (WADEntry *)snode->next)
+			{
+				if (!strcmp(snode->GetName(), "T_START"))
+				{
+					insidePatches = true;
+					continue;
+				}
+				if (!strcmp(snode->GetName(), "T_END"))
+				{
+					insidePatches = false;
+					break;
+				}
+
+				if (!insidePatches)
+					continue;
+
+				if (node->GetDataLength() != snode->GetDataLength())
+					continue;
+
+				MapTexture *mt = FindTexture(t1, snode->GetName());
+				if (!mt)
+					continue;
+
+				// Patches are rotated 90 degrees to the left, so we need to rotate the flat and see if it matches.
+				byte *compareData = RawToJagTexture(node->GetData(), mt->width, mt->height);
+
+				int compareResult = memcmp(compareData, snode->GetData(), node->GetDataLength());
+
+				free(compareData);
+
+				// Compare the data
+				if (!compareResult)
+				{
+					identical = true;
+					break;
+				}
+			}
+
+			if (identical)
+			{
+				// Found an identical entry!
+				*node->dir_entry_filepos = *snode->dir_entry_filepos;
+				node->pointsToAnotherEntry = true;
+				printf("Found identical entry to %s! (%s)\n", node->GetName(), snode->GetName());
+				continue;
+			}
+		}
 		*node->dir_entry_filepos = swap_endian32(fauxPtr);
 		fauxPtr += node->GetDataLength();
 		fauxPtr += padding_size;
@@ -177,6 +259,9 @@ void Exporter_Jaguar::Execute()
 	// Now we just spill all of the data
 	for (WADEntry *node = entries; node; node = (WADEntry *)node->next)
 	{
+		if (node->pointsToAnotherEntry)
+			continue;
+
 		size_t thetell = ftell(f);
 		*node->dir_entry_filepos = swap_endian32(thetell);
 

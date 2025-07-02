@@ -18,6 +18,7 @@ private:
 
 public:
 	int32_t *dir_entry_filepos; // INTERNAL ONLY FOR USE DURING SAVE PROCESS
+	bool pointsToAnotherEntry; // INTERNAL ONY FOR USE DURING SAVE PROCESS
 
 	void SetDataInternal(const byte *value, size_t length);
 	const char *GetName() const;

@@ -737,6 +737,9 @@ static void MyFunTest()
 				lvlTextures->SetData(mipData, dataLen);
 				free(mipData);
 #else
+//				if (!strcmp(lvlTextures->GetName(), "GFZROCK"))
+//					lvlTextures->SetIsCompressed(true);
+
 				lvlTextures->SetData(texData, texLen);
 				free(texData);
 #endif
@@ -762,7 +765,11 @@ static void MyFunTest()
 				// Just straight-up steal 'em, since we're working with RAM copies.
 				Listable::RemoveNoFree(lvlFlats, (Listable **)&lvleditorEntries);
 				Listable::AddAfter(lvlFlats, lastAdded, (Listable **)&importedEntries);
-
+				/*
+				const byte *flatData = lvlFlats->GetData();
+				lvlFlats->SetIsCompressed(true);
+				lvlFlats->SetData(flatData, lvlFlats->GetDataLength());
+				*/
 #ifdef MAKE_MIPMAPS
 				int dataLen;
 				byte *mipData = FlatMipmaps(lvlFlats->GetData(), lvlFlats->GetUnCompressedDataLength(), MIPLEVELS, &dataLen);
