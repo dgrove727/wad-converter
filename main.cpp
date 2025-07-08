@@ -351,7 +351,7 @@ static void ConvertMapToJaguar(const char *filename, const char *exportFilename)
 	fclose(f);
 
 	WADMap *map = new WADMap(entries);
-	WADEntry *converted = map->CreateJaguar(map->name);
+	WADEntry *converted = map->CreateJaguar(map->name, 0);
 
 	f = fopen(exportFilename, "wb");
 	Exporter_PC *epc = new Exporter_PC(converted, f);
@@ -389,7 +389,7 @@ void AddSingularItemRow(MapThing *list, const mapthing_t *origin, int16_t type, 
 
 }
 
-void InsertPCLevelFromWAD(const char *wadfile, WADEntry *entries)
+void InsertPCLevelFromWAD(const char *wadfile, WADEntry *entries, int loadFlags)
 {
 	FILE *f = fopen(wadfile, "rb");
 	Importer_PC *ipc = new Importer_PC(f);
@@ -485,7 +485,7 @@ void InsertPCLevelFromWAD(const char *wadfile, WADEntry *entries)
 		map->numthings++;
 	}
 	*/
-	WADEntry *jagEntries = map->CreateJaguar(map->name, true, t1, fList);
+	WADEntry *jagEntries = map->CreateJaguar(map->name, loadFlags, true, t1, fList);
 
 	printf("%s breakdown:\n", wadfile);
 	WADEntry *node;
@@ -843,21 +843,21 @@ static void MyFunTest()
 			sizeGraphics += node->GetDataLength();
 	}
 
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP01a.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP02a.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP03a.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP04b.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP06a.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP07b.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP10a.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP01a.wad", basePath), importedEntries, 255);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP02a.wad", basePath), importedEntries, 57);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP03a.wad", basePath), importedEntries, 255);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP04b.wad", basePath), importedEntries, 0);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP06a.wad", basePath), importedEntries, 255);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP07b.wad", basePath), importedEntries, 255);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP10a.wad", basePath), importedEntries, 0);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP16a.wad", basePath), importedEntries);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP17.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP30a.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP60b.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP61b.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP62b.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP63b.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP64b.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP30a.wad", basePath), importedEntries, 255);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP60b.wad", basePath), importedEntries, 255);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP61b.wad", basePath), importedEntries, 255);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP62b.wad", basePath), importedEntries, 255);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP63b.wad", basePath), importedEntries, 255);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP64b.wad", basePath), importedEntries, 255);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\FOF.wad", basePath), importedEntries);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP65.wad", basePath), importedEntries);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP66.wad", basePath), importedEntries);

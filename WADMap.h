@@ -127,7 +127,7 @@ public:
 	void CompressSectors();
 	void CompressSidedefs();
 
-	WADEntry *CreateJaguar(const char *mapname, bool srb32xsegs = false, Texture1 *t1 = NULL, FlatList *fList = NULL);
+	WADEntry *CreateJaguar(const char *mapname, int loadFlags, bool srb32xsegs = false, Texture1 *t1 = NULL, FlatList *fList = NULL);
 	WADEntry *CreatePC(const char *mapname);
 
 	WADMap(WADEntry *head);

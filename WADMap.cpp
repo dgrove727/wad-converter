@@ -54,6 +54,13 @@ typedef struct
 	uint8_t bottom;
 } sidetex_t;
 
+#define LOADFLAGS_VERTEXES 1
+#define LOADFLAGS_BLOCKMAP 2
+#define LOADFLAGS_REJECT 4
+#define LOADFLAGS_NODES 8
+#define LOADFLAGS_SEGS 16
+#define LOADFLAGS_LINEDEFS 32
+
 static uint8_t FindFlat(FlatList *fList, char name[8])
 {
 	char checkName[9];
@@ -487,7 +494,7 @@ int compare_by_type(const void *a, const void *b) {
 	return (thing_a->type - thing_b->type);
 }
 
-WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t1, FlatList *fList)
+WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xsegs, Texture1 *t1, FlatList *fList)
 {
 	WADEntry *head = NULL;
 
@@ -513,7 +520,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t
 	entry = new WADEntry();
 	Listable::Add(entry, (Listable **)&head);
 	entry->SetName("LINEDEFS");
-	entry->SetIsCompressed(false);
+	entry->SetIsCompressed(loadFlags & LOADFLAGS_LINEDEFS);
 
 	if (srb32xsegs)
 	{
@@ -611,7 +618,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t
 		entry = new WADEntry();
 		Listable::Add(entry, (Listable **)&head);
 		entry->SetName("VERTEXES");
-		entry->SetIsCompressed(false);
+		entry->SetIsCompressed(loadFlags & LOADFLAGS_VERTEXES);
 		vertex_t *temp = (vertex_t *)malloc(sizeof(vertex_t) * numvertexes);
 		for (int32_t i = 0; i < numvertexes; i++)
 		{
@@ -643,7 +650,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t
 	entry->SetName("SEGS");
 	if (srb32xsegs)
 	{
-		entry->SetIsCompressed(false);
+		entry->SetIsCompressed(loadFlags & LOADFLAGS_SEGS);
 
 		srb32xseg_t *newSegs = (srb32xseg_t *)malloc(sizeof(srb32xseg_t) * numsegs);
 		seg_t *origSegs = segs;
@@ -702,7 +709,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t
 	entry = new WADEntry();
 	Listable::Add(entry, (Listable **)&head);
 	entry->SetName("NODES");
-	entry->SetIsCompressed(false);
+	entry->SetIsCompressed(loadFlags & LOADFLAGS_NODES);
 	if (jagNodes)
 		entry->SetData((byte *)jagNodes, numnodes * sizeof(jagnode_t));
 	else if (srb32xsegs)
@@ -784,7 +791,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t
 	entry = new WADEntry();
 	Listable::Add(entry, (Listable **)&head);
 	entry->SetName("REJECT");
-	entry->SetIsCompressed(false);
+	entry->SetIsCompressed(loadFlags & LOADFLAGS_REJECT);
 	
 	// Vic's 50% compression of the REJECT table technique
 	{
@@ -834,7 +841,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, bool srb32xsegs, Texture1 *t
 	entry = new WADEntry();
 	Listable::Add(entry, (Listable **)&head);
 	entry->SetName("BLOCKMAP");
-	entry->SetIsCompressed(false);
+	entry->SetIsCompressed(loadFlags & LOADFLAGS_BLOCKMAP);
 
 	{
 		// Gotta byteswap it all
