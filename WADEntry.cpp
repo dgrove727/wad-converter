@@ -6,6 +6,7 @@
 
 #if defined(USE_LZEXE)
 	#include "lzexe.h"
+	#include "mdcomp/kosinski.hh"
 #else
 	#include "lzss.h"
 	#include "CarmackCompress.h"
@@ -51,6 +52,13 @@ void WADEntry::SetData(const byte *value, size_t length)
 
 #if defined(USE_LZEXE)
 		//DLG: Include LZEXE compressor here!
+		std::ostringstream dest;
+		kosinski::encode(dest, value, length);
+		std::string result = dest.str();
+		std::vector<uint8_t> byteArray(result.begin(), result.end());
+
+		compressedSize = result.length();
+		byte *recompressFinal = (byte*)result.data();
 #else
 		byte *recompressFinal = encode(value, filesize, &compressedSize);
 #endif
@@ -63,7 +71,9 @@ void WADEntry::SetData(const byte *value, size_t length)
 		else
 		{
 			this->SetDataInternal(recompressFinal, compressedSize);
+#if !defined(USE_LZEXE)
 			free(recompressFinal);
+#endif
 		}
 
 		this->SetUnCompressedDataLength(filesize);
@@ -123,11 +133,12 @@ byte *WADEntry::Decompress() const
 		int32_t readSize = uncompSize > bufferSize ? bufferSize : uncompSize;
 
 #if defined(USE_LZEXE)
-		lzexe_read(&lzexe, readSize);
+		lzexe_read_partial(&lzexe, readSize);
+		memcpy(writePtr, lzexe.output, readSize);
 #else
 		lzss_read(&lzss, readSize);
-#endif
 		memcpy(writePtr, lzss.buf, readSize);
+#endif
 		writePtr += readSize;
 
 		uncompSize -= readSize;
@@ -148,6 +159,13 @@ void WADEntry::ReplaceWithFile(const char *filename)
 		int compressedSize = 0;
 #if defined(USE_LZEXE)
 		//DLG: Include LZEXE compressor here!
+		std::ostringstream dest;
+		kosinski::encode(dest, newData, filesize);
+		std::string result = dest.str();
+		std::vector<uint8_t> byteArray(result.begin(), result.end());
+
+		compressedSize = result.length();
+		byte *recompressFinal = (byte *)result.data();
 #else
 		byte* recompressFinal = encode(newData, filesize, &compressedSize);
 #endif
@@ -160,7 +178,9 @@ void WADEntry::ReplaceWithFile(const char *filename)
 		else
 		{
 			this->SetData(recompressFinal, compressedSize);
+#if !defined(USE_LZEXE)
 			free(recompressFinal);
+#endif
 		}
 
 		this->SetUnCompressedDataLength(filesize);

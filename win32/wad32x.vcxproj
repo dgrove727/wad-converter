@@ -50,6 +50,13 @@
     <ClInclude Include="..\lzexe.h" />
     <ClInclude Include="..\lzss.h" />
     <ClInclude Include="..\MapThing.h" />
+    <ClInclude Include="..\mdcomp\basic_decoder.hh" />
+    <ClInclude Include="..\mdcomp\bigendian_io.hh" />
+    <ClInclude Include="..\mdcomp\bitstream.hh" />
+    <ClInclude Include="..\mdcomp\ignore_unused_variable_warning.hh" />
+    <ClInclude Include="..\mdcomp\kosinski.hh" />
+    <ClInclude Include="..\mdcomp\lzss.hh" />
+    <ClInclude Include="..\mdcomp\moduled_adaptor.hh" />
     <ClInclude Include="..\SpriteColumn.h" />
     <ClInclude Include="..\SRB2LevelConv.h" />
     <ClInclude Include="..\stb_image_resize2.h" />

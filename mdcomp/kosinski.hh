@@ -31,9 +31,9 @@ using moduled_kosinski = ModuledAdaptor<kosinski, 4096U, 16U>;
 class kosinski : public basic_kosinski, public moduled_kosinski {
     friend basic_kosinski;
     friend moduled_kosinski;
-    static bool encode(std::ostream& Dst, uint8_t const* data, size_t Size);
 
 public:
+    static bool encode(std::ostream &Dst, uint8_t const *data, size_t Size);
     using basic_kosinski::encode;
     static bool decode(std::istream& Src, std::iostream& Dst);
 };
