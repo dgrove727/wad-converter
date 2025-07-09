@@ -3,8 +3,13 @@
 #include <memory.h>
 #include <string.h>
 #include <stdio.h>
-#include "lzss.h"
-#include "CarmackCompress.h"
+
+#if defined(USE_LZEXE)
+	#include "lzexe.h"
+#else
+	#include "lzss.h"
+	#include "CarmackCompress.h"
+#endif
 
 const char *WADEntry::GetName() const
 {
@@ -43,7 +48,12 @@ void WADEntry::SetData(const byte *value, size_t length)
 	if (this->IsCompressed())
 	{
 		int32_t compressedSize = 0;
+
+#if defined(USE_LZEXE)
+		//DLG: Include LZEXE compressor here!
+#else
 		byte *recompressFinal = encode(value, filesize, &compressedSize);
+#endif
 		if (compressedSize >= filesize)
 		{
 			printf("Compressed size is larger or equal to uncompressed size. This is not allowed. Saving as uncompressed.\n");
@@ -89,11 +99,19 @@ const size_t WADEntry::GetUnCompressedDataLength() const
 
 byte *WADEntry::Decompress() const
 {
+#if defined(USE_LZEXE)
+	const uint32_t bufferSize = 0x2000;
+
+	byte* uncompressed = (byte*)malloc(bufferSize);
+	lzexe_state_t lzexe;
+	lzexe_setup(&lzexe, (uint8_t*)this->GetData(), (uint8_t*)uncompressed, bufferSize);
+#else
 	const uint32_t bufferSize = 0x1000;
 
-	byte *uncompressed = (byte *)malloc(bufferSize);
+	byte* uncompressed = (byte*)malloc(bufferSize);
 	lzss_state_t lzss;
-	lzss_setup(&lzss, (uint8_t *)this->GetData(), (uint8_t *)uncompressed, bufferSize);
+	lzss_setup(&lzss, (uint8_t*)this->GetData(), (uint8_t*)uncompressed, bufferSize);
+#endif
 
 	int uncompSize = this->GetUnCompressedDataLength();
 
@@ -104,7 +122,11 @@ byte *WADEntry::Decompress() const
 	{
 		int32_t readSize = uncompSize > bufferSize ? bufferSize : uncompSize;
 
+#if defined(USE_LZEXE)
+		lzexe_read(&lzexe, readSize);
+#else
 		lzss_read(&lzss, readSize);
+#endif
 		memcpy(writePtr, lzss.buf, readSize);
 		writePtr += readSize;
 
@@ -124,7 +146,11 @@ void WADEntry::ReplaceWithFile(const char *filename)
 	if (this->IsCompressed())
 	{
 		int compressedSize = 0;
-		byte *recompressFinal = encode(newData, filesize, &compressedSize);
+#if defined(USE_LZEXE)
+		//DLG: Include LZEXE compressor here!
+#else
+		byte* recompressFinal = encode(newData, filesize, &compressedSize);
+#endif
 		if (compressedSize > filesize)
 		{
 			printf("Compressed size is larger than uncompressed size. This is not allowed. Saving as uncompressed.\n");
