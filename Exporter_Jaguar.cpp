@@ -45,7 +45,6 @@ typedef struct
 
 MapTexture *FindTexture(Texture1 *t1, const char *name)
 {
-	MapTexture *node;
 	for (MapTexture *mt = t1->mapTextures; mt; mt = (MapTexture *)mt->next)
 	{
 		if (!memcmp(mt->name, name, 8))

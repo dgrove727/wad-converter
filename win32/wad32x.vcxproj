@@ -26,7 +26,9 @@
     <ClCompile Include="..\gfx_convert.cpp" />
     <ClCompile Include="..\Importer_Jaguar.cpp" />
     <ClCompile Include="..\Importer_PC.cpp" />
+    <ClCompile Include="..\kosinski.cpp" />
     <ClCompile Include="..\Listable.cpp" />
+    <ClCompile Include="..\lzexe.cpp" />
     <ClCompile Include="..\lzss.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\SRB2LevelConv.cpp" />
@@ -45,6 +47,7 @@
     <ClInclude Include="..\Importer_Jaguar.h" />
     <ClInclude Include="..\Importer_PC.h" />
     <ClInclude Include="..\Listable.h" />
+    <ClInclude Include="..\lzexe.h" />
     <ClInclude Include="..\lzss.h" />
     <ClInclude Include="..\MapThing.h" />
     <ClInclude Include="..\SpriteColumn.h" />
@@ -115,6 +118,7 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -130,6 +134,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
