@@ -20,13 +20,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\CarmackCompress.cpp" />
+    <ClCompile Include="..\clownlzss\compressors\clownlzss.c" />
     <ClCompile Include="..\common.cpp" />
     <ClCompile Include="..\Exporter_Jaguar.cpp" />
     <ClCompile Include="..\Exporter_PC.cpp" />
     <ClCompile Include="..\gfx_convert.cpp" />
     <ClCompile Include="..\Importer_Jaguar.cpp" />
     <ClCompile Include="..\Importer_PC.cpp" />
-    <ClCompile Include="..\kosinski.cpp" />
     <ClCompile Include="..\Listable.cpp" />
     <ClCompile Include="..\lzexe.cpp" />
     <ClCompile Include="..\lzss.cpp" />
@@ -38,6 +38,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\CarmackCompress.h" />
+    <ClInclude Include="..\clownlzss\clownlzss_bitfield.h" />
+    <ClInclude Include="..\clownlzss\clownlzss_common.h" />
+    <ClInclude Include="..\clownlzss\compressors\clownlzss.h" />
+    <ClInclude Include="..\clownlzss\compressors\kosinski.h" />
     <ClInclude Include="..\common.h" />
     <ClInclude Include="..\Exporter.h" />
     <ClInclude Include="..\Exporter_Jaguar.h" />
@@ -50,13 +54,6 @@
     <ClInclude Include="..\lzexe.h" />
     <ClInclude Include="..\lzss.h" />
     <ClInclude Include="..\MapThing.h" />
-    <ClInclude Include="..\mdcomp\basic_decoder.hh" />
-    <ClInclude Include="..\mdcomp\bigendian_io.hh" />
-    <ClInclude Include="..\mdcomp\bitstream.hh" />
-    <ClInclude Include="..\mdcomp\ignore_unused_variable_warning.hh" />
-    <ClInclude Include="..\mdcomp\kosinski.hh" />
-    <ClInclude Include="..\mdcomp\lzss.hh" />
-    <ClInclude Include="..\mdcomp\moduled_adaptor.hh" />
     <ClInclude Include="..\SpriteColumn.h" />
     <ClInclude Include="..\SRB2LevelConv.h" />
     <ClInclude Include="..\stb_image_resize2.h" />
@@ -125,8 +122,8 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
+      <AdditionalOptions>/sdl /w34996 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>../../;../</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -142,8 +139,6 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
-      <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>../../;../</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -158,6 +153,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>/sdl /w34996 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

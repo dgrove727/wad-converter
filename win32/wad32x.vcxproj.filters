@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Header Files\mdcomp">
-      <UniqueIdentifier>{a9cca675-5ffa-4b74-97e0-34d2e23074d8}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\main.cpp">
@@ -63,7 +60,7 @@
     <ClCompile Include="..\lzexe.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\kosinski.cpp">
+    <ClCompile Include="..\clownlzss\compressors\clownlzss.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -131,26 +128,17 @@
     <ClInclude Include="..\lzexe.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\mdcomp\basic_decoder.hh">
-      <Filter>Header Files\mdcomp</Filter>
+    <ClInclude Include="..\clownlzss\compressors\kosinski.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\mdcomp\bigendian_io.hh">
-      <Filter>Header Files\mdcomp</Filter>
+    <ClInclude Include="..\clownlzss\clownlzss_bitfield.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\mdcomp\bitstream.hh">
-      <Filter>Header Files\mdcomp</Filter>
+    <ClInclude Include="..\clownlzss\clownlzss_common.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\mdcomp\ignore_unused_variable_warning.hh">
-      <Filter>Header Files\mdcomp</Filter>
-    </ClInclude>
-    <ClInclude Include="..\mdcomp\kosinski.hh">
-      <Filter>Header Files\mdcomp</Filter>
-    </ClInclude>
-    <ClInclude Include="..\mdcomp\lzss.hh">
-      <Filter>Header Files\mdcomp</Filter>
-    </ClInclude>
-    <ClInclude Include="..\mdcomp\moduled_adaptor.hh">
-      <Filter>Header Files\mdcomp</Filter>
+    <ClInclude Include="..\clownlzss\compressors\clownlzss.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
