@@ -30,4 +30,6 @@ void lzexe_setup(lzexe_state_t* lzexe, uint8_t* input, uint8_t* output, uint32_t
 int lzexe_read_all(uint8_t* input, uint8_t* output);
 int lzexe_read_partial(lzexe_state_t* lzexe, uint16_t chunk_size);
 
+uint8_t* lzexe_encode(const uint8_t* input, int32_t inputlen, int32_t* size);
+
 #endif

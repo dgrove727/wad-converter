@@ -81,7 +81,7 @@ void derror(char *msg)
     fprintf(stdout, "\nerror: %s\n\n", msg);
 }
 
-uint8_t *encode(const uint8_t *input, int32_t inputlen, int32_t *size)
+uint8_t *lzss_encode(const uint8_t *input, int32_t inputlen, int32_t *size)
 {
     int32_t putidbyte = 0;
     const uint8_t *encodedpos = NULL;
@@ -267,7 +267,7 @@ int decodedsize(uint8_t *input)
 
 }
 
-void decode(uint8_t *input, uint8_t *output)
+void lzss_decode(uint8_t *input, uint8_t *output)
 {
 
     int32_t getidbyte = 0;

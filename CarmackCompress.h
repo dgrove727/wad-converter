@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-uint8_t *encode(const uint8_t *input, int32_t inputlen, int32_t *size);
-void decode(uint8_t *input, uint8_t *output);
+uint8_t *lzss_encode(const uint8_t *input, int32_t inputlen, int32_t *size);
+void lzss_decode(uint8_t *input, uint8_t *output);
 int32_t decodedsize(uint8_t *input);
 void derror(char *msg);
 

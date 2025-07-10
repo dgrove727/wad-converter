@@ -4,9 +4,11 @@
 #include <string.h>
 #include <stdio.h>
 
+#define USE_LZEXE
+
 #if defined(USE_LZEXE)
 	#include "lzexe.h"
-	#include "mdcomp/kosinski.hh"
+	#include "clownlzss\compressors\kosinski.h"
 #else
 	#include "lzss.h"
 	#include "CarmackCompress.h"
@@ -49,18 +51,10 @@ void WADEntry::SetData(const byte *value, size_t length)
 	if (this->IsCompressed())
 	{
 		int32_t compressedSize = 0;
-
 #if defined(USE_LZEXE)
-		//DLG: Include LZEXE compressor here!
-		std::ostringstream dest;
-		kosinski::encode(dest, value, length);
-		std::string result = dest.str();
-		std::vector<uint8_t> byteArray(result.begin(), result.end());
-
-		compressedSize = result.length();
-		byte *recompressFinal = (byte*)result.data();
+		byte* recompressFinal = lzexe_encode(value, filesize, &compressedSize);
 #else
-		byte *recompressFinal = encode(value, filesize, &compressedSize);
+		byte *recompressFinal = lzss_encode(value, filesize, &compressedSize);
 #endif
 		if (compressedSize >= filesize)
 		{
@@ -158,16 +152,9 @@ void WADEntry::ReplaceWithFile(const char *filename)
 	{
 		int compressedSize = 0;
 #if defined(USE_LZEXE)
-		//DLG: Include LZEXE compressor here!
-		std::ostringstream dest;
-		kosinski::encode(dest, newData, filesize);
-		std::string result = dest.str();
-		std::vector<uint8_t> byteArray(result.begin(), result.end());
-
-		compressedSize = result.length();
-		byte *recompressFinal = (byte *)result.data();
+		byte* recompressFinal = lzexe_encode(newData, filesize, &compressedSize);
 #else
-		byte* recompressFinal = encode(newData, filesize, &compressedSize);
+		byte* recompressFinal = lzss_encode(newData, filesize, &compressedSize);
 #endif
 		if (compressedSize > filesize)
 		{

@@ -1,6 +1,9 @@
+#include <sstream>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "lzexe.h"
+#include "clownlzss/compressors/kosinski.h"
 
 void lzexe_reset(lzexe_state_t* lzexe)
 {
@@ -221,4 +224,20 @@ save_lzexe_state:
 	//printf("\nbytes_written = %d\n\n", bytes_written);
 
 	return bytes_written;
+}
+
+
+
+uint8_t* lzexe_encode(const uint8_t* input, int32_t inputlen, int32_t* size)
+{
+	// Compress data.
+	std::stringstream stream;
+	ClownLZSS::KosinskiCompress(input, inputlen, stream);
+
+	// Obtain buffer (as a string).
+	std::string output_string = stream.str();
+	*size = std::size(output_string);
+	uint8_t* output_pointer = (uint8_t*)output_string.data();
+
+	return output_pointer;
 }
