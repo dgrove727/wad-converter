@@ -61,6 +61,21 @@ typedef struct
 #define LOADFLAGS_SEGS 16
 #define LOADFLAGS_LINEDEFS 32
 
+static uint8_t RemapLinedefSpecial(int16_t special)
+{
+	switch (special)
+	{
+	case 302:
+		return 232;
+	case 405:
+		return 220;
+	default:
+		break;
+	}
+
+	return special;
+}
+
 static uint8_t FindFlat(FlatList *fList, char name[8])
 {
 	char checkName[9];
@@ -553,7 +568,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 		for (int i = 0; i < numlinedefs; i++)
 		{
 			compData[i].flags = swap_endian16(linedefs[i].flags);
-			compData[i].special = (uint8_t)linedefs[i].special;
+			compData[i].special = RemapLinedefSpecial(linedefs[i].special);
 
 			if (linedefs[i].tag > 255)
 			{
