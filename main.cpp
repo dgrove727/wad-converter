@@ -662,7 +662,7 @@ static void MyFunTest()
 
 			if (strcmp(node->GetName(), "CHEVBLKU") && strcmp(node->GetName(), "CHEVBLKD"))
 			{
-				for (int i = 16; i < node->GetDataLength(); i++)
+				for (size_t i = 16; i < node->GetDataLength(); i++)
 				{
 					if (newData[i] == MEGADRIVE_THRU_COLOR)
 					{
@@ -850,7 +850,7 @@ static void MyFunTest()
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP06a.wad", basePath), importedEntries, 255);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP07b.wad", basePath), importedEntries, 255);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP10a.wad", basePath), importedEntries, 0);
-//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP16a.wad", basePath), importedEntries);
+	//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP16a.wad", basePath), importedEntries);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP17.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP30a.wad", basePath), importedEntries, 255);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP60b.wad", basePath), importedEntries, 255);
@@ -858,7 +858,8 @@ static void MyFunTest()
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP62b.wad", basePath), importedEntries, 255);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP63b.wad", basePath), importedEntries, 255);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP64b.wad", basePath), importedEntries, 255);
-//	InsertPCLevelFromWAD(va("%s\\Levels\\FOF.wad", basePath), importedEntries);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP65b.wad", basePath), importedEntries, 255);
+	InsertPCLevelFromWAD(va("%s\\Levels\\FOF.wad", basePath), importedEntries, 255);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP65.wad", basePath), importedEntries);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP66.wad", basePath), importedEntries);
 

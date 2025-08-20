@@ -65,6 +65,10 @@ static uint8_t RemapLinedefSpecial(int16_t special)
 {
 	switch (special)
 	{
+	case 300:
+		return 230;
+	case 301:
+		return 231;
 	case 302:
 		return 232;
 	case 405:
@@ -73,7 +77,7 @@ static uint8_t RemapLinedefSpecial(int16_t special)
 		break;
 	}
 
-	return special;
+	return (uint8_t)special;
 }
 
 static uint8_t FindFlat(FlatList *fList, char name[8])
@@ -575,6 +579,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 				compData[i].special = 0;
 				compData[i].tag = 0;
 				printf("Linedef %d has tag %d which is > 255.\n", i, linedefs[i].tag);
+				linedefs[i].tag = 0;
 			}
 			else
 				compData[i].tag = (uint8_t)linedefs[i].tag;
@@ -790,6 +795,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 			if (sectors[i].tag > 255)
 			{
 				printf("Sector %d has tag %d, which is > 255.\n", i, sectors[i].tag);
+				sectors[i].tag = 0;
 				compData[i].tag = 0;
 			}
 			else
@@ -819,7 +825,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 		outsize = (numsectors + 1) * numsectors / 2;
 		outsize = (outsize + 7) / 8;
 
-		byte *rejectmatrix = (byte *)malloc(outsize);
+		byte *rejectmatrix = (byte *)malloc(outsize * 4);
 
 		memset(rejectmatrix, 0, outsize);
 		
