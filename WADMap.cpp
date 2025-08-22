@@ -281,28 +281,10 @@ static srb32xnode_t *CompressNodes(node_t *data, int count)
 
 bool IdenticalSectors(const sector_t *sec1, const sector_t *sec2)
 {
-	if (sec1->ceilingheight != sec2->ceilingheight)
+	if (sec1 == sec2) // Itself
 		return false;
 
-	if (strcmp(sec1->ceilingpic, sec2->ceilingpic))
-		return false;
-
-	if (sec1->floorheight != sec2->floorheight)
-		return false;
-
-	if (strcmp(sec1->floorpic, sec2->floorpic))
-		return false;
-
-	if (sec1->lightlevel != sec2->lightlevel)
-		return false;
-
-	if (sec1->special != sec2->special)
-		return false;
-
-	if (sec1->tag != sec2->tag)
-		return false;
-
-	return true;
+	return !memcmp(sec1, sec2, sizeof(sector_t));
 }
 
 bool IdenticalSidedefs(const sidedef_t *side1, const sidedef_t *side2)
@@ -351,21 +333,27 @@ void WADMap::UpdateLinedefSidedefRefs(int16_t oldSidenum, int16_t newSidenum)
 
 void WADMap::CompressSectors()
 {
-	int32_t numNewSectors = 0;
+	int32_t numNewSectors = numsectors;
 
 	for (int32_t i = 0; i < numsectors; i++)
 	{
-		for (int32_t j = i + 1; j < numsectors; j++)
+		for (int32_t j = 0; j < numsectors; j++)
 		{
+			if (sectors[j].tag & 32768)
+				continue; // Already marked
+
 			if (IdenticalSectors(&sectors[i], &sectors[j]))
 			{
 				// Flag for deletion
 				sectors[j].tag |= 32768;
-				numNewSectors++;
+				numNewSectors--;
 			}
 		}
 	}
 
+	if (numNewSectors == numsectors)
+		return;
+	
 	sector_t *newSectors = (sector_t *)malloc(numNewSectors * sizeof(sector_t));
 
 	// Copy the sectors to their new block of memory.
@@ -381,20 +369,12 @@ void WADMap::CompressSectors()
 		sector_t *newSec = &newSectors[z++];
 		sector_t *oldSec = &sectors[i];
 
-		newSec->ceilingheight = oldSec->ceilingheight;
-		for (int j = 0; j < 8; j++)
-			newSec->ceilingpic[j] = oldSec->ceilingpic[j];
-		newSec->floorheight = oldSec->floorheight;
-		for (int j = 0; j < 8; j++)
-			newSec->floorpic[j] = oldSec->floorpic[j];
-		newSec->lightlevel = oldSec->lightlevel;
-		newSec->special = oldSec->special;
-		newSec->tag = oldSec->tag;
+		memcpy(newSec, oldSec, sizeof(sector_t));
 	}
 
 	free(sectors);
 	sectors = newSectors;
-	printf("Had %d sectors, now %d sectors.", numsectors, numNewSectors);
+	printf("Had %d sectors, now %d sectors.\n", numsectors, numNewSectors);
 	numsectors = numNewSectors;
 }
 
@@ -540,6 +520,58 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 	Listable::Add(entry, (Listable **)&head);
 	entry->SetName("LINEDEFS");
 	entry->SetIsCompressed(loadFlags & LOADFLAGS_LINEDEFS);
+
+	// A little bit of Q&A
+	{
+		// Check linedefs with a special but no tag
+		for (int i = 0; i < numlinedefs; i++)
+		{
+			if (linedefs[i].special > 0 && linedefs[i].tag == 0)
+				printf("Linedef %d has special (%d) but no tag.\n", i, linedefs[i].special);
+		}
+
+		// Check linedefs with a tag, but no special
+		for (int i = 0; i < numlinedefs; i++)
+		{
+			if (linedefs[i].special == 0 && linedefs[i].tag != 0)
+				printf("Linedef %d has tag (%d) but no special.\n", i, linedefs[i].tag);
+		}
+
+		for (int s = 0; s < numsectors; s++)
+		{
+			if (sectors[s].tag <= 0)
+				continue;
+
+			bool found = false;
+			for (int i = 0; i < numlinedefs; i++)
+			{
+				if (linedefs[i].tag == sectors[s].tag)
+				{
+					found = true;
+					break;
+				}
+			}
+
+			if (!found)
+				printf("Sector %d has tag (%d) but no linedef tagged to it.\n", s, sectors[s].tag);
+		}
+
+		// Find identical sectors
+		for (int x = 0; x < numsectors; x++)
+		{
+			sector_t* srcSec = &sectors[x];
+			for (int y = 0; y < numsectors; y++)
+			{
+				if (x == y)
+					continue;
+
+				sector_t* cmpSec = &sectors[y];
+
+				if (!memcmp(srcSec, cmpSec, sizeof(sector_t)))
+					printf("Sectors %d and %d are identical.\n", x, y);
+			}
+		}
+	}
 
 	if (srb32xsegs)
 	{
