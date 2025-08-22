@@ -172,7 +172,8 @@ void Exporter_Jaguar::Execute()
 				fauxPtr = ((fauxPtrHalfMeg + 1) * HALFMEG);
 		}
 
-		if (insideFlats && strcmp(node->GetName(), "F_START"))
+		const bool reuseflats = false;
+		if (reuseflats && insideFlats && strcmp(node->GetName(), "F_START"))
 		{
 			WADEntry *texture1 = WADEntry::FindEntry(entries, "TEXTURE1");
 
