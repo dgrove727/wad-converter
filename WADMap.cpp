@@ -850,6 +850,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 	{
 		int i, j;
 		uint8_t *out;
+		uint8_t* data = this->reject;
 		int outsize;
 		unsigned outbit, outbyte;
 
@@ -857,7 +858,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 		outsize = (numsectors + 1) * numsectors / 2;
 		outsize = (outsize + 7) / 8;
 
-		byte *rejectmatrix = (byte *)malloc(outsize * 4);
+		byte *rejectmatrix = (byte *)malloc(outsize);
 
 		memset(rejectmatrix, 0, outsize);
 		
@@ -870,14 +871,17 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 			unsigned bit = 1 << ((k + i) & 7);
 			for (j = i; j < numsectors; j++) {
 				unsigned bytenum = (k + j) / 8;
-				if (rejectmatrix[bytenum] & bit)
+
+				if (data[bytenum] & bit)
 				{
 					out[outbyte] |= outbit;
 				}
+
 				bit <<= 1;
 				if (bit > 0xff) {
 					bit = 1;
 				}
+
 				outbit <<= 1;
 				if (outbit > 0xff) {
 					outbyte++;
