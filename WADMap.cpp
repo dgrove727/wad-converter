@@ -108,7 +108,7 @@ static uint8_t FindTexture(Texture1 *t1, char name[8])
 	memcpy(checkName, name, 8);
 	checkName[8] = '\0';
 
-	if (name[0] == '-')
+	if (name[0] == '-' || (name[0] == 'C' && name[1] == 'E' && name[2] == 'Z' && name[3] == 'T' && name[4] == 'R' && name[5] == 'A' && name[6] == '0'))
 		return 0;
 
 	MapTexture *node;
