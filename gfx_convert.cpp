@@ -906,6 +906,9 @@ byte *FlatMipmaps(const byte *data, int dataLen, int numlevels, int *outputLen)
 	dataSize += flatSize * flatSize * 3;
 	flatSize >>= 1;
 
+	if (flatSize < 1)
+		flatSize = 1;
+
 	for (int i = 0; i < numlevels-1; i++)
 	{
 		byte *resized = stbir_resize_uint8_linear(rgbImage, fullSize, fullSize, 0, NULL, flatSize, flatSize, 0, STBIR_RGB);
