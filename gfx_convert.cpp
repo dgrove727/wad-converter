@@ -946,6 +946,11 @@ byte *PatchMipmaps(const byte *data, int width, int height, int numlevels, int *
 	mipWidth >>= 1;
 	mipHeight >>= 1;
 
+	if (mipWidth < 1)
+		mipWidth = 1;
+	if (mipHeight < 1)
+		mipHeight = 1;
+
 	for (int i = 0; i < numlevels - 1; i++)
 	{
 		byte *resized = stbir_resize_uint8_linear(rgbImage, width, height, 0, NULL, mipWidth, mipHeight, 0, STBIR_RGB);

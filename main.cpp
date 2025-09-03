@@ -15,8 +15,9 @@
 #include "MapThing.h"
 #include "SpriteColumn.h"
 
-//#define MAKE_MIPMAPS
-//#define MIPLEVELS 4
+#define MAKE_WALL_MIPMAPS
+//#define MAKE_FLAT_MIPMAPS
+#define MIPLEVELS 4
 #define WADPTRSTART 0//0x3B000
 
 #define		VERSION			1.10
@@ -728,7 +729,7 @@ static void MyFunTest()
 				int texLen;
 				byte *texData = PatchToJagTexture(lvlTextures->GetData(), lvlTextures->GetDataLength(), &texLen);
 
-#ifdef MAKE_MIPMAPS
+#ifdef MAKE_WALL_MIPMAPS
 				const patchHeader_t *header = (patchHeader_t *)lvlTextures->GetData(); // Need width/height info
 
 				int dataLen;
@@ -771,7 +772,7 @@ static void MyFunTest()
 				lvlFlats->SetIsCompressed(true);
 				lvlFlats->SetData(flatData, lvlFlats->GetDataLength());
 				*/
-#ifdef MAKE_MIPMAPS
+#ifdef MAKE_FLAT_MIPMAPS
 				int dataLen;
 				byte *mipData = FlatMipmaps(lvlFlats->GetData(), lvlFlats->GetUnCompressedDataLength(), MIPLEVELS, &dataLen);
 				lvlFlats->SetData(mipData, dataLen);
