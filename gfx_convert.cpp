@@ -15,7 +15,7 @@ typedef struct
 
 // SRB 32X palette
 palentry_t palette[256] = {
-	{ 0, 0, 0 },
+	{ 0, 255, 255 },
 { 246, 246, 246 },
 { 237, 237, 237 },
 { 228, 228, 228 },
@@ -830,6 +830,9 @@ byte GetIndexFromRGB(byte r, byte g, byte b)
 		closestIndex = 0xd0;
 #endif
 
+	if (closestIndex == 0x00) // Don't choose cyan
+		closestIndex = 121;
+
 	return (byte)closestIndex;
 }
 
@@ -946,6 +949,7 @@ byte *PatchMipmaps(const byte *data, int width, int height, int numlevels, int *
 
 	memcpy(totalBuffer, rgbImage, mipWidth * mipHeight * 3);
 	dataSize += mipWidth * mipHeight * 3;
+
 	mipWidth >>= 1;
 	mipHeight >>= 1;
 
@@ -980,6 +984,7 @@ byte *PatchMipmaps(const byte *data, int width, int height, int numlevels, int *
 
 	// All done! Send it back.
 	*outputLen = dataSize / 3;
+
 	return indexedFinal;
 }
 
