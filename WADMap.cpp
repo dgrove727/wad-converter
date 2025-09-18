@@ -49,6 +49,12 @@ typedef struct
 
 typedef struct
 {
+	int16_t firstline;
+	int16_t isector;
+} srb32xsubsector_t;
+
+typedef struct
+{
 	uint8_t top;
 	uint8_t mid;
 	uint8_t bottom;
@@ -60,6 +66,7 @@ typedef struct
 #define LOADFLAGS_NODES 8
 #define LOADFLAGS_SEGS 16
 #define LOADFLAGS_LINEDEFS 32
+#define LOADFLAGS_SUBSECTORS 64
 
 static uint8_t RemapLinedefSpecial(int16_t special)
 {
@@ -493,6 +500,23 @@ int compare_by_type(const void *a, const void *b) {
 	return (thing_a->type - thing_b->type);
 }
 
+int16_t WADMap::GetSectorFromSeg(int16_t firstline)
+{
+	seg_t* seg = &segs[firstline];
+
+	int16_t sideoffset = seg->offset;
+	int16_t side = seg->side;
+	side &= 1;
+
+	sideoffset <<= 1;
+	sideoffset |= side;
+
+	linedef_t* linedef = &linedefs[seg->linedef];
+	sidedef_t* sidedef = &sidedefs[linedef->sidenum[sideoffset & 1]];
+
+	return sidedef->sector;
+}
+
 WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xsegs, Texture1 *t1, FlatList *fList)
 {
 	WADEntry *head = NULL;
@@ -741,15 +765,22 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 	entry = new WADEntry();
 	Listable::Add(entry, (Listable **)&head);
 	entry->SetName("SSECTORS");
-	entry->SetIsCompressed(true);
+	entry->SetIsCompressed(loadFlags & LOADFLAGS_SUBSECTORS);
 
 	if (srb32xsegs)
 	{
-		int16_t *compData = (int16_t *)malloc(sizeof(int16_t) * numsubsectors);
-		for (int i = 0; i < numsubsectors; i++)
-			compData[i] = subsectors[i].firstseg;
+		srb32xsubsector_t *compData = (srb32xsubsector_t *)malloc(sizeof(srb32xsubsector_t) * (numsubsectors + 1));
+		int i;
+		for (i = 0; i < numsubsectors; i++)
+		{
+			compData[i].firstline = swap_endian16(subsectors[i].firstseg);
+			compData[i].isector = swap_endian16(GetSectorFromSeg(subsectors[i].firstseg));
+		}
 
-		entry->SetData((byte *)compData, numsubsectors * sizeof(int16_t));
+		compData[i].firstline = swap_endian16(numsegs);
+		compData[i].isector = swap_endian16(GetSectorFromSeg(0));
+
+		entry->SetData((byte *)compData, (numsubsectors + 1) * sizeof(srb32xsubsector_t));
 		free(compData);
 	}
 	else

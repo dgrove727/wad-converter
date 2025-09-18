@@ -124,6 +124,8 @@ public:
 	int32_t rejectSize;
 	int32_t blockmapSize;
 
+	int16_t GetSectorFromSeg(int16_t firstline);
+
 	void CompressSectors();
 	void CompressSidedefs();
 
