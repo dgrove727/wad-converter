@@ -126,6 +126,8 @@ public:
 
 	int16_t GetSectorFromSeg(int16_t firstline);
 
+	void DefragTags();
+
 	void CompressSectors();
 	void CompressSidedefs();
 

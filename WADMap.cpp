@@ -488,6 +488,7 @@ uint8_t FindSidetexIndex(sidetex_t *sidetexes, int *numsidetexes, sidetex_t find
 	
 	uint8_t retVal = *numsidetexes;
 	*numsidetexes = (*numsidetexes) + 1;
+
 	return retVal;
 }
 
@@ -515,6 +516,141 @@ int16_t WADMap::GetSectorFromSeg(int16_t firstline)
 	sidedef_t* sidedef = &sidedefs[linedef->sidenum[sideoffset & 1]];
 
 	return sidedef->sector;
+}
+
+// Renumber unique integers sequentially
+static int *renumber_sequential(int *numbers, int size) {
+	// Step 1: Copy and sort (unique guaranteed)
+	int *sorted = (int*)malloc(size * sizeof(int));
+	for (int i = 0; i < size; i++) {
+		sorted[i] = numbers[i];
+	}
+
+	// Step 2: Simple bubble sort
+	for (int i = 0; i < size - 1; i++) {
+		for (int j = 0; j < size - i - 1; j++) {
+			if (sorted[j] > sorted[j + 1]) {
+				int temp = sorted[j];
+				sorted[j] = sorted[j + 1];
+				sorted[j + 1] = temp;
+			}
+		}
+	}
+
+	return sorted;
+}
+
+static bool ExistsInArray(int *array, int value)
+{
+	for (int i = 0; i < 1024; i++)
+	{
+		if (array[i] == value)
+			return true;
+	}
+
+	return false;
+}
+
+void WADMap::DefragTags()
+{
+	int existingTags[1024]; // No more than 1024, right?....RIGHT?
+	int c = 0;
+	memset(existingTags, 0, 1024 * sizeof(int));
+
+	// First, ensure that every sector is tagged to a linedef
+	for (int i = 0; i < numsectors; i++)
+	{
+		bool found = false;
+
+		for (int j = 0; j < numlinedefs; j++)
+		{
+			if (linedefs[j].tag == sectors[i].tag)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+			sectors[i].tag = 0;
+	}
+
+	// Now ensure that every linedef is tagged to a sector
+	for (int i = 0; i < numlinedefs; i++)
+	{
+		bool found = false;
+
+		for (int j = 0; j < numsectors; j++)
+		{
+			if (sectors[j].tag == linedefs[i].tag)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+			linedefs[i].tag = 0;
+	}
+
+	// Scan sectors
+	for (int i = 0; i < numsectors; i++)
+	{
+		if (sectors[i].tag <= 0)
+			continue;
+
+		if (!ExistsInArray(existingTags, sectors[i].tag))
+			existingTags[c++] = sectors[i].tag;
+	}
+
+	// Scan linedefs
+	for (int i = 0; i < numlinedefs; i++)
+	{
+		if (linedefs[i].tag <= 0)
+			continue;
+
+		if (!ExistsInArray(existingTags, linedefs[i].tag))
+			existingTags[c++] = linedefs[i].tag;
+	}
+
+	printf("Number of unique tags is %d\n", c);
+
+	int *result = renumber_sequential(existingTags, c);
+
+	for (int i = 0; i < c; i++)
+	{
+		// Remap sectors
+		for (int j = 0; j < numsectors; j++)
+		{
+			if (sectors[j].tag == existingTags[i])
+				sectors[j].tag = result[i] | 32768;
+		}
+
+		// Remap linedefs
+		for (int j = 0; j < numlinedefs; j++)
+		{
+			if (linedefs[j].tag == existingTags[i])
+				linedefs[j].tag = result[i] | 32768;
+		}
+	}
+
+	for (int i = 0; i < numsectors; i++)
+	{
+		if (sectors[i].tag == 0)
+			continue;
+
+		sectors[i].tag &= ~32768;
+	}
+
+	for (int i = 0; i < numlinedefs; i++)
+	{
+		if (linedefs[i].tag == 0)
+			continue;
+
+		linedefs[i].tag &= ~32768;
+	}
+
+	free(result);
 }
 
 WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xsegs, Texture1 *t1, FlatList *fList)

@@ -604,8 +604,36 @@ static void FindDuplicateColumns(WADEntry *entries)
 	printf("If sprite columns were compressed, it would save %d bytes.\n", savedBytes);
 }
 
+static void WADMapEdits()
+{
+	FILE *f = fopen(va("D:\\32xrb2\\Levels\\map05-edit.wad", basePath), "rb");
+
+	Importer_PC *ipc = new Importer_PC(f);
+	WADEntry *importedEntries = ipc->Execute();
+	delete ipc;
+
+	WADMap *map = new WADMap(importedEntries);
+
+	map->DefragTags();
+
+	fclose(f);
+
+	f = fopen(va("D:\\32xrb2\\Levels\\map05-edit-o.wad", basePath), "wb");
+
+	Exporter_PC *epc = new Exporter_PC(importedEntries, f);
+	epc->Execute();
+	delete epc;
+
+	fclose(f);
+
+	delete map;
+}
+
 static void MyFunTest()
 {
+//	WADMapEdits();
+//	return;
+
 	FILE *f = fopen(va("%s\\srb32x-edit.wad", basePath), "rb");
 
 	Importer_PC *ipc = new Importer_PC(f);
@@ -848,10 +876,11 @@ static void MyFunTest()
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP01a.wad", basePath), importedEntries, 255);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP02a.wad", basePath), importedEntries, 57);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP03a.wad", basePath), importedEntries, 255);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP04b.wad", basePath), importedEntries, 0);
+//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP04b.wad", basePath), importedEntries, 0);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP05a.wad", basePath), importedEntries, 0);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP06a.wad", basePath), importedEntries, 255);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP07b.wad", basePath), importedEntries, 255);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP10a.wad", basePath), importedEntries, 0);
+//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP10a.wad", basePath), importedEntries, 0);
 	//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP16a.wad", basePath), importedEntries);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP17.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP30a.wad", basePath), importedEntries, 255);
