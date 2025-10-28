@@ -615,12 +615,13 @@ static void WADMapEdits()
 	WADMap *map = new WADMap(importedEntries);
 
 	map->DefragTags();
+	WADEntry *newmap = map->CreatePC("MAP05");
 
 	fclose(f);
 
 	f = fopen(va("D:\\32xrb2\\Levels\\map05-edit-o.wad", basePath), "wb");
 
-	Exporter_PC *epc = new Exporter_PC(importedEntries, f);
+	Exporter_PC *epc = new Exporter_PC(newmap, f);
 	epc->Execute();
 	delete epc;
 

@@ -80,6 +80,10 @@ static uint8_t RemapLinedefSpecial(int16_t special)
 		return 232;
 	case 405:
 		return 220;
+	case 404:
+		return 219;
+	case 403:
+		return 218;
 	default:
 		break;
 	}
@@ -537,7 +541,18 @@ static int *renumber_sequential(int *numbers, int size) {
 		}
 	}
 
-	return sorted;
+	int *result = (int*)malloc(size * sizeof(int));
+	for (int i = 0; i < size; i++) {
+		for (int j = 0; j < size; j++) {
+			if (numbers[i] == sorted[j]) {
+				result[i] = j + 1;
+				break;
+			}
+		}
+	}
+
+	free(sorted);
+	return result;
 }
 
 static bool ExistsInArray(int *array, int value)
@@ -635,22 +650,30 @@ void WADMap::DefragTags()
 	}
 
 	for (int i = 0; i < numsectors; i++)
-	{
-		if (sectors[i].tag == 0)
-			continue;
-
 		sectors[i].tag &= ~32768;
-	}
 
 	for (int i = 0; i < numlinedefs; i++)
-	{
-		if (linedefs[i].tag == 0)
-			continue;
-
 		linedefs[i].tag &= ~32768;
-	}
 
 	free(result);
+
+	printf("Sector printout:\n");
+	for (int i = 0; i < numsectors; i++)
+	{
+		if (sectors[i].tag <= 0)
+			continue;
+
+		printf("%d\n", sectors[i].tag);
+	}
+
+	printf("Linedef printout:\n");
+	for (int i = 0; i < numlinedefs; i++)
+	{
+		if (linedefs[i].tag <= 0)
+			continue;
+
+		printf("%d\n", linedefs[i].tag);
+	}
 }
 
 WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xsegs, Texture1 *t1, FlatList *fList)
