@@ -35,7 +35,11 @@ void WADEntry::SetDataInternal(const byte *value, size_t length)
 	if (_data)
 		free(_data);
 
-	_data = (byte*)memdup(value, length);
+	if (length == 0)
+		_data = NULL;
+	else
+		_data = (byte*)memdup(value, length);
+
 	_dataLength = length;
 	_uncompressedDataLength = length;
 }

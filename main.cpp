@@ -504,7 +504,7 @@ void InsertPCLevelFromWAD(const char *wadfile, WADEntry *entries, int loadFlags,
 		{
 			printf("Removing reject..\n");
 			totalSize -= node->GetDataLength();
-			Listable::Remove(node, (Listable **)&jagEntries);
+			node->SetData(NULL, 0);
 			break;
 		}
 	}
