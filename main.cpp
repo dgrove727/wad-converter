@@ -807,11 +807,11 @@ static void MyFunTest()
 				// Just straight-up steal 'em, since we're working with RAM copies.
 				Listable::RemoveNoFree(lvlFlats, (Listable **)&lvleditorEntries);
 				Listable::AddAfter(lvlFlats, lastAdded, (Listable **)&importedEntries);
-				/*
+				
 				const byte *flatData = lvlFlats->GetData();
 				lvlFlats->SetIsCompressed(true);
 				lvlFlats->SetData(flatData, lvlFlats->GetDataLength());
-				*/
+				
 #ifdef MAKE_FLAT_MIPMAPS
 				int dataLen;
 				byte *mipData = FlatMipmaps(lvlFlats->GetData(), lvlFlats->GetUnCompressedDataLength(), MIPLEVELS, &dataLen);
