@@ -391,7 +391,7 @@ void AddSingularItemRow(MapThing *list, const mapthing_t *origin, int16_t type, 
 
 }
 
-void InsertPCLevelFromWAD(const char *wadfile, WADEntry *entries, int loadFlags)
+void InsertPCLevelFromWAD(const char *wadfile, WADEntry *entries, int loadFlags, bool skipReject)
 {
 	FILE *f = fopen(wadfile, "rb");
 	Importer_PC *ipc = new Importer_PC(f);
@@ -496,6 +496,17 @@ void InsertPCLevelFromWAD(const char *wadfile, WADEntry *entries, int loadFlags)
 	{
 		printf("%s: %0.2fkb\n", node->GetName(), node->GetDataLength() / 1024.0f);
 		totalSize += node->GetDataLength();
+	}
+
+	if (skipReject)
+	{
+		for (node = jagEntries; node; node = (WADEntry *)node->next)
+		{
+			printf("Removing reject..\n");
+			totalSize -= node->GetDataLength();
+			Listable::Remove(node, (Listable **)&jagEntries);
+			break;
+		}
 	}
 
 	printf("Total size: %0.2fkb\n", totalSize / 1024.0f);
@@ -874,23 +885,23 @@ static void MyFunTest()
 			sizeGraphics += node->GetDataLength();
 	}
 
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP01a.wad", basePath), importedEntries, 255);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP02a.wad", basePath), importedEntries, 57);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP03a.wad", basePath), importedEntries, 255);
-//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP04b.wad", basePath), importedEntries, 0);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP05a.wad", basePath), importedEntries, 0);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP06a.wad", basePath), importedEntries, 255);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP07b.wad", basePath), importedEntries, 255);
-//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP10a.wad", basePath), importedEntries, 0);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP01a.wad", basePath), importedEntries, 255, false);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP02a.wad", basePath), importedEntries, 57, false);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP03a.wad", basePath), importedEntries, 255, true);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP04b.wad", basePath), importedEntries, 0, false);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP05a.wad", basePath), importedEntries, 0, false);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP06a.wad", basePath), importedEntries, 255, true);
+//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP07b.wad", basePath), importedEntries, 255);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP10a.wad", basePath), importedEntries, 0, false);
 	//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP16a.wad", basePath), importedEntries);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP17.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP30a.wad", basePath), importedEntries, 255);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP60b.wad", basePath), importedEntries, 255);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP61b.wad", basePath), importedEntries, 255);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP62b.wad", basePath), importedEntries, 255);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP63b.wad", basePath), importedEntries, 255);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP64b.wad", basePath), importedEntries, 255);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP65b.wad", basePath), importedEntries, 255);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP30a.wad", basePath), importedEntries, 255, true);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP60b.wad", basePath), importedEntries, 255, true);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP61b.wad", basePath), importedEntries, 255, true);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP62b.wad", basePath), importedEntries, 255, true);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP63b.wad", basePath), importedEntries, 255, true);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP64b.wad", basePath), importedEntries, 255, true);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP65b.wad", basePath), importedEntries, 255, true);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\FOF.wad", basePath), importedEntries, 255);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP65.wad", basePath), importedEntries);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP66.wad", basePath), importedEntries);
