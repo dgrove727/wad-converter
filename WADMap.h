@@ -125,6 +125,7 @@ public:
 	int32_t blockmapSize;
 
 	int16_t GetSectorFromSeg(int16_t firstline);
+	bool SectorsAreIdentical(sector_t *src, sector_t *cmp);
 
 	void DefragTags();
 

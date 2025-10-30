@@ -172,9 +172,10 @@ void Exporter_Jaguar::Execute()
 				fauxPtr = ((fauxPtrHalfMeg + 1) * HALFMEG);
 		}
 
-		const bool reuseflats = false;
+		const bool reuseflats = true;
 		if (reuseflats && insideFlats && strcmp(node->GetName(), "F_START"))
 		{
+			printf("Looking for a patch that matches %s...\n", node->GetName());
 			WADEntry *texture1 = WADEntry::FindEntry(entries, "TEXTURE1");
 
 			Texture1 *t1;

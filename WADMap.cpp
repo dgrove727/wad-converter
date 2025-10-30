@@ -522,6 +522,39 @@ int16_t WADMap::GetSectorFromSeg(int16_t firstline)
 	return sidedef->sector;
 }
 
+bool WADMap::SectorsAreIdentical(sector_t *src, sector_t *cmp)
+{
+	if (memcmp(src, cmp, sizeof(sector_t)))
+		return false;
+
+	// Okay, they are identical, but is it a control sector of certain kinds?
+	for (int i = 0; i < numlinedefs; i++)
+	{
+		linedef_t *line = &linedefs[i];
+		sidedef_t *side = &sidedefs[line->sidenum[0]];
+
+		if (side->sector != src - sectors)
+			continue;
+
+		if (line->special == 160) // Water bobbing)
+			return false;
+	}
+
+	for (int i = 0; i < numlinedefs; i++)
+	{
+		linedef_t *line = &linedefs[i];
+		sidedef_t *side = &sidedefs[line->sidenum[0]];
+
+		if (side->sector != cmp - sectors)
+			continue;
+
+		if (line->special == 160) // Water bobbing)
+			return false;
+	}
+
+	return true;
+}
+
 // Renumber unique integers sequentially
 static int *renumber_sequential(int *numbers, int size) {
 	// Step 1: Copy and sort (unique guaranteed)
@@ -750,7 +783,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 
 				sector_t* cmpSec = &sectors[y];
 
-				if (!memcmp(srcSec, cmpSec, sizeof(sector_t)))
+				if (SectorsAreIdentical(srcSec, cmpSec))
 					printf("Sectors %d and %d are identical.\n", x, y);
 			}
 		}
