@@ -95,6 +95,7 @@ void Exporter_Jaguar::Execute()
 	bool insideSprites = false;
 	bool insideMap = false;
 	bool insideFlats = false;
+	int flatcount = -1;
 	for (WADEntry *node = entries; node; node = (WADEntry *)node->next)
 	{
 		int32_t padding_size = PADDING_SIZE(node);
@@ -175,7 +176,7 @@ void Exporter_Jaguar::Execute()
 		const bool reuseflats = true;
 		if (reuseflats && insideFlats && strcmp(node->GetName(), "F_START"))
 		{
-			printf("Looking for a patch that matches %s...\n", node->GetName());
+//			printf("Looking for a patch that matches %s...\n", node->GetName());
 			WADEntry *texture1 = WADEntry::FindEntry(entries, "TEXTURE1");
 
 			Texture1 *t1;
@@ -208,11 +209,13 @@ void Exporter_Jaguar::Execute()
 				if (!insidePatches)
 					continue;
 
-				if (node->GetDataLength() != snode->GetDataLength())
-					continue;
+//				printf("Comparing %s and %s (%d, %d)\n", node->GetName(), snode->GetName(), node->GetDataLength(), snode->GetDataLength());
 
 				MapTexture *mt = FindTexture(t1, snode->GetName());
 				if (!mt)
+					continue;
+
+				if (node->GetDataLength() != mt->width * mt->height)
 					continue;
 
 				// Patches are rotated 90 degrees to the left, so we need to rotate the flat and see if it matches.
@@ -230,15 +233,97 @@ void Exporter_Jaguar::Execute()
 				}
 			}
 
+			if (!strcmp(node->GetName(), "GFZFLR06"))
+			{
+				for (snode = entries; snode; snode = (WADEntry *)snode->next)
+				{
+					if (!strcmp(snode->GetName(), "GFZFLR05"))
+					{
+						identical = true;
+						break;
+					}
+				}
+			}
+			else if (!strcmp(node->GetName(), "GFZFLR19"))
+			{
+				for (snode = entries; snode; snode = (WADEntry *)snode->next)
+				{
+					if (!strcmp(snode->GetName(), "GFZFLR18"))
+					{
+						identical = true;
+						break;
+					}
+				}
+			}
+			else if (!strcmp(node->GetName(), "THPIPEF2"))
+			{
+				for (snode = entries; snode; snode = (WADEntry *)snode->next)
+				{
+					if (!strcmp(snode->GetName(), "THPIPEF1"))
+					{
+						identical = true;
+						break;
+					}
+				}
+			}
+			else if (!strcmp(node->GetName(), "THZFLR03"))
+			{
+				for (snode = entries; snode; snode = (WADEntry *)snode->next)
+				{
+					if (!strcmp(snode->GetName(), "THZFLR02"))
+					{
+						identical = true;
+						break;
+					}
+				}
+			}
+			else if (!strcmp(node->GetName(), "THZFLR15"))
+			{
+				for (snode = entries; snode; snode = (WADEntry *)snode->next)
+				{
+					if (!strcmp(snode->GetName(), "THZFLR14"))
+					{
+						identical = true;
+						break;
+					}
+				}
+			}
+			else if (!strcmp(node->GetName(), "THZFLR17"))
+			{
+				for (snode = entries; snode; snode = (WADEntry *)snode->next)
+				{
+					if (!strcmp(snode->GetName(), "THZFLR16"))
+					{
+						identical = true;
+						break;
+					}
+				}
+			}
+			else if (!strcmp(node->GetName(), "THZFLR23"))
+			{
+				for (snode = entries; snode; snode = (WADEntry *)snode->next)
+				{
+					if (!strcmp(snode->GetName(), "THZFLR22"))
+					{
+						identical = true;
+						break;
+					}
+				}
+			}
+
 			if (identical)
 			{
 				// Found an identical entry!
 				*node->dir_entry_filepos = *snode->dir_entry_filepos;
 				node->pointsToAnotherEntry = true;
-				printf("Found identical entry to %s! (%s)\n", node->GetName(), snode->GetName());
+				printf("Found identical entry to %s! (%s): %d\n", node->GetName(), snode->GetName(), flatcount++);
 				continue;
 			}
 		}
+
+		if (insideFlats)
+			flatcount++;
+
 		*node->dir_entry_filepos = swap_endian32(fauxPtr);
 		fauxPtr += node->GetDataLength();
 		fauxPtr += padding_size;
