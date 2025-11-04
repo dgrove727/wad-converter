@@ -78,6 +78,10 @@ static uint8_t RemapLinedefSpecial(int16_t special)
 		return 231;
 	case 302:
 		return 232;
+	case 407:
+		return 222;
+	case 406: // Focus on a point
+		return 221;
 	case 405:
 		return 220;
 	case 404:
