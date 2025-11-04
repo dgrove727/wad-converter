@@ -702,7 +702,7 @@ static void MyFunTest()
 
 			byte *newData = (byte *)memdup(node->GetData(), node->GetDataLength());
 
-			if (strcmp(node->GetName(), "CHEVBLKU") && strcmp(node->GetName(), "CHEVBLKD") && strcmp(node->GetName(), "M_TITLE"))
+			if (strcmp(node->GetName(), "CHEVBLK") && strcmp(node->GetName(), "M_TITLE"))
 			{
 				for (size_t i = 16; i < node->GetDataLength(); i++)
 				{
@@ -1082,4 +1082,5 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
+
 
