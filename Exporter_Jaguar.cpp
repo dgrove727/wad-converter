@@ -255,17 +255,6 @@ void Exporter_Jaguar::Execute()
 					}
 				}
 			}
-			else if (!strcmp(node->GetName(), "THPIPEF2"))
-			{
-				for (snode = entries; snode; snode = (WADEntry *)snode->next)
-				{
-					if (!strcmp(snode->GetName(), "THPIPEF1"))
-					{
-						identical = true;
-						break;
-					}
-				}
-			}
 			else if (!strcmp(node->GetName(), "THZFLR03"))
 			{
 				for (snode = entries; snode; snode = (WADEntry *)snode->next)
