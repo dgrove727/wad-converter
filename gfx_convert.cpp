@@ -1284,8 +1284,17 @@ void PCSpriteToJag(const byte *lumpData, int32_t lumpSize, byte *jagHeader, int3
 {
 	// Casting to a structure makes it easier to read
 	patchHeader_t *header = (patchHeader_t *)lumpData;
+
+	bool addAColumn = false;
+	uint16_t headerWidth = header->width;
+	if (header->width & 1)
+	{
+		addAColumn = true;
+		headerWidth++;
+	}
+
 	jagPatchHeader_t *jagPatchHeader = (jagPatchHeader_t *)jagHeader;
-	jagPatchHeader->width = swap_endian16(header->width);
+	jagPatchHeader->width = swap_endian16(headerWidth);
 	jagPatchHeader->height = swap_endian16(header->height);
 	jagPatchHeader->leftoffset = swap_endian16(header->leftoffset);
 	jagPatchHeader->topoffset = swap_endian16(header->topoffset);
@@ -1294,8 +1303,11 @@ void PCSpriteToJag(const byte *lumpData, int32_t lumpSize, byte *jagHeader, int3
 	for (int32_t column = 0; column < header->width; column++)
 		jagPatchHeader->columnofs[column] = swap_endian16((uint16_t)header->columnofs[column]);
 
+	if (addAColumn)
+		jagPatchHeader->columnofs[header->width] = 0; // TODO: errgg
+
 	byte *dataPtr = jagData;
-	uint16_t headerSize = 8 + (header->width * 2);
+	uint16_t headerSize = 8 + (headerWidth * 2);
 	byte *headerPtr = jagHeader + headerSize;
 
 	// Keep a cache of posts already drawn. If we come across one that matches one of the previous, re-use it.
@@ -1376,6 +1388,17 @@ void PCSpriteToJag(const byte *lumpData, int32_t lumpSize, byte *jagHeader, int3
 
 		*headerPtr++ = 0xff;
 //		*headerPtr++ = 0xff;
+	}
+
+	if (addAColumn)
+	{
+		jagPatchHeader->columnofs[header->width] = swap_endian16((uint16_t)(headerPtr - jagHeader));
+		jagPost_t *jagPost = (jagPost_t *)headerPtr;
+		jagPost->topdelta = 0;
+		jagPost->length = 0;
+		jagPost->dataofs = 0;
+		headerPtr += sizeof(jagPost_t);
+		*headerPtr++ = 0xff;
 	}
 
 	*jagHeaderLen = headerPtr - jagHeader;
