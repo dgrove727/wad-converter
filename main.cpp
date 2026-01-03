@@ -26,7 +26,8 @@
 #ifdef CHIBI
 const char *basePath = "D:\\32xrb2\\Chibi";
 #else
-const char *basePath = "D:\\32xrb2";
+//const char *basePath = "D:\\32xrb2";
+const char* basePath = "E:\\wad32x\\wad-converter\\bin\\Release";
 #endif
 
 char *va(const char *format, ...)
@@ -153,6 +154,87 @@ static bool IsHalfSprite(const char *name)
 	}
 
 	return false;
+}
+
+static size_t ConvertStandardGraphicToMaskedGraphic(WADEntry* entry)
+{
+	// Prepare buffer for reading and converting.
+
+	byte* rawData = (byte*)entry->GetData();
+
+	uint16_t width = swap_endian16(*(short*)&rawData[0]);
+	uint16_t height = swap_endian16(*(short*)&rawData[2]);
+
+	rawData += 16;
+
+	int buffer_size = (320 * height) + 2;
+	byte* source = (byte *)calloc(buffer_size, 1);
+	for (int rowStart = 0; rowStart < height*320; rowStart += 320) {
+		for (int column = 0; column < width; column++) {
+			source[rowStart + column] = *rawData++;	// Expand each row to 320 pixels.
+		}
+	}
+	source[buffer_size - 2] = 0xFF;
+	source[buffer_size - 1] = 0xFF;
+
+
+	// Convert graphic to fast-mask format.
+
+	byte* dest = (byte*)malloc(65536); // 64 KB is more than enough to work with.
+	byte* dest_bytes = dest;
+	uint16_t* source_words = (uint16_t*)source;
+	uint16_t skip_count;
+	uint8_t write_count;
+	bool eof = false;
+
+	while (eof == false)
+	{
+		skip_count = 0;
+		while (*source_words == 0x0000) {
+			source_words++;
+			skip_count++;
+		}
+
+		//printf("[A]    0x%02X : 0x%06X\n", skip_count, ((int)source_words - (int)source));
+		if (((int)source_words - (int)source) >= buffer_size - 2) {
+			skip_count = 0;
+			*dest_bytes++ = skip_count;	// EOF marker;
+			eof = true;
+		}
+		else {
+			while (skip_count > 255) {
+				*dest_bytes++ = 0xFF;	// Skip 255
+				*dest_bytes++ = 0x00;	// Write 0
+				skip_count -= 255;
+			}
+			*dest_bytes++ = skip_count;
+			write_count = 0;
+			while (*source_words != 0x0000) {
+				source_words++;
+				write_count++;
+			}
+			//printf("   [B] 0x%02X : 0x%06X\n", write_count, ((int)source_words - (int)source));
+			source_words -= write_count;
+			//fwrite(&write_count, 1, 1, output_file);
+			//fwrite(source_words, 1, write_count * 2, output_file);
+			*dest_bytes++ = write_count;
+			for (int i = 0; i < write_count; i++) {
+				*dest_bytes++ = source_words[i];
+				*dest_bytes++ = source_words[i]>>8;
+			}
+			source_words += write_count;
+		}
+	}
+
+	free(source);
+
+	size_t outputSize = dest_bytes - dest;
+
+	entry->SetData(dest, outputSize);
+
+	free(dest);
+
+	return outputSize;
 }
 
 static size_t ConvertPCSpriteEntryToJagSprite(WADEntry *entry, WADEntry **list)
@@ -330,14 +412,14 @@ static void DumpJagMap(const char *wadFile)
 		if (!strcmp(node->GetName(), "MAP01"))
 		{
 			char dumpName[2048];
-			sprintf(dumpName, "D:\\32xrb2\\Levels\\E1M1\\%s.lmp", node->GetName());
+			sprintf(dumpName, "E:\\wad32x\\wad-converter\\bin\\Release\\Levels\\E1M1\\%s.lmp", node->GetName());
 			node->DumpToFile(dumpName);
 			i = 10;
 		}
 		else if (i > 0)
 		{
 			char dumpName[2048];
-			sprintf(dumpName, "D:\\32xrb2\\Levels\\E1M1\\%s.lmp", node->GetName());
+			sprintf(dumpName, "E:\\wad32x\\wad-converter\\bin\\Release\\Levels\\E1M1\\%s.lmp", node->GetName());
 			node->DumpToFile(dumpName);
 			i--;
 		}
@@ -391,7 +473,7 @@ void AddSingularItemRow(MapThing *list, const mapthing_t *origin, int16_t type, 
 
 }
 
-void InsertPCLevelFromWAD(const char *wadfile, WADEntry *entries, int loadFlags, bool skipReject)
+void InsertPCLevelFromWAD(const char* wadfile, WADEntry* entries, int loadFlags, bool skipReject)
 {
 	FILE *f = fopen(wadfile, "rb");
 	Importer_PC *ipc = new Importer_PC(f);
@@ -500,7 +582,7 @@ void InsertPCLevelFromWAD(const char *wadfile, WADEntry *entries, int loadFlags,
 
 	if (skipReject)
 	{
-		for (node = jagEntries; node; node = (WADEntry *)node->next)
+		for (node = jagEntries; node; node = (WADEntry*)node->next)
 		{
 			printf("Removing reject..\n");
 			totalSize -= node->GetDataLength();
@@ -617,22 +699,21 @@ static void FindDuplicateColumns(WADEntry *entries)
 
 static void WADMapEdits()
 {
-	FILE *f = fopen(va("D:\\32xrb2\\Levels\\map05-edit.wad", basePath), "rb");
+	FILE* f = fopen(va("E:\\wad32x\\wad-converter\\bin\\Release\\Levels\\map05-edit.wad", basePath), "rb");
 
-	Importer_PC *ipc = new Importer_PC(f);
-	WADEntry *importedEntries = ipc->Execute();
+	Importer_PC* ipc = new Importer_PC(f);
+	WADEntry* importedEntries = ipc->Execute();
 	delete ipc;
 
-	WADMap *map = new WADMap(importedEntries);
+	WADMap* map = new WADMap(importedEntries);
 
 	map->DefragTags();
-	WADEntry *newmap = map->CreatePC("MAP05");
 
 	fclose(f);
 
-	f = fopen(va("D:\\32xrb2\\Levels\\map05-edit-o.wad", basePath), "wb");
+	f = fopen(va("E:\\wad32x\\wad-converter\\bin\\Release\\Levels\\map05-edit-o.wad", basePath), "wb");
 
-	Exporter_PC *epc = new Exporter_PC(newmap, f);
+	Exporter_PC* epc = new Exporter_PC(importedEntries, f);
 	epc->Execute();
 	delete epc;
 
@@ -643,8 +724,8 @@ static void WADMapEdits()
 
 static void MyFunTest()
 {
-//	WADMapEdits();
-//	return;
+	//	WADMapEdits();
+	//	return;
 
 	FILE *f = fopen(va("%s\\srb32x-edit.wad", basePath), "rb");
 
@@ -667,12 +748,16 @@ static void MyFunTest()
 	size_t sizeFlats = 0;
 	size_t sizeGraphics = 0;
 	size_t sizeCompGraphics = 0;
+	size_t sizeMaskedGraphics = 0;
+	size_t sizeCompMaskedGraphics = 0;
 
 	bool insideSprites = false;
 	bool insideTextures = false;
 	bool insideFlats = false;
 	bool insideSounds = false;
 	bool inside68k = false;
+	bool insideCompressedMaskedGraphics = false;
+	bool insideRegularMaskedGraphics = false;
 	bool insideCompressedGraphics = false;
 	bool insideRegularGraphics = false;
 
@@ -685,6 +770,15 @@ static void MyFunTest()
 
 		if (!strcmp(node->GetName(), "F_SKY1"))
 			continue;
+
+		if (!strcmp(node->GetName(), "MC_END"))
+			insideCompressedMaskedGraphics = false;
+
+		if (!strcmp(node->GetName(), "M_END"))
+			insideRegularMaskedGraphics = false;
+
+		if (!strcmp(node->GetName(), "M_START"))
+			insideRegularMaskedGraphics = true;
 
 		if (!strcmp(node->GetName(), "GC_END"))
 			insideCompressedGraphics = false;
@@ -702,7 +796,24 @@ static void MyFunTest()
 
 			byte *newData = (byte *)memdup(node->GetData(), node->GetDataLength());
 
-			if (strcmp(node->GetName(), "CHEVBLK") && strcmp(node->GetName(), "M_TITLE"))
+			if (
+				strcmp(node->GetName(), "CHEVBLK")// &&
+				//strcmp(node->GetName(), "KFIST1") &&
+				//strcmp(node->GetName(), "KFIST2") &&
+				//strcmp(node->GetName(), "KFIST3") &&
+				//strcmp(node->GetName(), "KFIST4") &&
+				//strcmp(node->GetName(), "KFIST5") &&
+				//strcmp(node->GetName(), "KFIST6") &&
+				//strcmp(node->GetName(), "KFIST7") &&
+				//strcmp(node->GetName(), "M_TITLEA") &&
+				//strcmp(node->GetName(), "M_TITLEB") &&
+				//strcmp(node->GetName(), "TAILWAG1") &&
+				//strcmp(node->GetName(), "TAILWAG2") &&
+				//strcmp(node->GetName(), "TAILWAG3") &&
+				//strcmp(node->GetName(), "TAILWAG4") &&
+				//strcmp(node->GetName(), "TAILWAG5") &&
+				//strcmp(node->GetName(), "TAILWAG6")
+				)
 			{
 				for (size_t i = 16; i < node->GetDataLength(); i++)
 				{
@@ -716,6 +827,13 @@ static void MyFunTest()
 
 			node->SetData(newData, node->GetDataLength());
 			free(newData);
+		}
+
+		if (insideCompressedMaskedGraphics)
+		{
+			node->SetIsCompressed(true);
+			ConvertStandardGraphicToMaskedGraphic(node);
+			sizeCompMaskedGraphics += node->GetDataLength();
 		}
 
 		if (insideCompressedGraphics)
@@ -748,6 +866,8 @@ static void MyFunTest()
 			insideSprites = true;
 		if (!strcmp(node->GetName(), "S_END"))
 			insideSprites = false;
+		if (!strcmp(node->GetName(), "MC_START"))
+			insideCompressedMaskedGraphics = true;
 		if (!strcmp(node->GetName(), "GC_START"))
 			insideCompressedGraphics = true;
 		if (!strcmp(node->GetName(), "T_START"))
@@ -808,7 +928,7 @@ static void MyFunTest()
 				Listable::RemoveNoFree(lvlFlats, (Listable **)&lvleditorEntries);
 				Listable::AddAfter(lvlFlats, lastAdded, (Listable **)&importedEntries);
 				
-/*				const byte *flatData = lvlFlats->GetData();
+/*				const byte* flatData = lvlFlats->GetData();
 				lvlFlats->SetIsCompressed(true);
 				lvlFlats->SetData(flatData, lvlFlats->GetDataLength());*/
 				
@@ -881,8 +1001,13 @@ static void MyFunTest()
 #endif
 		}
 
-		if (insideRegularGraphics)
+		if (insideRegularMaskedGraphics && node->GetDataLength() > 0) {
+			ConvertStandardGraphicToMaskedGraphic(node);
+			sizeMaskedGraphics += node->GetDataLength();
+		}
+		if (insideRegularGraphics) {
 			sizeGraphics += node->GetDataLength();
+		}
 	}
 
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP01a.wad", basePath), importedEntries, 255, false);
@@ -891,7 +1016,7 @@ static void MyFunTest()
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP04b.wad", basePath), importedEntries, 0, false);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP05a.wad", basePath), importedEntries, 0, false);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP06a.wad", basePath), importedEntries, 255, true);
-//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP07b.wad", basePath), importedEntries, 255);
+	//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP07b.wad", basePath), importedEntries, 255);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP10a.wad", basePath), importedEntries, 0, false);
 	//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP16a.wad", basePath), importedEntries);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP17.wad", basePath), importedEntries);
@@ -902,9 +1027,9 @@ static void MyFunTest()
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP63b.wad", basePath), importedEntries, 255, true);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP64b.wad", basePath), importedEntries, 255, true);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP65b.wad", basePath), importedEntries, 255, true);
-//	InsertPCLevelFromWAD(va("%s\\Levels\\FOF.wad", basePath), importedEntries, 255);
-//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP65.wad", basePath), importedEntries);
-//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP66.wad", basePath), importedEntries);
+	//	InsertPCLevelFromWAD(va("%s\\Levels\\FOF.wad", basePath), importedEntries, 255);
+	//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP65.wad", basePath), importedEntries);
+	//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP66.wad", basePath), importedEntries);
 
 	int dummySize = 4;
 	byte dummy[] = { 0xaf, 0xaf, 0xaf, 0xaf };
@@ -927,6 +1052,8 @@ static void MyFunTest()
 	printf("Textures: %0.2fkb\n", sizeTextures / 1024.0f);
 	printf("Graphics: %0.2fkb\n", sizeGraphics / 1024.0f);
 	printf("Compressed Graphics: %0.2fkb\n", sizeCompGraphics / 1024.0f);
+	printf("Masked Graphics: %0.2fkb\n", sizeMaskedGraphics / 1024.0f);
+	printf("Compressed Masked Graphics: %0.2fkb\n", sizeCompMaskedGraphics / 1024.0f);
 
 	expF = fopen(va("%s\\doom32x.wad", basePath), "rb");
 	fseek(expF, 0, SEEK_END);
@@ -1082,5 +1209,3 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
-
-
