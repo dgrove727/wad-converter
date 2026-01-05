@@ -92,6 +92,21 @@ typedef struct
 	int16_t tag;
 } sector_t;
 
+typedef struct
+{
+	int32_t floorheight, ceilingheight;
+	int16_t specialdata;
+	uint8_t floorpic, ceilingpic;
+	uint8_t lightlevel, special;
+	uint8_t tag;
+	uint8_t flags;
+	uint16_t floor_offs;
+	int16_t heightsec;
+	int16_t fofsec;
+	int16_t specline;
+	int16_t extrasecdata;
+} staticsector_t;
+
 struct WADMap
 {
 private:
@@ -117,7 +132,7 @@ public:
 	int16_t numlinedefs;
 	int16_t numsidedefs;
 	int16_t numvertexes;
-	int16_t numsegs;
+	uint16_t numsegs;
 	int16_t numsubsectors;
 	int16_t numnodes;
 	int16_t numsectors;
@@ -126,10 +141,11 @@ public:
 
 	int16_t GetSectorFromSeg(int16_t firstline);
 	bool SectorsAreIdentical(sector_t *src, sector_t *cmp);
+	int16_t GetFrontsector(linedef_t *line);
+	int16_t GetSectorWithTag(staticsector_t *fullSectors, int16_t start, uint8_t tag);
 
 	void DefragTags();
 
-	void CompressSectors();
 	void CompressSidedefs();
 
 	WADEntry *CreateJaguar(const char *mapname, int loadFlags, bool srb32xsegs = false, Texture1 *t1 = NULL, FlatList *fList = NULL);

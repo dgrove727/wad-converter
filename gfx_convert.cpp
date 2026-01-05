@@ -1018,15 +1018,17 @@ byte *PatchToRaw(const byte *patchData, size_t dataLen, int32_t *outputLen, byte
 	byte *rawImage = (byte *)malloc(header->width * header->height * 1);
 	memset(rawImage, transparentIndex, header->width * header->height * 1); // Transparent value
 
+	// TODO: support > 255 height
 	for (int32_t i = 0; i < header->width; i++)
 	{
 		uint32_t colOffset = header->columnofs[i];
 		const post_t *post = (post_t *)(patchData + colOffset);
 
 		int32_t yPos = 0;
+		int accumTopDelta = 0;
 		while (post->topdelta != 255)
 		{
-			yPos = post->topdelta;
+			yPos = accumTopDelta + post->topdelta;
 			const byte *pixel = post->data;
 
 			for (int32_t j = 0; j < post->length; j++)
@@ -1045,6 +1047,8 @@ byte *PatchToRaw(const byte *patchData, size_t dataLen, int32_t *outputLen, byte
 			}
 
 			pixel++; // dummy value
+			if (post->length == 0)
+				accumTopDelta += post->topdelta;
 			post = (const post_t *)pixel;
 		}
 	}

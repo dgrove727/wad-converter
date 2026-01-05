@@ -198,7 +198,7 @@ static size_t ConvertStandardGraphicToMaskedGraphic(WADEntry* entry)
 		//printf("[A]    0x%02X : 0x%06X\n", skip_count, ((int)source_words - (int)source));
 		if (((int)source_words - (int)source) >= buffer_size - 2) {
 			skip_count = 0;
-			*dest_bytes++ = skip_count;	// EOF marker;
+			*dest_bytes++ = (byte)skip_count;	// EOF marker;
 			eof = true;
 		}
 		else {
@@ -207,7 +207,7 @@ static size_t ConvertStandardGraphicToMaskedGraphic(WADEntry* entry)
 				*dest_bytes++ = 0x00;	// Write 0
 				skip_count -= 255;
 			}
-			*dest_bytes++ = skip_count;
+			*dest_bytes++ = (byte)skip_count;
 			write_count = 0;
 			while (*source_words != 0x0000) {
 				source_words++;
@@ -219,8 +219,8 @@ static size_t ConvertStandardGraphicToMaskedGraphic(WADEntry* entry)
 			//fwrite(source_words, 1, write_count * 2, output_file);
 			*dest_bytes++ = write_count;
 			for (int i = 0; i < write_count; i++) {
-				*dest_bytes++ = source_words[i];
-				*dest_bytes++ = source_words[i]>>8;
+				*dest_bytes++ = (byte)source_words[i];
+				*dest_bytes++ = (byte)(source_words[i]>>8);
 			}
 			source_words += write_count;
 		}
@@ -766,7 +766,7 @@ static void MyFunTest()
 	for (node = importedEntries; node; node = next)
 	{
 		printf("%s\n", node->GetName());
-		next = (WADEntry*)node->next;
+		next = (WADEntry *)node->next;
 
 		if (!strcmp(node->GetName(), "F_SKY1"))
 			continue;
@@ -838,7 +838,7 @@ static void MyFunTest()
 
 		if (insideCompressedGraphics)
 		{
-			byte *data = (byte*)memdup(node->GetData(), node->GetDataLength());
+			byte *data = (byte *)memdup(node->GetData(), node->GetDataLength());
 			node->SetIsCompressed(true);
 			node->SetData(data, node->GetDataLength());
 			free(data);
@@ -852,7 +852,7 @@ static void MyFunTest()
 			WADEntry *lastAdded = node;
 			for (WADEntry *M68Node = M68kEntries; M68Node; M68Node = M68Next)
 			{
-				M68Next = (WADEntry*)M68Node->next;
+				M68Next = (WADEntry *)M68Node->next;
 
 				// Just straight-up steal 'em, since we're working with RAM copies.
 				Listable::RemoveNoFree(M68Node, (Listable **)&M68kEntries);
@@ -875,17 +875,17 @@ static void MyFunTest()
 			insideTextures = true;
 
 			// Copy in the textures
-			WADEntry *lvlTextures = (WADEntry*)WADEntry::FindEntry(lvleditorEntries, "P_START")->next;
+			WADEntry *lvlTextures = (WADEntry *)WADEntry::FindEntry(lvleditorEntries, "P_START")->next;
 			WADEntry *lastAdded = node;
 			while (strcmp(lvlTextures->GetName(), "P_END"))
 			{
-				WADEntry *next = (WADEntry*)lvlTextures->next;
+				WADEntry *next = (WADEntry *)lvlTextures->next;
 
 				// Just straight-up steal 'em, since we're working with RAM copies.
 				Listable::RemoveNoFree(lvlTextures, (Listable **)&lvleditorEntries);
 				Listable::AddAfter(lvlTextures, lastAdded, (Listable **)&importedEntries);
 
-				// Convert to everyone's favorite lovable row-major Jaguar format
+				// Convert to everyone's favorite lovable col-major Jaguar format
 				int texLen;
 				byte *texData = PatchToJagTexture(lvlTextures->GetData(), lvlTextures->GetDataLength(), &texLen);
 
@@ -899,8 +899,8 @@ static void MyFunTest()
 				lvlTextures->SetData(mipData, dataLen);
 				free(mipData);
 #else
-//				if (!strcmp(lvlTextures->GetName(), "GFZROCK"))
-//					lvlTextures->SetIsCompressed(true);
+				//				if (!strcmp(lvlTextures->GetName(), "GFZROCK"))
+				//					lvlTextures->SetIsCompressed(true);
 
 				lvlTextures->SetData(texData, texLen);
 				free(texData);
@@ -927,11 +927,11 @@ static void MyFunTest()
 				// Just straight-up steal 'em, since we're working with RAM copies.
 				Listable::RemoveNoFree(lvlFlats, (Listable **)&lvleditorEntries);
 				Listable::AddAfter(lvlFlats, lastAdded, (Listable **)&importedEntries);
-				
-/*				const byte* flatData = lvlFlats->GetData();
-				lvlFlats->SetIsCompressed(true);
-				lvlFlats->SetData(flatData, lvlFlats->GetDataLength());*/
-				
+
+				/*				const byte* flatData = lvlFlats->GetData();
+								lvlFlats->SetIsCompressed(true);
+								lvlFlats->SetData(flatData, lvlFlats->GetDataLength());*/
+
 #ifdef MAKE_FLAT_MIPMAPS
 				int dataLen;
 				byte *mipData = FlatMipmaps(lvlFlats->GetData(), lvlFlats->GetUnCompressedDataLength(), MIPLEVELS, &dataLen);
@@ -1009,15 +1009,16 @@ static void MyFunTest()
 			sizeGraphics += node->GetDataLength();
 		}
 	}
-
+	
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP01a.wad", basePath), importedEntries, 255, false);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP02a.wad", basePath), importedEntries, 57, false);
+	/*InsertPCLevelFromWAD(va("%s\\Levels\\MAP02a.wad", basePath), importedEntries, 57, false);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP03a.wad", basePath), importedEntries, 255, true);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP04b.wad", basePath), importedEntries, 0, false);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP05a.wad", basePath), importedEntries, 0, false);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP06a.wad", basePath), importedEntries, 255, true);
-	//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP07b.wad", basePath), importedEntries, 255);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP10a.wad", basePath), importedEntries, 0, false);
+//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP07b.wad", basePath), importedEntries, 255);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP10a.wad", basePath), importedEntries, 0, false);*/
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP11a.wad", basePath), importedEntries, 0, false);
 	//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP16a.wad", basePath), importedEntries);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP17.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP30a.wad", basePath), importedEntries, 255, true);
@@ -1063,48 +1064,6 @@ static void MyFunTest()
 	return;
 }
 
-void ChibiMap(const char *wadfile)
-{
-	FILE *f = fopen(wadfile, "rb");
-	Importer_PC *ipc = new Importer_PC(f);
-	WADEntry *mapEntries = ipc->Execute();
-	delete ipc;
-
-	WADMap *map = new WADMap(mapEntries);
-	for (int i = 0; i < map->numsectors; i++)
-	{
-		map->sectors[i].floorheight /= 2;
-		map->sectors[i].ceilingheight /= 2;
-	}
-
-	for (int i = 0; i < map->numthings; i++)
-	{
-		map->things[i].x /= 2;
-		map->things[i].y /= 2;
-	}
-
-	for (int i = 0; i < map->numvertexes; i++)
-	{
-		map->vertexes[i].x /= 2;
-		map->vertexes[i].y /= 2;
-	}
-
-	WADEntry *levelEntries = map->CreatePC(mapEntries->GetName());
-	f = fopen(wadfile, "wb");
-	Exporter_PC *exPC = new Exporter_PC(levelEntries, f);
-	exPC->Execute();
-	delete exPC;
-}
-
-void ChibiMaps()
-{
-	ChibiMap(va("%s\\Levels\\MAP01.wad", basePath));
-	ChibiMap(va("%s\\Levels\\MAP02.wad", basePath));
-	ChibiMap(va("%s\\Levels\\MAP03.wad", basePath));
-//	ChibiMap(va("%s\\Levels\\pcwad.wad", basePath));
-	ChibiMap(va("%s\\Levels\\MAP30.wad", basePath));
-}
-
 int main(int argc, char *argv[])
 {
 	if (argc > 1)
@@ -1132,80 +1091,6 @@ int main(int argc, char *argv[])
 	}
 //	ChibiMaps();
 	MyFunTest();
-	return 0;
-	printf(
-		"---------------------------------\n"
-		" DOOM 32X / JAGUAR WAD CONVERTER v%01.02f\n"
-		" Written by Damian Grove\n"
-		" %s\n"
-		"---------------------------------\n"
-		"\n", VERSION, __DATE__
-	);
-
-	// TODO: Add a parameter here that sets Jaguar or 32X mode
-
-	if (argc < 4)
-	{
-		printf(
-			"USAGE: wad32x.exe [command] [in file] [out file]\n"
-			"  example 1:  wad32x.exe -mars2pc doom32x.wad doompc.wad\n"
-			"  example 2:  wad32x.exe -pc2mars doompc.wad doom32x.wad\n\n"
-		);
-		return 0;
-	}
-
-	if (stricmp(argv[1], "-mars2pc") == 0)
-	{
-		FILE *in_file = fopen(argv[2], "rb");
-		if (!in_file)
-		{
-			printf("ERROR: WAD file not found.\n");
-			return 0;
-		}
-
-		Importer_Jaguar *ij = new Importer_Jaguar(in_file);
-		WADEntry *importedEntries = ij->Execute();
-
-		// Export to PC WAD here
-		/*
-		FILE *out_file = fopen(argv[3], "wb");
-		if (!out_file)
-		{
-			printf("ERROR: Unable to create output file.\n");
-			fclose(in_file);
-			Shutdown();
-		}*/
-
-		delete ij;
-		Listable::RemoveAll((Listable **)&importedEntries);
-	}
-	else if (stricmp(argv[1], "-pc2mars") == 0)
-	{
-		FILE *in_file = fopen(argv[2], "rb");
-		if(!in_file)
-		{
-			printf("ERROR: WAD file not found.\n");
-			return 0;
-		}
-
-		Importer_PC *ipc = new Importer_PC(in_file);
-		WADEntry *importedEntries = ipc->Execute();
-
-		// Export to Jag WAD here
-		/*
-		FILE *out_file = fopen(argv[3], "wb");
-		if (!out_file)
-		{
-			printf("ERROR: Unable to create output file.\n");
-			fclose(in_file);
-			Shutdown();
-		}*/
-
-		delete ipc;
-		Listable::RemoveAll((Listable **)&importedEntries);
-	}
-	else
-		printf("ERROR: Invalid command.\n");
 
 	return 0;
 }
