@@ -172,16 +172,6 @@ void SortAndRemapSectors(staticsector_t *sectors, size_t num_sectors,
 	free(temp);
 }
 
-
-#define LOADFLAGS_VERTEXES 1
-#define LOADFLAGS_BLOCKMAP 2
-#define LOADFLAGS_REJECT 4
-#define LOADFLAGS_NODES 8
-#define LOADFLAGS_SEGS 16
-#define LOADFLAGS_LINEDEFS 32
-#define LOADFLAGS_SUBSECTORS 64
-#define LOADFLAGS_SECTORS 128
-
 static uint8_t RemapLinedefSpecial(int16_t special)
 {
 	switch (special)
@@ -817,49 +807,52 @@ int16_t WADMap::GetSectorWithTag(staticsector_t *fullSectors, int16_t start, uin
 WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xsegs, Texture1 *t1, FlatList *fList)
 {
 	WADEntry *head = NULL;
+	staticsector_t *fullSectors = NULL;
+	bool hasLightning = false;
 
 //	CompressSectors();
 	CompressSidedefs();
-#ifdef DYNAMIC_SECTORS
-	bool hasLightning = false;
-
-	for (int i = 0; i < numsectors; i++)
+	if (!(loadFlags & LOADFLAGS_SECTORS))
 	{
-		if (sectors[i].tag > 255)
+		bool hasLightning = false;
+
+		for (int i = 0; i < numsectors; i++)
 		{
-			printf("Sector %d has tag %d, which is > 255.\n", i, sectors[i].tag);
-			sectors[i].tag = 0;
+			if (sectors[i].tag > 255)
+			{
+				printf("Sector %d has tag %d, which is > 255.\n", i, sectors[i].tag);
+				sectors[i].tag = 0;
+			}
 		}
-	}
 
-	staticsector_t *fullSectors = (staticsector_t *)malloc(sizeof(staticsector_t) * numsectors);
-	for (int i = 0; i < numsectors; i++)
-	{
-		staticsector_t *sec = &fullSectors[i];
-
-		sec->ceilingheight = sectors[i].ceilingheight << FRACBITS;
-		sec->ceilingpic = FindFlat(fList, sectors[i].ceilingpic);
-		sec->extrasecdata = 0;
-		sec->flags = 0;
-		sec->floorheight = sectors[i].floorheight << FRACBITS;
-		sec->floorpic = FindFlat(fList, sectors[i].floorpic);
-		sec->floor_offs = 0;
-		sec->fofsec = -1;
-		sec->heightsec = -1;
-		sec->lightlevel = (uint8_t)sectors[i].lightlevel;
-		sec->special = (uint8_t)sectors[i].special;
-		sec->specialdata = 0;
-		sec->specline = -1;
-		sec->tag = (uint8_t)sectors[i].tag;
-	}
-
-	// Process line specials for fofsec/heightsec 
-	for (int i = 0; i < numlinedefs; i++)
-	{
-		uint8_t tag = (uint8_t)linedefs[i].tag;
-		int16_t front = GetFrontsector(&linedefs[i]);
-		switch (linedefs[i].special)
+		fullSectors = (staticsector_t *)malloc(sizeof(staticsector_t) * numsectors);
+		for (int i = 0; i < numsectors; i++)
 		{
+			staticsector_t *sec = &fullSectors[i];
+
+			sec->ceilingheight = sectors[i].ceilingheight << FRACBITS;
+			sec->ceilingpic = FindFlat(fList, sectors[i].ceilingpic);
+			sec->extrasecdata = 0;
+			sec->flags = 0;
+			sec->floorheight = sectors[i].floorheight << FRACBITS;
+			sec->floorpic = FindFlat(fList, sectors[i].floorpic);
+			sec->floor_offs = 0;
+			sec->fofsec = -1;
+			sec->heightsec = -1;
+			sec->lightlevel = (uint8_t)sectors[i].lightlevel;
+			sec->special = (uint8_t)sectors[i].special;
+			sec->specialdata = 0;
+			sec->specline = -1;
+			sec->tag = (uint8_t)sectors[i].tag;
+		}
+
+		// Process line specials for fofsec/heightsec 
+		for (int i = 0; i < numlinedefs; i++)
+		{
+			uint8_t tag = (uint8_t)linedefs[i].tag;
+			int16_t front = GetFrontsector(&linedefs[i]);
+			switch (linedefs[i].special)
+			{
 			case 100:
 			{
 				for (int s = -1; (s = GetSectorWithTag(fullSectors, s, tag)) >= 0;)
@@ -885,46 +878,46 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 				}
 				break;
 			}
+			}
+		}
+
+		SortAndRemapSectors(fullSectors, numsectors, sidedefs, numsidedefs, hasLightning);
+
+		// Process line specials for fofsec/heightsec 
+		for (int i = 0; i < numlinedefs; i++)
+		{
+			uint8_t tag = (uint8_t)linedefs[i].tag;
+			int16_t front = GetFrontsector(&linedefs[i]);
+			switch (linedefs[i].special)
+			{
+			case 100:
+			{
+				for (int s = -1; (s = GetSectorWithTag(fullSectors, s, tag)) >= 0;)
+				{
+					fullSectors[s].fofsec = front;
+					fullSectors[s].specialdata = 1;
+					fullSectors[front].specline = i;
+					fullSectors[front].flags |= SF_FOF_CONTROLSECTOR;
+
+					if (linedefs[i].flags & ML_BLOCKMONSTERS)
+						fullSectors[s].flags |= SF_FOF_SWAPHEIGHTS;
+				}
+				break;
+			}
+
+			case 120:
+			{
+				for (int s = -1; (s = GetSectorWithTag(fullSectors, s, tag)) >= 0;)
+				{
+					fullSectors[s].heightsec = front;
+					fullSectors[s].specialdata = 1;
+					fullSectors[front].specline = i;
+				}
+				break;
+			}
+			}
 		}
 	}
-
-	SortAndRemapSectors(fullSectors, numsectors, sidedefs, numsidedefs, hasLightning);
-
-	// Process line specials for fofsec/heightsec 
-	for (int i = 0; i < numlinedefs; i++)
-	{
-		uint8_t tag = (uint8_t)linedefs[i].tag;
-		int16_t front = GetFrontsector(&linedefs[i]);
-		switch (linedefs[i].special)
-		{
-		case 100:
-		{
-			for (int s = -1; (s = GetSectorWithTag(fullSectors, s, tag)) >= 0;)
-			{
-				fullSectors[s].fofsec = front;
-				fullSectors[s].specialdata = 1;
-				fullSectors[front].specline = i;
-				fullSectors[front].flags |= SF_FOF_CONTROLSECTOR;
-
-				if (linedefs[i].flags & ML_BLOCKMONSTERS)
-					fullSectors[s].flags |= SF_FOF_SWAPHEIGHTS;
-			}
-			break;
-		}
-
-		case 120:
-		{
-			for (int s = -1; (s = GetSectorWithTag(fullSectors, s, tag)) >= 0;)
-			{
-				fullSectors[s].heightsec = front;
-				fullSectors[s].specialdata = 1;
-				fullSectors[front].specline = i;
-			}
-			break;
-		}
-		}
-	}
-#endif
 
 	// Header
 	WADEntry *entry = new WADEntry();
@@ -1239,116 +1232,119 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 		free(temp);
 	}
 
-#ifdef DYNAMIC_SECTORS
-	// First, find out how many static sectors we have and how many dynamic sectors we have.
-	int numDynamic = 0;
-	int numStatic = 0;
-	for (int i = 0; i < numsectors; i++)
+	if (!(loadFlags & LOADFLAGS_SECTORS))
 	{
-		if (IsDynamicSector(&fullSectors[i], hasLightning))
-			numDynamic++;
-		else
-			numStatic++;
-	}
-
-	// SECTORS (uncompressed) - these are static and stay in ROM
-	entry = new WADEntry();
-	Listable::Add(entry, (Listable **)&head);
-	entry->SetName("SECTORS");
-	entry->SetIsCompressed(false);
-
-	if (srb32xsegs)
-	{
-		staticsector_t *compData = (staticsector_t *)malloc(numStatic * sizeof(staticsector_t));
-
-		int ci = 0;
+		// First, find out how many static sectors we have and how many dynamic sectors we have.
+		int numDynamic = 0;
+		int numStatic = 0;
 		for (int i = 0; i < numsectors; i++)
 		{
 			if (IsDynamicSector(&fullSectors[i], hasLightning))
-				continue;
-
-			compData[ci] = fullSectors[i];
-			compData[ci].ceilingheight = swap_endian32(compData[ci].ceilingheight);
-			compData[ci].floorheight = swap_endian32(compData[ci].floorheight);
-			compData[ci].floor_offs = swap_endian16(compData[ci].floor_offs);
-			compData[ci].fofsec = swap_endian16(compData[ci].fofsec);
-			compData[ci].heightsec = swap_endian16(compData[ci].heightsec);
-			compData[ci].specialdata = swap_endian16(0);
-			compData[ci].specline = swap_endian16(compData[ci].specline);
-			compData[ci].extrasecdata = swap_endian16(compData[ci].extrasecdata);
-			ci++;
-		}
-
-		entry->SetData((byte *)compData, numStatic * sizeof(staticsector_t));
-		free(compData);
-	}
-
-	// DSECTORS (compressed) - these are dynamic and stay in RAM
-	entry = new WADEntry();
-	Listable::Add(entry, (Listable **)&head);
-	entry->SetName("DSECTORS");
-	entry->SetIsCompressed(true);
-
-	if (srb32xsegs)
-	{
-		srb32xsector_t *compData = (srb32xsector_t *)malloc(numDynamic * sizeof(srb32xsector_t));
-		int ci = 0;
-		for (int i = 0; i < numsectors; i++)
-		{
-			if (!IsDynamicSector(&fullSectors[i], hasLightning))
-				continue;
-
-			compData[ci].floorheight = swap_endian16(fullSectors[i].floorheight >> 16);
-			compData[ci].ceilingheight = swap_endian16(fullSectors[i].ceilingheight >> 16);
-			compData[ci].floorpic = fullSectors[i].floorpic;
-			compData[ci].ceilingpic = fullSectors[i].ceilingpic;
-			compData[ci].lightlevel = fullSectors[i].lightlevel;
-			compData[ci].special = fullSectors[i].special;
-			compData[ci].tag = fullSectors[i].tag;
-
-			ci++;
-		}
-
-		entry->SetData((byte *)compData, numDynamic * sizeof(srb32xsector_t));
-		free(compData);
-	}
-	else
-		entry->SetData((byte *)sectors, numDynamic * sizeof(sector_t));
-#else
-	// SECTORS (compressed)
-	entry = new WADEntry();
-	Listable::Add(entry, (Listable **)&head);
-	entry->SetName("SECTORS");
-	entry->SetIsCompressed(true);
-
-	if (srb32xsegs)
-	{
-		srb32xsector_t *compData = (srb32xsector_t *)malloc(numsectors * sizeof(srb32xsector_t));
-		for (int i = 0; i < numsectors; i++)
-		{
-			compData[i].floorheight = sectors[i].floorheight;
-			compData[i].ceilingheight = sectors[i].ceilingheight;
-			compData[i].floorpic = FindFlat(fList, sectors[i].floorpic);
-			compData[i].ceilingpic = FindFlat(fList, sectors[i].ceilingpic);
-			compData[i].lightlevel = (uint8_t)sectors[i].lightlevel;
-			compData[i].special = (uint8_t)sectors[i].special;
-
-			if (sectors[i].tag > 255)
-			{
-				printf("Sector %d has tag %d, which is > 255.\n", i, sectors[i].tag);
-				sectors[i].tag = 0;
-				compData[i].tag = 0;
-			}
+				numDynamic++;
 			else
-				compData[i].tag = (uint8_t)sectors[i].tag;
+				numStatic++;
 		}
 
-		entry->SetData((byte *)compData, numsectors * sizeof(srb32xsector_t));
-		free(compData);
+		// SECTORS (uncompressed) - these are static and stay in ROM
+		entry = new WADEntry();
+		Listable::Add(entry, (Listable **)&head);
+		entry->SetName("SECTORS");
+		entry->SetIsCompressed(false);
+
+		if (srb32xsegs)
+		{
+			staticsector_t *compData = (staticsector_t *)malloc(numStatic * sizeof(staticsector_t));
+
+			int ci = 0;
+			for (int i = 0; i < numsectors; i++)
+			{
+				if (IsDynamicSector(&fullSectors[i], hasLightning))
+					continue;
+
+				compData[ci] = fullSectors[i];
+				compData[ci].ceilingheight = swap_endian32(compData[ci].ceilingheight);
+				compData[ci].floorheight = swap_endian32(compData[ci].floorheight);
+				compData[ci].floor_offs = swap_endian16(compData[ci].floor_offs);
+				compData[ci].fofsec = swap_endian16(compData[ci].fofsec);
+				compData[ci].heightsec = swap_endian16(compData[ci].heightsec);
+				compData[ci].specialdata = swap_endian16(0);
+				compData[ci].specline = swap_endian16(compData[ci].specline);
+				compData[ci].extrasecdata = swap_endian16(compData[ci].extrasecdata);
+				ci++;
+			}
+
+			entry->SetData((byte *)compData, numStatic * sizeof(staticsector_t));
+			free(compData);
+		}
+
+		// DSECTORS (compressed) - these are dynamic and stay in RAM
+		entry = new WADEntry();
+		Listable::Add(entry, (Listable **)&head);
+		entry->SetName("DSECTORS");
+		entry->SetIsCompressed(true);
+
+		if (srb32xsegs)
+		{
+			srb32xsector_t *compData = (srb32xsector_t *)malloc(numDynamic * sizeof(srb32xsector_t));
+			int ci = 0;
+			for (int i = 0; i < numsectors; i++)
+			{
+				if (!IsDynamicSector(&fullSectors[i], hasLightning))
+					continue;
+
+				compData[ci].floorheight = swap_endian16(fullSectors[i].floorheight >> 16);
+				compData[ci].ceilingheight = swap_endian16(fullSectors[i].ceilingheight >> 16);
+				compData[ci].floorpic = fullSectors[i].floorpic;
+				compData[ci].ceilingpic = fullSectors[i].ceilingpic;
+				compData[ci].lightlevel = fullSectors[i].lightlevel;
+				compData[ci].special = fullSectors[i].special;
+				compData[ci].tag = fullSectors[i].tag;
+
+				ci++;
+			}
+
+			entry->SetData((byte *)compData, numDynamic * sizeof(srb32xsector_t));
+			free(compData);
+		}
+		else
+			entry->SetData((byte *)sectors, numDynamic * sizeof(sector_t));
 	}
 	else
-		entry->SetData((byte *)sectors, numsectors * sizeof(sector_t));
-#endif
+	{
+		// SECTORS (compressed)
+		entry = new WADEntry();
+		Listable::Add(entry, (Listable **)&head);
+		entry->SetName("SECTORS");
+		entry->SetIsCompressed(true);
+
+		if (srb32xsegs)
+		{
+			srb32xsector_t *compData = (srb32xsector_t *)malloc(numsectors * sizeof(srb32xsector_t));
+			for (int i = 0; i < numsectors; i++)
+			{
+				compData[i].floorheight = sectors[i].floorheight;
+				compData[i].ceilingheight = sectors[i].ceilingheight;
+				compData[i].floorpic = FindFlat(fList, sectors[i].floorpic);
+				compData[i].ceilingpic = FindFlat(fList, sectors[i].ceilingpic);
+				compData[i].lightlevel = (uint8_t)sectors[i].lightlevel;
+				compData[i].special = (uint8_t)sectors[i].special;
+
+				if (sectors[i].tag > 255)
+				{
+					printf("Sector %d has tag %d, which is > 255.\n", i, sectors[i].tag);
+					sectors[i].tag = 0;
+					compData[i].tag = 0;
+				}
+				else
+					compData[i].tag = (uint8_t)sectors[i].tag;
+			}
+
+			entry->SetData((byte *)compData, numsectors * sizeof(srb32xsector_t));
+			free(compData);
+		}
+		else
+			entry->SetData((byte *)sectors, numsectors * sizeof(sector_t));
+	}
 
 	// REJECT
 	entry = new WADEntry();
@@ -1426,6 +1422,9 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 		entry->SetData((byte*)temp, blockmapSize);
 		free(temp);
 	}
+
+	if (fullSectors)
+		free(fullSectors);
 
 	return head;
 }

@@ -4,6 +4,15 @@
 #include "Texture1.h"
 #include "FlatList.h"
 
+#define LOADFLAGS_VERTEXES 1
+#define LOADFLAGS_BLOCKMAP 2
+#define LOADFLAGS_REJECT 4
+#define LOADFLAGS_NODES 8
+#define LOADFLAGS_SEGS 16
+#define LOADFLAGS_LINEDEFS 32
+#define LOADFLAGS_SUBSECTORS 64
+#define LOADFLAGS_SECTORS 128
+
 typedef struct
 {
 	int16_t x;
