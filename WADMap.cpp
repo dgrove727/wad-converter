@@ -128,9 +128,30 @@ static void insertion_sort_by_value(sortablesector_t *items, size_t n)
 	}
 }
 
+/* Helper to get bit from byte array (LSB first) */
+static int get_bit(const unsigned char *data, size_t bit_index)
+{
+	size_t byte_idx = bit_index / 8;
+	size_t bit_pos = bit_index % 8;
+	return (data[byte_idx] & (1u << bit_pos)) != 0;
+}
+
+/* Helper to set bit in byte array (LSB first) */
+static void set_bit(unsigned char *data, size_t bit_index, int value)
+{
+	size_t byte_idx = bit_index / 8;
+	size_t bit_pos = bit_index % 8;
+	if (value) {
+		data[byte_idx] |= (1u << bit_pos);
+	}
+	else {
+		data[byte_idx] &= ~(1u << bit_pos);
+	}
+}
+
 void SortAndRemapSectors(staticsector_t *sectors, size_t num_sectors,
 	sidedef_t *sides, size_t num_sides,
-	bool hasLightning)
+	bool hasLightning, byte *reject, size_t rejectSize)
 {
 	// Build temporary array with sort keys and original indices
 	sortablesector_t *temp = (sortablesector_t*)malloc(num_sectors * sizeof(sortablesector_t));
@@ -147,12 +168,14 @@ void SortAndRemapSectors(staticsector_t *sectors, size_t num_sectors,
 
 	// Build old -> new mapping and reorder the sectors array
 	int *old_to_new = (int*)malloc(num_sectors * sizeof(int));
+	int *new_to_old = (int*)malloc(num_sectors * sizeof(int));
 	staticsector_t *reordered = (staticsector_t*)malloc(num_sectors * sizeof(staticsector_t));
 
 	for (size_t new_pos = 0; new_pos < num_sectors; ++new_pos)
 	{
 		int old_pos = temp[new_pos].original_index;
 		old_to_new[old_pos] = (int)new_pos;
+		new_to_old[new_pos] = old_pos;
 		reordered[new_pos] = *temp[new_pos].sector;  // copy full struct
 	}
 
@@ -167,8 +190,30 @@ void SortAndRemapSectors(staticsector_t *sectors, size_t num_sectors,
 			sides[i].sector = old_to_new[old_idx];
 	}
 
+	unsigned char *new_reject = (unsigned char *)calloc(rejectSize, sizeof(unsigned char));  /* zero-init */
+
+	for (size_t new_i = 0; new_i < num_sectors; ++new_i) {
+		for (size_t new_j = 0; new_j < num_sectors; ++new_j) {
+			size_t old_i = (size_t)new_to_old[new_i];
+			size_t old_j = (size_t)new_to_old[new_j];
+
+			/* Old bit index: (old_i * num_sectors + old_j) */
+			size_t old_bit_idx = old_i * num_sectors + old_j;
+			int bit_value = get_bit(reject, old_bit_idx);
+
+			/* New bit index: (new_i * num_sectors + new_j) */
+			size_t new_bit_idx = new_i * num_sectors + new_j;
+			set_bit(new_reject, new_bit_idx, bit_value);
+		}
+	}
+
+	// Copy new_reject back into original reject (in-place reorder)
+	memcpy(reject, new_reject, rejectSize);
+
+	free(new_reject);
 	free(reordered);
 	free(old_to_new);
+	free(new_to_old);
 	free(temp);
 }
 
@@ -881,7 +926,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 			}
 		}
 
-		SortAndRemapSectors(fullSectors, numsectors, sidedefs, numsidedefs, hasLightning);
+		SortAndRemapSectors(fullSectors, numsectors, sidedefs, numsidedefs, hasLightning, this->reject, this->rejectSize);
 
 		// Process line specials for fofsec/heightsec 
 		for (int i = 0; i < numlinedefs; i++)
