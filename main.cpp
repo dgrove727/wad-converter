@@ -23,8 +23,8 @@
 #define		VERSION			1.10
 #define		WAD_FORMAT		1
 
-//const char *basePath = "D:\\32xrb2";
-const char* basePath = "E:\\wad32x\\wad-converter\\bin\\Release";
+const char *basePath = "D:\\32xrb2";
+//const char* basePath = "E:\\wad32x\\wad-converter\\bin\\Release";
 
 char *va(const char *format, ...)
 {
@@ -1007,10 +1007,10 @@ static void MyFunTest()
 	}
 	
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP01a.wad", basePath), importedEntries, 255, false);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP02a.wad", basePath), importedEntries, LOADFLAGS_LINEDEFS|LOADFLAGS_SEGS|LOADFLAGS_NODES|LOADFLAGS_VERTEXES|LOADFLAGS_BLOCKMAP, false);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP02a.wad", basePath), importedEntries, 57, false);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP03a.wad", basePath), importedEntries, 255, true);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP04b.wad", basePath), importedEntries, LOADFLAGS_NODES, false);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP05a.wad", basePath), importedEntries, LOADFLAGS_NODES, false);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP04b.wad", basePath), importedEntries, 0, false);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP05a.wad", basePath), importedEntries, 0, false);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP06a.wad", basePath), importedEntries, 255, true);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP07b.wad", basePath), importedEntries, 255);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP10a.wad", basePath), importedEntries, LOADFLAGS_NODES, false);

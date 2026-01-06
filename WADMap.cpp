@@ -890,7 +890,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 			sec->specline = -1;
 			sec->tag = (uint8_t)sectors[i].tag;
 		}
-
+		
 		// Process line specials for fofsec/heightsec 
 		for (int i = 0; i < numlinedefs; i++)
 		{
@@ -1356,10 +1356,15 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 	}
 	else
 	{
-		// SECTORS (compressed)
 		entry = new WADEntry();
 		Listable::Add(entry, (Listable **)&head);
 		entry->SetName("SECTORS");
+		entry->SetIsCompressed(false);
+
+		// DSECTORS (compressed)
+		entry = new WADEntry();
+		Listable::Add(entry, (Listable **)&head);
+		entry->SetName("DSECTORS");
 		entry->SetIsCompressed(true);
 
 		if (srb32xsegs)
@@ -1367,8 +1372,8 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 			srb32xsector_t *compData = (srb32xsector_t *)malloc(numsectors * sizeof(srb32xsector_t));
 			for (int i = 0; i < numsectors; i++)
 			{
-				compData[i].floorheight = sectors[i].floorheight;
-				compData[i].ceilingheight = sectors[i].ceilingheight;
+				compData[i].floorheight = swap_endian16(sectors[i].floorheight);
+				compData[i].ceilingheight = swap_endian16(sectors[i].ceilingheight);
 				compData[i].floorpic = FindFlat(fList, sectors[i].floorpic);
 				compData[i].ceilingpic = FindFlat(fList, sectors[i].ceilingpic);
 				compData[i].lightlevel = (uint8_t)sectors[i].lightlevel;
