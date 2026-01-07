@@ -190,27 +190,30 @@ void SortAndRemapSectors(staticsector_t *sectors, size_t num_sectors,
 			sides[i].sector = old_to_new[old_idx];
 	}
 
-	unsigned char *new_reject = (unsigned char *)calloc(rejectSize, sizeof(unsigned char));  /* zero-init */
+	if (rejectSize > 0)
+	{
+		unsigned char *new_reject = (unsigned char *)calloc(rejectSize, sizeof(unsigned char));  /* zero-init */
 
-	for (size_t new_i = 0; new_i < num_sectors; ++new_i) {
-		for (size_t new_j = 0; new_j < num_sectors; ++new_j) {
-			size_t old_i = (size_t)new_to_old[new_i];
-			size_t old_j = (size_t)new_to_old[new_j];
+		for (size_t new_i = 0; new_i < num_sectors; ++new_i) {
+			for (size_t new_j = 0; new_j < num_sectors; ++new_j) {
+				size_t old_i = (size_t)new_to_old[new_i];
+				size_t old_j = (size_t)new_to_old[new_j];
 
-			/* Old bit index: (old_i * num_sectors + old_j) */
-			size_t old_bit_idx = old_i * num_sectors + old_j;
-			int bit_value = get_bit(reject, old_bit_idx);
+				/* Old bit index: (old_i * num_sectors + old_j) */
+				size_t old_bit_idx = old_i * num_sectors + old_j;
+				int bit_value = get_bit(reject, old_bit_idx);
 
-			/* New bit index: (new_i * num_sectors + new_j) */
-			size_t new_bit_idx = new_i * num_sectors + new_j;
-			set_bit(new_reject, new_bit_idx, bit_value);
+				/* New bit index: (new_i * num_sectors + new_j) */
+				size_t new_bit_idx = new_i * num_sectors + new_j;
+				set_bit(new_reject, new_bit_idx, bit_value);
+			}
 		}
+
+		// Copy new_reject back into original reject (in-place reorder)
+		memcpy(reject, new_reject, rejectSize);
+
+		free(new_reject);
 	}
-
-	// Copy new_reject back into original reject (in-place reorder)
-	memcpy(reject, new_reject, rejectSize);
-
-	free(new_reject);
 	free(reordered);
 	free(old_to_new);
 	free(new_to_old);
