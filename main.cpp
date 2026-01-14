@@ -112,7 +112,7 @@ const char *halfSprites[] = {
 	"BANR",
 	"ESTA",
 	"FLMH",
-	"CEZB",
+	"CBUS",
 
 	// R_PrepMobj items
 	"BOM1",
@@ -1020,7 +1020,7 @@ static void MyFunTest()
 	//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP16a.wad", basePath), importedEntries);
 //	InsertPCLevelFromWAD(va("%s\\Levels\\MAP17.wad", basePath), importedEntries);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP30a.wad", basePath), importedEntries, 255, true);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP60b.wad", basePath), importedEntries, 255, true);
+	InsertPCLevelFromWAD(va("%s\\Levels\\MAP50a.wad", basePath), importedEntries, 255, true);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP61b.wad", basePath), importedEntries, 255, true);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP62b.wad", basePath), importedEntries, 255, true);
 	InsertPCLevelFromWAD(va("%s\\Levels\\MAP63b.wad", basePath), importedEntries, 255, true);
