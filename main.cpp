@@ -576,6 +576,9 @@ void InsertPCLevelFromWAD(const char* wadfile, WADEntry* entries, int loadFlags,
 	size_t totalSize = 0;
 	for (node = jagEntries; node; node = (WADEntry *)node->next)
 	{
+		if (skipReject && !strcmp(node->GetName(), "REJECT"))
+			continue;
+
 		printf("%s: %0.2fkb\n", node->GetName(), node->GetDataLength() / 1024.0f);
 		totalSize += node->GetDataLength();
 	}
@@ -584,10 +587,12 @@ void InsertPCLevelFromWAD(const char* wadfile, WADEntry* entries, int loadFlags,
 	{
 		for (node = jagEntries; node; node = (WADEntry*)node->next)
 		{
-			printf("Removing reject..\n");
-			totalSize -= node->GetDataLength();
-			node->SetData(NULL, 0);
-			break;
+			if (!strcmp(node->GetName(), "REJECT"))
+			{
+				printf("Removing reject..\n");
+				node->SetData(NULL, 0);
+				break;
+			}
 		}
 	}
 
