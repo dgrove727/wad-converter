@@ -1092,7 +1092,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 	entry = new WADEntry();
 	Listable::Add(entry, (Listable **)&head);
 	entry->SetName("SIDEDEFS");
-	entry->SetIsCompressed(true);
+	entry->SetIsCompressed(!(loadFlags & LOADFLAGS_SIDEDEFS_ROM));
 
 	sidetex_t sidetexes[256];
 	int numsidetexes = 0;
