@@ -1102,9 +1102,9 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 		srb32xsidedef_t *compData = (srb32xsidedef_t *)malloc(numsidedefs * sizeof(srb32xsidedef_t));
 		for (int i = 0; i < numsidedefs; i++)
 		{
-			compData[i].sector = sidedefs[i].sector;
+			compData[i].sector = swap_endian16(sidedefs[i].sector);
 			compData[i].rowoffset = sidedefs[i].rowoffset & 0xff;
-			compData[i].textureoffset = (sidedefs[i].textureoffset & 0xfff) | ((sidedefs[i].rowoffset & 0x0f00) << 4);
+			compData[i].textureoffset = swap_endian16((sidedefs[i].textureoffset & 0xfff) | ((sidedefs[i].rowoffset & 0x0f00) << 4));
 
 			sidetex_t sidetex;
 			sidetex.top = FindTexture(t1, sidedefs[i].toptexture);
