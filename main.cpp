@@ -898,7 +898,7 @@ static void MyFunTest()
 				const patchHeader_t *header = (patchHeader_t *)lvlTextures->GetData(); // Need width/height info
 
 				int dataLen;
-				byte *mipData = PatchMipmaps(texData, header->width, header->height, MIPLEVELS, &dataLen);
+				byte *mipData = PatchMipmaps(texData, header->height, header->width, MIPLEVELS, &dataLen);
 				free(texData);
 
 				lvlTextures->SetData(mipData, dataLen);
