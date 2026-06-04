@@ -39,6 +39,23 @@
 #define ML_ST_POSITIVE	 	16384
 #define ML_ST_NEGATIVE	 	32768
 
+typedef int fixed_t;
+#define FRACUNIT (1<<16)
+fixed_t FixedDiv2(fixed_t a, fixed_t b)
+{
+	// This does not check for division overflow or division by 0!
+	// That is the caller's responsibility.
+	return (fixed_t)(((int64_t)a * FRACUNIT) / b);
+}
+
+fixed_t FixedDiv (fixed_t a, fixed_t b)
+{
+	if ((abs(a) >> 14) >= abs(b))
+		return (a ^ b) < 0 ? INT32_MIN : INT32_MAX;
+	return FixedDiv2(a, b);
+}
+
+
 typedef struct
 {
 	int16_t v1, v2;
@@ -58,11 +75,11 @@ typedef struct
 	int16_t v1;
 	int16_t v2;
 	int16_t sidenum[2];
+	int16_t flags;
 } srb32xlinedef_t;
 
 typedef struct
 {
-	uint16_t flags;
 	uint8_t special;
 	uint8_t tag;
 } srb32xldflags_t;
@@ -1049,6 +1066,33 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 			compData[i].v2 = swap_endian16(linedefs[i].v2);
 			compData[i].sidenum[0] = swap_endian16(linedefs[i].sidenum[0]);
 			compData[i].sidenum[1] = swap_endian16(linedefs[i].sidenum[1]);
+
+			fixed_t dx, dy;
+			vertex_t *v1, *v2;
+			v1 = &vertexes[linedefs[i].v1];
+			v2 = &vertexes[linedefs[i].v2];
+			dx = (v2->x - v1->x) << FRACBITS;
+			dy = (v2->y - v1->y) << FRACBITS;
+			if (!dx)
+				linedefs[i].flags |= ML_ST_VERTICAL;
+			else if (!dy)
+				linedefs[i].flags |= ML_ST_HORIZONTAL;
+			else
+			{
+				if (FixedDiv(dy, dx) > 0)
+					linedefs[i].flags |= ML_ST_POSITIVE;
+				else
+					linedefs[i].flags |= ML_ST_NEGATIVE;
+			}
+
+			compData[i].flags = swap_endian16(linedefs[i].flags);
+
+			if (linedefs[i].tag > 255)
+			{
+				printf("Linedef %d has tag %d which is > 255.\n", i, linedefs[i].tag);
+				linedefs[i].special = 0;
+				linedefs[i].tag = 0;
+			}
 		}
 
 		entry->SetData((byte *)compData, numlinedefs * sizeof(srb32xlinedef_t));
@@ -1070,18 +1114,8 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 		srb32xldflags_t *compData = (srb32xldflags_t *)malloc(numlinedefs * sizeof(srb32xldflags_t));
 		for (int i = 0; i < numlinedefs; i++)
 		{
-			compData[i].flags = swap_endian16(linedefs[i].flags);
 			compData[i].special = RemapLinedefSpecial(linedefs[i].special);
-
-			if (linedefs[i].tag > 255)
-			{
-				compData[i].special = 0;
-				compData[i].tag = 0;
-				printf("Linedef %d has tag %d which is > 255.\n", i, linedefs[i].tag);
-				linedefs[i].tag = 0;
-			}
-			else
-				compData[i].tag = (uint8_t)linedefs[i].tag;
+			compData[i].tag = (uint8_t)linedefs[i].tag;
 		}
 
 		entry->SetData((byte *)compData, numlinedefs * sizeof(srb32xldflags_t));
