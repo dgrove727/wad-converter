@@ -18,7 +18,7 @@
 #define MAKE_WALL_MIPMAPS
 //#define MAKE_FLAT_MIPMAPS
 #define MIPLEVELS 4
-#define WADPTRSTART 0//0x3B000
+#define WADPTRSTART 0x38100
 
 #define		VERSION			1.10
 #define		WAD_FORMAT		1
@@ -375,12 +375,16 @@ static void CropSprites()
 	{
 		next = (WADEntry *)node->next;
 
-		if (!strcmp(node->GetName(), "S_START"))
+		if (!strcmp(node->GetName(), "S1_START") || !strcmp(node->GetName(), "S2_START") || !strcmp(node->GetName(), "S3_START") || !strcmp(node->GetName(), "S4_START") || !strcmp(node->GetName(), "S5_START") || !strcmp(node->GetName(), "S6_START") || !strcmp(node->GetName(), "S7_START") || !strcmp(node->GetName(), "S8_START") || !strcmp(node->GetName(), "S9_START"))
+		{
 			insideSprites = true;
-		if (!strcmp(node->GetName(), "S_END"))
+			continue;
+		}
+
+		if (!strcmp(node->GetName(), "S1_END") || !strcmp(node->GetName(), "S2_END") || !strcmp(node->GetName(), "S3_END") || !strcmp(node->GetName(), "S4_END") || !strcmp(node->GetName(), "S5_END") || !strcmp(node->GetName(), "S6_END") || !strcmp(node->GetName(), "S7_END") || !strcmp(node->GetName(), "S8_END") || !strcmp(node->GetName(), "S9_END"))
 			insideSprites = false;
 
-		if (insideSprites && strcmp(node->GetName(), "S_START"))
+		if (insideSprites)
 		{
 			int outputLen;
 			byte *newPatch = CropPCPatch(node->GetData(), node->GetDataLength(), &outputLen, 0);
@@ -473,7 +477,14 @@ void AddSingularItemRow(MapThing *list, const mapthing_t *origin, int16_t type, 
 
 }
 
-void InsertPCLevelFromWAD(const char* wadfile, WADEntry* entries, int loadFlags, bool skipReject)
+void AddEmptyEntry(WADEntry *entries)
+{
+	WADEntry *entry = new WADEntry("NEWPAGE", NULL, 0);
+	Listable::Add(entry, (Listable**)&entries);
+}
+
+#define PADDING_SIZE(x) (((x->GetDataLength() - 1) & 3) ^ 3)
+size_t InsertPCLevelFromWAD(const char* wadfile, WADEntry* entries, int loadFlags, bool skipReject)
 {
 	FILE *f = fopen(wadfile, "rb");
 	Importer_PC *ipc = new Importer_PC(f);
@@ -573,6 +584,7 @@ void InsertPCLevelFromWAD(const char* wadfile, WADEntry* entries, int loadFlags,
 
 	printf("%s breakdown:\n", wadfile);
 	WADEntry *node;
+	size_t alignedTotalSize = 0;
 	size_t totalSize = 0;
 	for (node = jagEntries; node; node = (WADEntry *)node->next)
 	{
@@ -581,6 +593,8 @@ void InsertPCLevelFromWAD(const char* wadfile, WADEntry* entries, int loadFlags,
 
 		printf("%s: %0.2fkb\n", node->GetName(), node->GetDataLength() / 1024.0f);
 		totalSize += node->GetDataLength();
+		alignedTotalSize += node->GetDataLength();
+		alignedTotalSize += PADDING_SIZE(node);
 	}
 
 	if (skipReject)
@@ -598,12 +612,13 @@ void InsertPCLevelFromWAD(const char* wadfile, WADEntry* entries, int loadFlags,
 
 	printf("Total size: %0.2fkb\n", totalSize / 1024.0f);
 
-	WADEntry *insertPoint;
-	for (insertPoint = entries; insertPoint; insertPoint = (WADEntry *)insertPoint->next)
+	WADEntry *insertPoint = (WADEntry*)Listable::GetLast(entries);
+	// Don't need to look for L_START, just put it at the end of the WAD
+/*	for (insertPoint = entries; insertPoint; insertPoint = (WADEntry *)insertPoint->next)
 	{
 		if (!strcmp(insertPoint->GetName(), "L_START"))
 			break;
-	}
+	}*/
 
 	WADEntry *next;
 	for (node = jagEntries; node; node = next)
@@ -618,6 +633,8 @@ void InsertPCLevelFromWAD(const char* wadfile, WADEntry* entries, int loadFlags,
 	delete map;
 	delete mapEntries;
 	delete t1;
+
+	return alignedTotalSize;
 }
 
 static void FindDuplicateColumns(WADEntry *entries)
@@ -630,12 +647,12 @@ static void FindDuplicateColumns(WADEntry *entries)
 	WADEntry *node;
 	for (node = entries; node; node = (WADEntry *)node->next)
 	{
-		if (!strcmp(node->GetName(), "S_START"))
+		if (!strcmp(node->GetName(), "S1_START") || !strcmp(node->GetName(), "S2_START") || !strcmp(node->GetName(), "S3_START") || !strcmp(node->GetName(), "S4_START") || !strcmp(node->GetName(), "S5_START") || !strcmp(node->GetName(), "S6_START") || !strcmp(node->GetName(), "S7_START") || !strcmp(node->GetName(), "S8_START") || !strcmp(node->GetName(), "S9_START"))
 		{
 			insideSprites = true;
 			continue;
 		}
-		if (!strcmp(node->GetName(), "S_END"))
+		if (!strcmp(node->GetName(), "S1_END") || !strcmp(node->GetName(), "S2_END") || !strcmp(node->GetName(), "S3_END") || !strcmp(node->GetName(), "S4_END") || !strcmp(node->GetName(), "S5_END") || !strcmp(node->GetName(), "S6_END") || !strcmp(node->GetName(), "S7_END") || !strcmp(node->GetName(), "S8_END") || !strcmp(node->GetName(), "S9_END"))
 			break;
 
 		if (!insideSprites)
@@ -704,7 +721,7 @@ static void FindDuplicateColumns(WADEntry *entries)
 
 static void WADMapEdits()
 {
-	FILE* f = fopen(va("E:\\wad32x\\wad-converter\\bin\\Release\\Levels\\map05-edit.wad", basePath), "rb");
+	FILE* f = fopen(va("D:\\32xrb2\\Levels\\MAP11.wad", basePath), "rb");
 
 	Importer_PC* ipc = new Importer_PC(f);
 	WADEntry* importedEntries = ipc->Execute();
@@ -712,11 +729,28 @@ static void WADMapEdits()
 
 	WADMap* map = new WADMap(importedEntries);
 
-	map->DefragTags();
+	for (int i = 0; i < map->numlinedefs; i++)
+	{
+		linedef_t *line = &map->linedefs[i];
+
+		if (line->special == 0 && line->sidenum[1] != -1)
+		{
+			sidedef_t *side1 = &map->sidedefs[line->sidenum[0]];
+			sidedef_t *side2 = &map->sidedefs[line->sidenum[1]];
+
+			if (side1->midtexture[0] == '-' && side2->midtexture[0] == '-')
+			{
+				side1->rowoffset = 0;
+				side1->textureoffset = 0;
+				side2->rowoffset = 0;
+				side2->textureoffset = 0;
+			}
+		}
+	}
 
 	fclose(f);
 
-	f = fopen(va("E:\\wad32x\\wad-converter\\bin\\Release\\Levels\\map05-edit-o.wad", basePath), "wb");
+	f = fopen(va("D:\\32xrb2\\Levels\\MAP11.wad", basePath), "wb");
 
 	Exporter_PC* epc = new Exporter_PC(importedEntries, f);
 	epc->Execute();
@@ -729,8 +763,8 @@ static void WADMapEdits()
 
 static void MyFunTest()
 {
-	//	WADMapEdits();
-	//	return;
+//		WADMapEdits();
+//		return;
 
 	FILE *f = fopen(va("%s\\srb32x-edit.wad", basePath), "rb");
 
@@ -867,9 +901,9 @@ static void MyFunTest()
 		}
 		if (!strcmp(node->GetName(), "68_END"))
 			inside68k = false;
-		if (!strcmp(node->GetName(), "S_START"))
+		if (!strcmp(node->GetName(), "S1_START") || !strcmp(node->GetName(), "S2_START") || !strcmp(node->GetName(), "S3_START") || !strcmp(node->GetName(), "S4_START") || !strcmp(node->GetName(), "S5_START") || !strcmp(node->GetName(), "S6_START") || !strcmp(node->GetName(), "S7_START") || !strcmp(node->GetName(), "S8_START") || !strcmp(node->GetName(), "S9_START"))
 			insideSprites = true;
-		if (!strcmp(node->GetName(), "S_END"))
+		if (!strcmp(node->GetName(), "S1_END") || !strcmp(node->GetName(), "S2_END") || !strcmp(node->GetName(), "S3_END") || !strcmp(node->GetName(), "S4_END") || !strcmp(node->GetName(), "S5_END") || !strcmp(node->GetName(), "S6_END") || !strcmp(node->GetName(), "S7_END") || !strcmp(node->GetName(), "S8_END") || !strcmp(node->GetName(), "S9_END"))
 			insideSprites = false;
 		if (!strcmp(node->GetName(), "MC_START"))
 			insideCompressedMaskedGraphics = true;
@@ -992,7 +1026,7 @@ static void MyFunTest()
 			node->SetName("IVSP^0");
 		}
 
-		if (insideSprites && strcmp(node->GetName(), "S_START"))
+		if (insideSprites && !strstr(node->GetName(), "_START"))
 		{
 #ifdef CHIBI
 			bool chibify = strcmp(node->GetName(), "GFZDOOR") && strcmp(node->GetName(), "GFZFENCE") && strcmp(node->GetName(), "GFZGRASS") && strcmp(node->GetName(), "GFZGATE") && strcmp(node->GetName(), "GFZRAIL") && strcmp(node->GetName(), "GFZWINDP");
@@ -1015,27 +1049,41 @@ static void MyFunTest()
 		}
 	}
 	
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP01a.wad", basePath), importedEntries, 255, false);
-/*	InsertPCLevelFromWAD(va("%s\\Levels\\MAP02a.wad", basePath), importedEntries, 47, false);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP03a.wad", basePath), importedEntries, 255, true);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP04b.wad", basePath), importedEntries, 0, false);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP05a.wad", basePath), importedEntries, 0, false);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP06a.wad", basePath), importedEntries, 255, true);*/
-//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP07b.wad", basePath), importedEntries, 255);
-//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP10a.wad", basePath), importedEntries, LOADFLAGS_NODES, false);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP11a.wad", basePath), importedEntries, 256, true);
-	//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP16a.wad", basePath), importedEntries);
-//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP17.wad", basePath), importedEntries);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP30a.wad", basePath), importedEntries, 255, true);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP60a.wad", basePath), importedEntries, 255, true);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP61b.wad", basePath), importedEntries, 255, true);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP62b.wad", basePath), importedEntries, 255, true);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP63b.wad", basePath), importedEntries, 255, true);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP64b.wad", basePath), importedEntries, 255, true);
-	InsertPCLevelFromWAD(va("%s\\Levels\\MAP65b.wad", basePath), importedEntries, 255, true);
-	//	InsertPCLevelFromWAD(va("%s\\Levels\\FOF.wad", basePath), importedEntries, 255);
-	//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP65.wad", basePath), importedEntries);
-	//	InsertPCLevelFromWAD(va("%s\\Levels\\MAP66.wad", basePath), importedEntries);
+	size_t extraSpace = 0;
+	printf("---------------------Bank 8:\n");
+	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP01a.wad", basePath), importedEntries, 255, false);
+	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP02a.wad", basePath), importedEntries, 47, false);
+	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP03a.wad", basePath), importedEntries, 255, true);
+	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP04b.wad", basePath), importedEntries, 0, false);
+	AddEmptyEntry(importedEntries);
+	extraSpace = 0;
+	printf("---------------------Bank 9:\n");
+	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP05a.wad", basePath), importedEntries, 0, false);
+	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP06a.wad", basePath), importedEntries, 255, true);
+	AddEmptyEntry(importedEntries);
+	extraSpace = 0;
+	printf("---------------------Bank 10:\n");
+	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP07b.wad", basePath), importedEntries, 255, false);
+	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP10a.wad", basePath), importedEntries, LOADFLAGS_NODES, false);
+	AddEmptyEntry(importedEntries);
+	extraSpace = 0;
+	printf("---------------------Bank 11:\n");
+	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP11a.wad", basePath), importedEntries, 256, true);
+	AddEmptyEntry(importedEntries);
+	extraSpace = 0;
+	printf("---------------------Bank 12:\n");
+	//	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP16a.wad", basePath), importedEntries);
+//	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP17.wad", basePath), importedEntries);
+	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP30a.wad", basePath), importedEntries, 255, true);
+	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP60a.wad", basePath), importedEntries, 255, true);
+	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP61b.wad", basePath), importedEntries, 255, true);
+	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP62b.wad", basePath), importedEntries, 255, true);
+	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP63b.wad", basePath), importedEntries, 255, true);
+	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP64b.wad", basePath), importedEntries, 255, true);
+	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP65b.wad", basePath), importedEntries, 255, true);
+	//	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\FOF.wad", basePath), importedEntries, 255);
+	//	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP65.wad", basePath), importedEntries);
+	//	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP66.wad", basePath), importedEntries);
 
 	int dummySize = 4;
 	byte dummy[] = { 0xaf, 0xaf, 0xaf, 0xaf };

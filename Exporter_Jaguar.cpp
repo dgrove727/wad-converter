@@ -98,11 +98,44 @@ void Exporter_Jaguar::Execute()
 	int flatcount = -1;
 	for (WADEntry *node = entries; node; node = (WADEntry *)node->next)
 	{
+		if (!strcmp(node->GetName(), "3MB_END"))
+		{
+			*node->dir_entry_filepos = swap_endian32(fauxPtr);
+			size_t blankLength = (3 * 1024 * 1024) - fauxPtr;
+			byte *blankData = (byte*)calloc(1, blankLength);
+			node->SetIsCompressed(false);
+			node->SetData(blankData, blankLength);
+			free(blankData);
+			fauxPtr += node->GetDataLength();
+			continue;
+		}
+		else if (!strcmp(node->GetName(), "NEWPAGE"))
+		{
+			const int32_t INTERVAL = 524288;
+			size_t blankLength = ((fauxPtr + INTERVAL - 1) / INTERVAL) * INTERVAL;
+			blankLength -= fauxPtr;
+
+			*node->dir_entry_filepos = swap_endian32(fauxPtr);
+			byte *blankData = (byte *)calloc(1, blankLength);
+			node->SetIsCompressed(false);
+			node->SetData(blankData, blankLength);
+			free(blankData);
+			fauxPtr += node->GetDataLength();
+
+			WADEntry *nextEntry = (WADEntry *)node->next;
+			printf("Placing pointer at %x for entry %s\n", fauxPtr, nextEntry->GetName());
+
+			continue;
+		}
+
 		int32_t padding_size = PADDING_SIZE(node);
 
-		if (!strcmp(node->GetName(), "S_START"))
+		if (!strcmp(node->GetName(), "S1_START") || !strcmp(node->GetName(), "S2_START") || !strcmp(node->GetName(), "S3_START") || !strcmp(node->GetName(), "S4_START") || !strcmp(node->GetName(), "S5_START") || !strcmp(node->GetName(), "S6_START") || !strcmp(node->GetName(), "S7_START") || !strcmp(node->GetName(), "S8_START") || !strcmp(node->GetName(), "S9_START"))
+		{
 			insideSprites = true;
-		if (!strcmp(node->GetName(), "S_END"))
+			printf("Going inside sprite list %s. Ptr: %x\n", node->GetName(), fauxPtr);
+		}
+		if (!strcmp(node->GetName(), "S1_END") || !strcmp(node->GetName(), "S2_END") || !strcmp(node->GetName(), "S3_END") || !strcmp(node->GetName(), "S4_END") || !strcmp(node->GetName(), "S5_END") || !strcmp(node->GetName(), "S6_END") || !strcmp(node->GetName(), "S7_END") || !strcmp(node->GetName(), "S8_END") || !strcmp(node->GetName(), "S9_END"))
 			insideSprites = false;
 		if (!strcmp(node->GetName(), "F_START"))
 			insideFlats = true;
@@ -112,7 +145,7 @@ void Exporter_Jaguar::Execute()
 		if (strstr(node->GetName(), "MAP") && strlen(node->GetName()) == 5) // Should be a map...
 			insideMap = true;
 
-		if (bankSwitching)
+		if (false)//bankSwitching)
 		{
 			int fauxPtrHalfMeg = fauxPtr / HALFMEG;
 			if (insideSprites)
@@ -316,6 +349,9 @@ void Exporter_Jaguar::Execute()
 		*node->dir_entry_filepos = swap_endian32(fauxPtr);
 		fauxPtr += node->GetDataLength();
 		fauxPtr += padding_size;
+
+		if (insideSprites)
+			printf("Address of %s: %x\n", node->GetName(), swap_endian32(*node->dir_entry_filepos));
 
 		if (!strcmp(node->GetName(), "BLOCKMAP"))
 			insideMap = false;
