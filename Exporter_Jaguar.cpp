@@ -115,6 +115,9 @@ void Exporter_Jaguar::Execute()
 			size_t blankLength = ((fauxPtr + INTERVAL - 1) / INTERVAL) * INTERVAL;
 			blankLength -= fauxPtr;
 
+			if (blankLength == 0)
+				blankLength = INTERVAL;
+
 			*node->dir_entry_filepos = swap_endian32(fauxPtr);
 			byte *blankData = (byte *)calloc(1, blankLength);
 			node->SetIsCompressed(false);
