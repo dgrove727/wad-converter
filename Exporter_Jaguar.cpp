@@ -339,9 +339,10 @@ void Exporter_Jaguar::Execute()
 			if (identical)
 			{
 				// Found an identical entry!
-				*node->dir_entry_filepos = *snode->dir_entry_filepos;
+				int addr = swap_endian32(*snode->dir_entry_filepos);
+				*node->dir_entry_filepos = swap_endian32(addr);
 				node->pointsToAnotherEntry = true;
-				
+				flatcount++;
 				printf("Found identical entry to %s! (%s): %d\n", node->GetName(), snode->GetName(), flatcount++);
 				continue;
 			}
@@ -351,8 +352,7 @@ void Exporter_Jaguar::Execute()
 			flatcount++;
 
 		*node->dir_entry_filepos = swap_endian32(fauxPtr);
-		if (!node->pointsToAnotherEntry)
-			fauxPtr += node->GetDataLength() + PADDING_SIZE(node);
+		fauxPtr += node->GetDataLength() + PADDING_SIZE(node);
 
 		if (insideSprites)
 			printf("Address of %s: %x\n", node->GetName(), swap_endian32(*node->dir_entry_filepos));

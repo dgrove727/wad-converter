@@ -63,12 +63,6 @@ typedef struct
 	int16_t linedef;
 } srb32xseg_t;
 
-typedef struct
-{
-	int16_t x, y, dx, dy; // partition line
-	uint16_t children[2]; // if NF_SUBSECTOR, it's a subsector
-	uint16_t encbbox[2]; // encoded bounding box for each child
-} srb32xnode_t;
 
 typedef struct
 {
@@ -308,11 +302,6 @@ static uint8_t FindTexture(Texture1 *t1, char name[8])
 	return 0;
 }
 
-int16_t worldbbox[4];
-
-static srb32xnode_t *nodes;
-static int numnodes;
-
 #define NF_SUBSECTOR 0x8000
 
 enum { BOXTOP, BOXBOTTOM, BOXLEFT, BOXRIGHT };	/* bbox coordinates */
@@ -360,7 +349,7 @@ static int P_EncodeBBox(int16_t *cb, int16_t *outerbbox)
 	return encbbox;
 }
 
-static void P_EncodeNodeBBox_r(int nn, int16_t *bboxes, int16_t *outerbbox)
+void WADMap::P_EncodeNodeBBox_r(int nn, int16_t *bboxes, int16_t *outerbbox)
 {
 	int 		j;
 	srb32xnode_t *n;
@@ -368,7 +357,7 @@ static void P_EncodeNodeBBox_r(int nn, int16_t *bboxes, int16_t *outerbbox)
 	if (nn & NF_SUBSECTOR)
 		return;
 
-	n = nodes + nn;
+	n = srb32xnodes + nn;
 	for (j = 0; j < 2; j++)
 	{
 		int16_t *bbox = &bboxes[nn * 8 + j * 4];
@@ -379,7 +368,7 @@ static void P_EncodeNodeBBox_r(int nn, int16_t *bboxes, int16_t *outerbbox)
 
 // set the world's bounding box
 // recursively encode bounding boxes for all BSP nodes
-static void P_EncodeNodesBBoxes(int16_t *bboxes)
+void WADMap::P_EncodeNodesBBoxes(int16_t *bboxes)
 {
 	int j;
 
@@ -418,14 +407,13 @@ static void R_DecodeBBox(int16_t *bbox, const int16_t *outerbbox, uint16_t encbb
 	bbox[BOXRIGHT] = outerbbox[BOXRIGHT] - ((l * (encbbox & 0xf0)) >> 8);
 }
 
-static srb32xnode_t *CompressNodes(node_t *data, int count)
+srb32xnode_t *WADMap::CompressNodes(node_t *data, int count)
 {
-	numnodes = count;
-	nodes = (srb32xnode_t*)malloc(numnodes * sizeof(srb32xnode_t));
+	srb32xnodes = (srb32xnode_t*)malloc(numnodes * sizeof(srb32xnode_t));
 	int16_t *bboxes = (int16_t*)malloc(1024 * 256); // 256k
 
 	node_t *mn = data;
-	srb32xnode_t *no = (srb32xnode_t*)nodes;
+	srb32xnode_t *no = (srb32xnode_t*)srb32xnodes;
 	for (int i = 0; i < numnodes; i++, no++, mn++)
 	{
 		no->x = mn->x;
@@ -445,7 +433,7 @@ static srb32xnode_t *CompressNodes(node_t *data, int count)
 	free(bboxes);
 
 	// Now we gotta swap everything.
-	no = (srb32xnode_t *)nodes;
+	no = (srb32xnode_t *)srb32xnodes;
 	for (int i = 0; i < numnodes; i++, no++)
 	{
 		no->x = swap_endian16(no->x);
@@ -460,7 +448,7 @@ static srb32xnode_t *CompressNodes(node_t *data, int count)
 		no->encbbox[1] = swap_endian16(no->encbbox[1]);
 	}
 
-	return nodes;
+	return srb32xnodes;
 }
 
 bool IdenticalSectors(const sector_t *sec1, const sector_t *sec2)
