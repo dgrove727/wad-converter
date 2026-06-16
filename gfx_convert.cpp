@@ -1713,7 +1713,7 @@ typedef struct
 	short	flags, pad2, pad3, pad4;	/* future expansion */
 } jagobj_t;
 
-uint8_t *PNGTo15Bit(const uint8_t *pngData, size_t dataLen)
+pngresult_t PNGTo15Bit(const uint8_t *pngData, size_t dataLen)
 {
 	int width, height, channels;
 	byte *rgb888 = stbi_load_from_memory(pngData, dataLen, &width, &height, &channels, 3);
@@ -1752,5 +1752,9 @@ uint8_t *PNGTo15Bit(const uint8_t *pngData, size_t dataLen)
 
 	free(rgb888);
 
-	return bgr555original;
+	pngresult_t ret;
+	ret.data = bgr555original;
+	ret.dataSize = width * height * 2;
+
+	return ret;
 }

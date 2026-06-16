@@ -758,6 +758,21 @@ static void WADMapEdits()
 	delete map;
 }
 
+// PNG Magic Signature: 89 50 4E 47 0D 0A 1A 0A
+static const uint8_t PNG_SIGNATURE[8] = {
+	0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A
+};
+
+bool is_png_header(const uint8_t *buffer, size_t size) {
+	// Ensure buffer has at least 8 bytes
+	if (size < 8) {
+		return false;
+	}
+
+	// Compare the first 8 bytes directly
+	return memcmp(buffer, PNG_SIGNATURE, 8) == 0;
+}
+
 static void MyFunTest()
 {
 //		WADMapEdits();
@@ -824,6 +839,13 @@ static void MyFunTest()
 
 		if (!strcmp(node->GetName(), "G_START"))
 			insideRegularGraphics = true;
+
+		if (is_png_header(node->GetData(), node->GetDataLength()))
+		{
+			pngresult_t result = PNGTo15Bit(node->GetData(), node->GetDataLength());
+			node->SetData(result.data, result.dataSize);
+			printf("Converting %s to 15bpp graphic.\n", node->GetName());
+		}
 
 		if (insideRegularGraphics || insideCompressedGraphics)
 		{
