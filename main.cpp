@@ -483,17 +483,13 @@ void AddEmptyEntry(WADEntry *entries)
 	Listable::Add(entry, (Listable**)&entries);
 }
 
-#define PADDING_SIZE(x) (((x->GetDataLength() - 1) & 3) ^ 3)
-size_t InsertPCLevelFromWAD(const char* wadfile, WADEntry* entries, int loadFlags, bool skipReject)
-{
-	FILE *f = fopen(wadfile, "rb");
-	Importer_PC *ipc = new Importer_PC(f);
-	WADEntry *mapEntries = ipc->Execute();
-	delete ipc;
+Texture1 *t1;
+FlatList *fList = NULL;
 
+void InitLevelInsertStuff(WADEntry *entries)
+{
 	WADEntry *texture1 = WADEntry::FindEntry(entries, "TEXTURE1");
 
-	Texture1 *t1;
 	if (texture1->IsCompressed())
 	{
 		byte *decomp = texture1->Decompress();
@@ -503,7 +499,7 @@ size_t InsertPCLevelFromWAD(const char* wadfile, WADEntry* entries, int loadFlag
 	else
 		t1 = new Texture1(texture1->GetData(), texture1->GetUnCompressedDataLength());
 
-	FlatList *fList = NULL;
+	fList = NULL;
 	WADEntry *flatNode;
 	bool inFlats = false;
 	for (flatNode = entries; flatNode; flatNode = (WADEntry *)flatNode->next)
@@ -522,6 +518,21 @@ size_t InsertPCLevelFromWAD(const char* wadfile, WADEntry* entries, int loadFlag
 			Listable::Add(fi, (Listable **)&fList);
 		}
 	}
+}
+
+void CleanupLevelInsertStuff()
+{
+	delete fList;
+	delete t1;
+}
+
+#define PADDING_SIZE(x) (((x->GetDataLength() - 1) & 3) ^ 3)
+size_t InsertPCLevelFromWAD(const char* wadfile, WADEntry* entries, int loadFlags, bool skipReject)
+{
+	FILE *f = fopen(wadfile, "rb");
+	Importer_PC *ipc = new Importer_PC(f);
+	WADEntry *mapEntries = ipc->Execute();
+	delete ipc;
 
 	WADMap *map = new WADMap(mapEntries);
 	/*
@@ -612,27 +623,13 @@ size_t InsertPCLevelFromWAD(const char* wadfile, WADEntry* entries, int loadFlag
 
 	printf("Total size: %0.2fkb\n", totalSize / 1024.0f);
 
-	WADEntry *insertPoint = (WADEntry*)Listable::GetLast(entries);
 	// Don't need to look for L_START, just put it at the end of the WAD
-/*	for (insertPoint = entries; insertPoint; insertPoint = (WADEntry *)insertPoint->next)
-	{
-		if (!strcmp(insertPoint->GetName(), "L_START"))
-			break;
-	}*/
+	Listable *itemNext = jagEntries->next;
+	Listable::Add(jagEntries, (Listable **)&entries);
+	jagEntries->next = itemNext; // Restore next link
 
-	WADEntry *next;
-	for (node = jagEntries; node; node = next)
-	{
-		next = (WADEntry *)node->next;
-		Listable::RemoveNoFree(node, (Listable **)&jagEntries);
-		Listable::AddAfter(node, insertPoint, (Listable **)&entries);
-		insertPoint = node;
-	}
-
-	delete fList;
 	delete map;
 	delete mapEntries;
-	delete t1;
 
 	return alignedTotalSize;
 }
@@ -1050,6 +1047,7 @@ static void MyFunTest()
 	}
 	
 	size_t extraSpace = 0;
+	InitLevelInsertStuff(importedEntries);
 	printf("---------------------Bank 8:\n");
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP01a.wad", basePath), importedEntries, 255, false);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP02a.wad", basePath), importedEntries, 47, false);
@@ -1084,6 +1082,7 @@ static void MyFunTest()
 	//	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\FOF.wad", basePath), importedEntries, 255);
 	//	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP65.wad", basePath), importedEntries);
 	//	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP66.wad", basePath), importedEntries);
+	CleanupLevelInsertStuff();
 
 	int dummySize = 4;
 	byte dummy[] = { 0xaf, 0xaf, 0xaf, 0xaf };
