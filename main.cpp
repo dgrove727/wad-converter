@@ -1084,7 +1084,7 @@ static void MyFunTest()
 	extraSpace = 0;
 	printf("---------------------Page 10:\n");
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP07b.wad", basePath), importedEntries, 0, false);
-	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP10a.wad", basePath), importedEntries, LOADFLAGS_NODES, false);
+	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP10a.wad", basePath), importedEntries, 0, false);
 	AddEmptyEntry(importedEntries);
 	extraSpace = 0;
 	printf("---------------------Page 11:\n");
