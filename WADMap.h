@@ -93,6 +93,13 @@ typedef struct
 
 typedef struct
 {
+	int16_t x, y, dx, dy; // partition line
+	uint16_t children[2]; // if NF_SUBSECTOR, it's a subsector
+	uint16_t encbbox[2]; // encoded bounding box for each child
+} srb32xnode_t;
+
+typedef struct
+{
 	int16_t floorheight;
 	int16_t ceilingheight;
 	char floorpic[8];
@@ -138,6 +145,9 @@ public:
 	uint8_t *reject;
 	uint8_t *blockmap;
 
+	int16_t worldbbox[4];
+	srb32xnode_t *srb32xnodes;
+
 	int16_t numthings;
 	int16_t numlinedefs;
 	int16_t numsidedefs;
@@ -149,6 +159,9 @@ public:
 	int32_t rejectSize;
 	int32_t blockmapSize;
 
+	void P_EncodeNodeBBox_r(int nn, int16_t *bboxes, int16_t *outerbbox);
+	void P_EncodeNodesBBoxes(int16_t *bboxes);
+	srb32xnode_t *CompressNodes(node_t *data, int count);
 	int16_t GetSectorFromSeg(int16_t firstline);
 	bool SectorsAreIdentical(sector_t *src, sector_t *cmp);
 	int16_t GetFrontsector(linedef_t *line);

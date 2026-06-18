@@ -54,6 +54,8 @@ MapTexture *FindTexture(Texture1 *t1, const char *name)
 	return NULL;
 }
 
+#define PADDING_SIZE(x) (((x->GetDataLength() - 1) & 3) ^ 3)
+
 void Exporter_Jaguar::Execute()
 {
 	size_t lump_count = Listable::GetCount(this->entries);
@@ -67,7 +69,7 @@ void Exporter_Jaguar::Execute()
 	uint32_t fileposCursor = 0xC + directorySize; // Start of entry data
 	for (WADEntry *node = entries; node; node = (WADEntry *)node->next, i++)
 	{
-		int32_t padding_size = ((node->GetDataLength() - 1) & 3) ^ 3;
+		int32_t padding_size = PADDING_SIZE(node);
 
 		directory_t *dirEntry = &directory[i];
 
@@ -84,11 +86,10 @@ void Exporter_Jaguar::Execute()
 		dirEntry->size = swap_endian32(node->GetUnCompressedDataLength());
 
 		// Add the real size, uncompressed or not, to the file pointer.
-		fileposCursor += ((node->GetDataLength() - 1) & 0xFFFFFFFC) + 4; // Maintain 4-byte alignment.
+		fileposCursor += node->GetDataLength() + padding_size;// ((node->GetDataLength() - 1) & 0xFFFFFFFC) + 4; // Maintain 4-byte alignment.
 	}
 
 #define HALFMEG (512*1024)
-#define PADDING_SIZE(x) (((x->GetDataLength() - 1) & 3) ^ 3)
 
 	// Pre-scan the entries and set the filepos cursor
 	int32_t fauxPtr = wadPtrStart + 12 + (sizeof(directory_t) * lump_count);
@@ -98,11 +99,46 @@ void Exporter_Jaguar::Execute()
 	int flatcount = -1;
 	for (WADEntry *node = entries; node; node = (WADEntry *)node->next)
 	{
-		int32_t padding_size = PADDING_SIZE(node);
+		if (!strcmp(node->GetName(), "3MB_END"))
+		{
+			// Pad the rest of the ROM out to 3mb with zeroes
+			*node->dir_entry_filepos = swap_endian32(fauxPtr);
+			size_t blankLength = (3 * 1024 * 1024) - fauxPtr;
+			byte *blankData = (byte*)calloc(1, blankLength);
+			node->SetIsCompressed(false);
+			node->SetData(blankData, blankLength);
+			free(blankData);
+			fauxPtr += node->GetDataLength();
+			continue;
+		}
+		else if (!strcmp(node->GetName(), "NEWPAGE"))
+		{
+			const int32_t INTERVAL = 524288;
+			size_t blankLength = ((fauxPtr + INTERVAL - 1) / INTERVAL) * INTERVAL;
+			blankLength -= fauxPtr;
 
-		if (!strcmp(node->GetName(), "S_START"))
+			if (blankLength == 0)
+				blankLength = INTERVAL;
+
+			*node->dir_entry_filepos = swap_endian32(fauxPtr);
+			byte *blankData = (byte *)calloc(1, blankLength);
+			node->SetIsCompressed(false);
+			node->SetData(blankData, blankLength);
+			free(blankData);
+			fauxPtr += node->GetDataLength();
+
+			WADEntry *nextEntry = (WADEntry *)node->next;
+			printf("Placing pointer at %x for entry %s\n", fauxPtr, nextEntry->GetName());
+
+			continue;
+		}
+
+		if (!strcmp(node->GetName(), "S1_START") || !strcmp(node->GetName(), "S2_START") || !strcmp(node->GetName(), "S3_START") || !strcmp(node->GetName(), "S4_START") || !strcmp(node->GetName(), "S5_START") || !strcmp(node->GetName(), "S6_START") || !strcmp(node->GetName(), "S7_START") || !strcmp(node->GetName(), "S8_START") || !strcmp(node->GetName(), "S9_START"))
+		{
 			insideSprites = true;
-		if (!strcmp(node->GetName(), "S_END"))
+			printf("Going inside sprite list %s. Ptr: %x\n", node->GetName(), fauxPtr);
+		}
+		if (!strcmp(node->GetName(), "S1_END") || !strcmp(node->GetName(), "S2_END") || !strcmp(node->GetName(), "S3_END") || !strcmp(node->GetName(), "S4_END") || !strcmp(node->GetName(), "S5_END") || !strcmp(node->GetName(), "S6_END") || !strcmp(node->GetName(), "S7_END") || !strcmp(node->GetName(), "S8_END") || !strcmp(node->GetName(), "S9_END"))
 			insideSprites = false;
 		if (!strcmp(node->GetName(), "F_START"))
 			insideFlats = true;
@@ -112,7 +148,7 @@ void Exporter_Jaguar::Execute()
 		if (strstr(node->GetName(), "MAP") && strlen(node->GetName()) == 5) // Should be a map...
 			insideMap = true;
 
-		if (bankSwitching)
+/*		if (false)//bankSwitching)
 		{
 			int fauxPtrHalfMeg = fauxPtr / HALFMEG;
 			if (insideSprites)
@@ -171,11 +207,12 @@ void Exporter_Jaguar::Execute()
 			}
 			else if (fauxPtrHalfMeg != (fauxPtr + node->GetDataLength() + padding_size) / HALFMEG)
 				fauxPtr = ((fauxPtrHalfMeg + 1) * HALFMEG);
-		}
+		}*/
 
 		const bool reuseflats = true;
 		if (reuseflats && insideFlats && strcmp(node->GetName(), "F_START"))
 		{
+			WADEntry *snode;
 //			printf("Looking for a patch that matches %s...\n", node->GetName());
 			WADEntry *texture1 = WADEntry::FindEntry(entries, "TEXTURE1");
 
@@ -192,7 +229,6 @@ void Exporter_Jaguar::Execute()
 			// Is there a patch that matches?
 			bool insidePatches = false;
 			bool identical = false;
-			WADEntry *snode;
 			for (snode = entries; snode; snode = (WADEntry *)snode->next)
 			{
 				if (!strcmp(snode->GetName(), "T_START"))
@@ -305,6 +341,7 @@ void Exporter_Jaguar::Execute()
 				// Found an identical entry!
 				*node->dir_entry_filepos = *snode->dir_entry_filepos;
 				node->pointsToAnotherEntry = true;
+				flatcount++;
 				printf("Found identical entry to %s! (%s): %d\n", node->GetName(), snode->GetName(), flatcount++);
 				continue;
 			}
@@ -314,8 +351,10 @@ void Exporter_Jaguar::Execute()
 			flatcount++;
 
 		*node->dir_entry_filepos = swap_endian32(fauxPtr);
-		fauxPtr += node->GetDataLength();
-		fauxPtr += padding_size;
+		fauxPtr += node->GetDataLength() + PADDING_SIZE(node);
+
+		if (insideSprites)
+			printf("Address of %s: %x\n", node->GetName(), swap_endian32(*node->dir_entry_filepos));
 
 		if (!strcmp(node->GetName(), "BLOCKMAP"))
 			insideMap = false;
@@ -338,6 +377,16 @@ void Exporter_Jaguar::Execute()
 			continue;
 
 		size_t thetell = ftell(f);
+
+		// Catch entries that reference other entries (dumb hack)
+		for (WADEntry *dup = entries; dup; dup = (WADEntry *)dup->next)
+		{
+			if (dup == node)
+				continue;
+
+			if (*dup->dir_entry_filepos == *node->dir_entry_filepos)
+				*dup->dir_entry_filepos = swap_endian32(thetell);
+		}
 		*node->dir_entry_filepos = swap_endian32(thetell);
 
 		if (node->GetDataLength() > 0)
@@ -347,7 +396,7 @@ void Exporter_Jaguar::Execute()
 		}
 
 		// We need to maintain 4-byte alignments. Pad out the data with zeros as needed.
-		int32_t padding_size = ((node->GetDataLength() - 1) & 3) ^ 3;
+		int32_t padding_size = PADDING_SIZE(node);
 		for (int i=0; i < padding_size; i++)
 			fputc(0, f);
 

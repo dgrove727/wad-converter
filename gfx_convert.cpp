@@ -1703,3 +1703,58 @@ void *PNGToJagSprite(byte *pngData, size_t pngLen, byte *sprHeader, int32_t *hea
 	return nullptr;
 }
 */
+
+typedef struct
+{
+	short	width;		/* in pixels */
+	short	height;
+	short	depth;		/* 1-5 */
+	short	index;		/* location in palette of color 0 */
+	short	flags, pad2, pad3, pad4;	/* future expansion */
+} jagobj_t;
+
+pngresult_t PNGTo15Bit(const uint8_t *pngData, size_t dataLen)
+{
+	int width, height, channels;
+	byte *rgb888 = stbi_load_from_memory(pngData, dataLen, &width, &height, &channels, 3);
+	int num_pixels = width * height;
+
+	uint8_t *bgr555 = (uint8_t*)calloc(1, 16 + (width * height * 2));
+	uint8_t *bgr555original = bgr555;
+
+	// Add 16-byte header
+	jagobj_t *header = (jagobj_t*)bgr555original;
+	header->width = swap_endian16(width);
+	header->height = swap_endian16(height);
+	header->depth = swap_endian16(15);
+
+	bgr555 += 16;
+
+	for (size_t i = 0; i < (size_t)num_pixels; ++i) {
+		uint8_t r = rgb888[i * 3 + 0];
+		uint8_t g = rgb888[i * 3 + 1];
+		uint8_t b = rgb888[i * 3 + 2];
+
+		/* 8-bit to 5-bit conversion */
+		uint8_t r5 = r >> 3;
+		uint8_t g5 = g >> 3;
+		uint8_t b5 = b >> 3;
+
+		/* Pack: 0 bbbbb ggggg rrrrr */
+		uint16_t word = ((uint16_t)b5 << 10) |
+			((uint16_t)g5 << 5) |
+			r5;
+
+		/* Big-endian byte order */
+		bgr555[i * 2 + 0] = (uint8_t)(word >> 8);   /* high byte first */
+		bgr555[i * 2 + 1] = (uint8_t)(word & 0xFF); /* low byte */
+	}
+
+	free(rgb888);
+
+	pngresult_t ret;
+	ret.data = bgr555original;
+	ret.dataSize = width * height * 2;
+
+	return ret;
+}

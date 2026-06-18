@@ -21,3 +21,11 @@ byte *JagSpriteToPNG(byte *jagHeader, byte *jagData, size_t headerLen, size_t da
 byte *PatchToRaw(const byte *patchData, size_t dataLen, int32_t *outputLen, byte transparentIndex);
 byte *RawToPatch(byte *rawImage, int32_t width, int32_t height, int32_t *outputLen, byte transparentIndex);
 byte *PNGToPatch(byte *pngData, size_t dataLen, int32_t *outputLen, byte transparentIndex);
+
+typedef struct
+{
+	uint8_t *data;
+	size_t dataSize;
+} pngresult_t;
+
+pngresult_t PNGTo15Bit(const uint8_t *pngData, size_t dataLen);
