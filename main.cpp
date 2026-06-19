@@ -758,6 +758,24 @@ static void WADMapEdits()
 	delete map;
 }
 
+size_t CalculatePageSize(WADEntry *start, WADEntry *end)
+{
+	size_t total = 0;
+
+	WADEntry *node = start;
+	do
+	{
+		total += node->GetDataLength();
+
+		if (node == end)
+			break;
+
+		node = (WADEntry *)node->next;
+	} while (true);
+
+	return total;
+}
+
 // PNG Magic Signature: 89 50 4E 47 0D 0A 1A 0A
 static const uint8_t PNG_SIGNATURE[8] = {
 	0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A
@@ -1069,29 +1087,39 @@ static void MyFunTest()
 	}
 	
 	size_t extraSpace = 0;
+	WADEntry *startMarker;
 	InitLevelInsertStuff(importedEntries);
 	printf("---------------------Page 8:\n");
+	startMarker = (WADEntry*)Listable::GetLast(importedEntries);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP01a.wad", basePath), importedEntries, 255, false);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP02a.wad", basePath), importedEntries, 47, false);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP03a.wad", basePath), importedEntries, 255, true);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP04b.wad", basePath), importedEntries, 0, false);
+	printf("*********************Space used: %0.2fkb\n", CalculatePageSize(startMarker, (WADEntry*)Listable::GetLast(startMarker)) / 1024.0f);
 	AddEmptyEntry(importedEntries);
 	extraSpace = 0;
 	printf("---------------------Page 9:\n");
+	startMarker = (WADEntry *)Listable::GetLast(importedEntries);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP05a.wad", basePath), importedEntries, 0, false);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP06a.wad", basePath), importedEntries, 255, true);
+	printf("*********************Space used: %0.2fkb", CalculatePageSize(startMarker, (WADEntry *)Listable::GetLast(startMarker)) / 1024.0f);
 	AddEmptyEntry(importedEntries);
 	extraSpace = 0;
 	printf("---------------------Page 10:\n");
+	startMarker = (WADEntry *)Listable::GetLast(importedEntries);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP07b.wad", basePath), importedEntries, 0, false);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP10a.wad", basePath), importedEntries, 0, false);
+	printf("*********************Space used: %0.2fkb", CalculatePageSize(startMarker, (WADEntry *)Listable::GetLast(startMarker)) / 1024.0f);
 	AddEmptyEntry(importedEntries);
 	extraSpace = 0;
 	printf("---------------------Page 11:\n");
+	startMarker = (WADEntry *)Listable::GetLast(importedEntries);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP11a.wad", basePath), importedEntries, 256, true);
+	printf("*********************Space used: %0.2fkb", CalculatePageSize(startMarker, (WADEntry *)Listable::GetLast(startMarker)) / 1024.0f);
 	AddEmptyEntry(importedEntries);
 	extraSpace = 0;
 	printf("---------------------Page 12:\n");
+	startMarker = (WADEntry *)Listable::GetLast(importedEntries);
 	//	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP16a.wad", basePath), importedEntries);
 //	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP17.wad", basePath), importedEntries);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP30a.wad", basePath), importedEntries, 255, true);
@@ -1104,6 +1132,7 @@ static void MyFunTest()
 	//	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\FOF.wad", basePath), importedEntries, 255);
 	//	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP65.wad", basePath), importedEntries);
 	//	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP66.wad", basePath), importedEntries);
+	printf("*********************Space used: %0.2fkb\n", CalculatePageSize(startMarker, (WADEntry *)Listable::GetLast(startMarker)) / 1024.0f);
 	CleanupLevelInsertStuff();
 
 	int dummySize = 4;
