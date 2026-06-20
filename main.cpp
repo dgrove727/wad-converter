@@ -1109,6 +1109,7 @@ static void MyFunTest()
 	startMarker = (WADEntry *)Listable::GetLast(importedEntries);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP07b.wad", basePath), importedEntries, 0, false);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP10a.wad", basePath), importedEntries, 0, false);
+	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP12a.wad", basePath), importedEntries, 255, true);
 	printf("*********************Space used: %0.2fkb", CalculatePageSize(startMarker, (WADEntry *)Listable::GetLast(startMarker)) / 1024.0f);
 	AddEmptyEntry(importedEntries);
 	extraSpace = 0;
