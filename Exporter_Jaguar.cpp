@@ -97,6 +97,7 @@ void Exporter_Jaguar::Execute()
 	bool insideMap = false;
 	bool insideFlats = false;
 	int flatcount = -1;
+	size_t spriteCount = 0;
 	for (WADEntry *node = entries; node; node = (WADEntry *)node->next)
 	{
 		if (!strcmp(node->GetName(), "3MB_END"))
@@ -135,11 +136,16 @@ void Exporter_Jaguar::Execute()
 
 		if (!strcmp(node->GetName(), "S1_START") || !strcmp(node->GetName(), "S2_START") || !strcmp(node->GetName(), "S3_START") || !strcmp(node->GetName(), "S4_START") || !strcmp(node->GetName(), "S5_START") || !strcmp(node->GetName(), "S6_START") || !strcmp(node->GetName(), "S7_START") || !strcmp(node->GetName(), "S8_START") || !strcmp(node->GetName(), "S9_START"))
 		{
+			spriteCount = 0;
 			insideSprites = true;
 			printf("Going inside sprite list %s. Ptr: %x\n", node->GetName(), fauxPtr);
 		}
 		if (!strcmp(node->GetName(), "S1_END") || !strcmp(node->GetName(), "S2_END") || !strcmp(node->GetName(), "S3_END") || !strcmp(node->GetName(), "S4_END") || !strcmp(node->GetName(), "S5_END") || !strcmp(node->GetName(), "S6_END") || !strcmp(node->GetName(), "S7_END") || !strcmp(node->GetName(), "S8_END") || !strcmp(node->GetName(), "S9_END"))
+		{
 			insideSprites = false;
+			printf("Size of sprite bank: %0.2f\n", spriteCount / 1024.0f);
+			spriteCount = 0;
+		}
 		if (!strcmp(node->GetName(), "F_START"))
 			insideFlats = true;
 		if (!strcmp(node->GetName(), "F_END"))
@@ -352,6 +358,8 @@ void Exporter_Jaguar::Execute()
 
 		*node->dir_entry_filepos = swap_endian32(fauxPtr);
 		fauxPtr += node->GetDataLength() + PADDING_SIZE(node);
+
+		spriteCount += node->GetDataLength() + PADDING_SIZE(node);
 
 		if (insideSprites)
 			printf("Address of %s: %x\n", node->GetName(), swap_endian32(*node->dir_entry_filepos));
