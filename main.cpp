@@ -121,6 +121,7 @@ const char *halfSprites[] = {
 	"BOM2",
 	"BOM3",
 	"DUST",
+	"EFIR",
 	"FL01",
 	"FL02",
 	"FL03",
