@@ -998,7 +998,7 @@ byte *RawToPNG(const byte *rawData, int32_t width, int32_t height, int32_t *outp
 	return stbi_write_png_to_mem(rawData, 0, width, height, 1, outputLen);
 }
 
-byte *PNGToFlat(byte *pngData, int32_t pngLength, int32_t *width, int32_t *height)
+byte *PNGToFlat(const byte *pngData, int32_t pngLength, int32_t *width, int32_t *height)
 {
 	int32_t channels;
 

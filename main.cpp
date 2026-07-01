@@ -792,6 +792,20 @@ bool is_png_header(const uint8_t *buffer, size_t size) {
 	return memcmp(buffer, PNG_SIGNATURE, 8) == 0;
 }
 
+int get_exponent_portable(unsigned int n)
+{
+	if (n == 0)
+		return -1;
+
+	int exponent = 0;
+	while (n > 1)
+	{
+		n >>= 1; // Shift right by 1 (divide by 2)
+		exponent++;
+	}
+	return exponent;
+}
+
 static void MyFunTest()
 {
 //		WADMapEdits();
@@ -820,6 +834,8 @@ static void MyFunTest()
 	size_t sizeCompGraphics = 0;
 	size_t sizeMaskedGraphics = 0;
 	size_t sizeCompMaskedGraphics = 0;
+	flatsize_t flatSizes[256]; // Only a maximum of 256 flats allowed
+	size_t numFlats = 0;
 
 	bool insideSprites = false;
 	bool insideTextures = false;
@@ -859,7 +875,7 @@ static void MyFunTest()
 		if (!strcmp(node->GetName(), "G_START"))
 			insideRegularGraphics = true;
 
-		if (is_png_header(node->GetData(), node->GetDataLength()))
+		if (!insideFlats && is_png_header(node->GetData(), node->GetDataLength()))
 		{
 			pngresult_t result = PNGTo15Bit(node->GetData(), node->GetDataLength());
 			node->SetData(result.data, result.dataSize);
@@ -1009,6 +1025,16 @@ static void MyFunTest()
 								lvlFlats->SetIsCompressed(true);
 								lvlFlats->SetData(flatData, lvlFlats->GetDataLength());*/
 
+				// Convert from PNG to row-major raw
+				int32_t flatWidth, flatHeight;
+				byte *flatData = PNGToFlat(lvlFlats->GetData(), lvlFlats->GetDataLength(), &flatWidth, &flatHeight);
+				lvlFlats->SetData(flatData, flatWidth * flatHeight);
+				free(flatData);
+
+				flatSizes[numFlats].width = (uint8_t)get_exponent_portable(flatWidth);
+				flatSizes[numFlats].height = (uint8_t)get_exponent_portable(flatHeight);
+				numFlats++;
+
 #ifdef MAKE_FLAT_MIPMAPS
 				int dataLen;
 				byte *mipData = FlatMipmaps(lvlFlats->GetData(), lvlFlats->GetUnCompressedDataLength(), MIPLEVELS, &dataLen);
@@ -1022,7 +1048,11 @@ static void MyFunTest()
 			}
 		}
 		if (!strcmp(node->GetName(), "F_END"))
+		{
 			insideFlats = false;
+			WADEntry *flatInfo = new WADEntry("FLATINFO", (const byte *)flatSizes, numFlats * 2);
+			Listable::AddAfter(flatInfo, node, (Listable **)&importedEntries);
+		}
 		if (!strcmp(node->GetName(), "DS_START"))
 		{
 			insideSounds = true;

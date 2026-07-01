@@ -43,6 +43,12 @@ typedef struct
 	uint16_t dataofs;
 } jagPost_t;
 
+typedef struct
+{
+	uint8_t width;
+	uint8_t height;
+} flatsize_t;
+
 void *memdup(const void *mem, size_t size);
 uint32_t swap_endian32(uint32_t i);
 uint16_t swap_endian16(uint16_t i);
