@@ -277,7 +277,19 @@ void Exporter_Jaguar::Execute()
 				}
 			}
 
-			if (!strcmp(node->GetName(), "GFZFLR06"))
+
+			if (!strcmp(node->GetName(), "CECRPTG2"))
+			{
+				for (snode = entries; snode; snode = (WADEntry *)snode->next)
+				{
+					if (!strcmp(snode->GetName(), "CECRPTG1"))
+					{
+						identical = true;
+						break;
+					}
+				}
+			}
+			else if (!strcmp(node->GetName(), "GFZFLR06"))
 			{
 				for (snode = entries; snode; snode = (WADEntry *)snode->next)
 				{
@@ -344,13 +356,13 @@ void Exporter_Jaguar::Execute()
 				}
 			}
 
-			if (false && identical)
+			if (identical)
 			{
 				// Found an identical entry!
 				*node->dir_entry_filepos = *snode->dir_entry_filepos;
 				node->pointsToAnotherEntry = true;
 
-				if (patchIdentical) // TODO: Try swapping this
+//				if (false)//patchIdentical) // TODO: Try swapping this
 				{
 					for (WADEntry *fnode = entries; fnode; fnode = (WADEntry *)fnode->next)
 					{
