@@ -235,6 +235,7 @@ void Exporter_Jaguar::Execute()
 			// Is there a patch that matches?
 			bool insidePatches = false;
 			bool identical = false;
+			bool patchIdentical = false;
 			for (snode = entries; snode; snode = (WADEntry *)snode->next)
 			{
 				if (!strcmp(snode->GetName(), "T_START"))
@@ -271,11 +272,24 @@ void Exporter_Jaguar::Execute()
 				if (!compareResult)
 				{
 					identical = true;
+					patchIdentical = true;
 					break;
 				}
 			}
 
-			if (!strcmp(node->GetName(), "GFZFLR06"))
+
+			if (!strcmp(node->GetName(), "CECRPTG2"))
+			{
+				for (snode = entries; snode; snode = (WADEntry *)snode->next)
+				{
+					if (!strcmp(snode->GetName(), "CECRPTG1"))
+					{
+						identical = true;
+						break;
+					}
+				}
+			}
+			else if (!strcmp(node->GetName(), "GFZFLR06"))
 			{
 				for (snode = entries; snode; snode = (WADEntry *)snode->next)
 				{
@@ -347,8 +361,25 @@ void Exporter_Jaguar::Execute()
 				// Found an identical entry!
 				*node->dir_entry_filepos = *snode->dir_entry_filepos;
 				node->pointsToAnotherEntry = true;
+
+//				if (false)//patchIdentical) // TODO: Try swapping this
+				{
+					for (WADEntry *fnode = entries; fnode; fnode = (WADEntry *)fnode->next)
+					{
+						if (!strcmp(fnode->GetName(), "FLATINFO"))
+						{
+							size_t fLength = fnode->GetDataLength();
+							flatsize_t *flatSizes = (flatsize_t *)fnode->GetData();
+							uint8_t flatTemp = flatSizes[flatcount].height;
+							flatSizes[flatcount].height = flatSizes[flatcount].width;
+							flatSizes[flatcount].width = flatTemp;
+							break;
+						}
+					}
+				}
+
+				printf("Found identical entry to %s! (%s): %d\n", node->GetName(), snode->GetName(), flatcount);
 				flatcount++;
-				printf("Found identical entry to %s! (%s): %d\n", node->GetName(), snode->GetName(), flatcount++);
 				continue;
 			}
 		}

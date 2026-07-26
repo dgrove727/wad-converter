@@ -2,7 +2,7 @@
 #include "common.h"
 
 byte *FlatToPNG(const byte *flatData, int32_t width, int32_t height, int32_t *outputLen);
-byte *PNGToFlat(byte *pngData, int32_t pngLength, int32_t *width, int32_t *height);
+byte *PNGToFlat(const byte *pngData, int32_t pngLength, int32_t *width, int32_t *height);
 byte *RawToPNG(const byte *rawData, int32_t width, int32_t height, int32_t *outputLen);
 
 byte *FlatMipmaps(const byte *data, int dataLen, int numlevels, int *outputLen);
