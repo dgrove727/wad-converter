@@ -31,6 +31,7 @@
     <ClCompile Include="..\lzexe.cpp" />
     <ClCompile Include="..\lzss.cpp" />
     <ClCompile Include="..\main.cpp" />
+    <ClCompile Include="..\PathParser.cpp" />
     <ClCompile Include="..\SRB2LevelConv.cpp" />
     <ClCompile Include="..\Texture1.cpp" />
     <ClCompile Include="..\WADEntry.cpp" />
@@ -57,6 +58,8 @@
     <ClInclude Include="..\mdcomp\kosinski.hh" />
     <ClInclude Include="..\mdcomp\lzss.hh" />
     <ClInclude Include="..\mdcomp\moduled_adaptor.hh" />
+    <ClInclude Include="..\nanosvg.h" />
+    <ClInclude Include="..\PathParser.h" />
     <ClInclude Include="..\SpriteColumn.h" />
     <ClInclude Include="..\SRB2LevelConv.h" />
     <ClInclude Include="..\stb_image_resize2.h" />

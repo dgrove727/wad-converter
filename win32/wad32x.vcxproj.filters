@@ -152,5 +152,8 @@
     <ClInclude Include="..\mdcomp\moduled_adaptor.hh">
       <Filter>Header Files\mdcomp</Filter>
     </ClInclude>
+    <ClInclude Include="..\nanosvg.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

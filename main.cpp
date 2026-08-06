@@ -14,6 +14,7 @@
 #include "Texture1.h"
 #include "MapThing.h"
 #include "SpriteColumn.h"
+#include "PathParser.h"
 
 #define MAKE_WALL_MIPMAPS
 //#define MAKE_FLAT_MIPMAPS
@@ -1116,13 +1117,23 @@ static void MyFunTest()
 			sizeGraphics += node->GetDataLength();
 		}
 	}
+	/*
+	{
+		size_t pathSize;
+		PathParser *pathParser = new PathParser();
+		pathParser->ParsePath(va("%s\\Levels\\Nights\\polytest.svg", basePath));
+		byte *pathLump = pathParser->CreateLump(&pathSize);
+		entry->SetData(pathLump, pathSize);
+		delete pathParser;
+	}*/
 	
 	size_t extraSpace = 0;
 	WADEntry *startMarker;
 	InitLevelInsertStuff(importedEntries);
 	printf("---------------------Page 8:\n");
 	startMarker = (WADEntry*)Listable::GetLast(importedEntries);
-	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP01a.wad", basePath), importedEntries, 255, false);
+	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\polytesta.wad", basePath), importedEntries, 255, false);
+//	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP01a.wad", basePath), importedEntries, 255, false);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP02a.wad", basePath), importedEntries, 47, false);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP03a.wad", basePath), importedEntries, 255, true);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP04b.wad", basePath), importedEntries, 0, false);
