@@ -24,6 +24,7 @@
 #define		VERSION			1.10
 #define		WAD_FORMAT		1
 
+const char *outputPath = NULL;
 const char *basePath = "D:\\32xrb2";
 //const char* basePath = "E:\\wad32x\\wad-converter\\bin\\Release";
 
@@ -984,14 +985,17 @@ static void MyFunTest()
 				byte *texData = PatchToJagTexture(lvlTextures->GetData(), lvlTextures->GetDataLength(), &texLen);
 
 #ifdef MAKE_WALL_MIPMAPS
-				const patchHeader_t *header = (patchHeader_t *)lvlTextures->GetData(); // Need width/height info
+				if (strcmp(lvlTextures->GetName(), "SLROPE1A") && strcmp(lvlTextures->GetName(), "SLROPE1B"))
+				{
+					const patchHeader_t *header = (patchHeader_t *)lvlTextures->GetData(); // Need width/height info
 
-				int dataLen;
-				byte *mipData = PatchMipmaps(texData, header->height, header->width, MIPLEVELS, &dataLen);
-				free(texData);
+					int dataLen;
+					byte *mipData = PatchMipmaps(texData, header->height, header->width, MIPLEVELS, &dataLen);
+					free(texData);
 
-				lvlTextures->SetData(mipData, dataLen);
-				free(mipData);
+					lvlTextures->SetData(mipData, dataLen);
+					free(mipData);
+				}
 #else
 				//				if (!strcmp(lvlTextures->GetName(), "GFZROCK"))
 				//					lvlTextures->SetIsCompressed(true);
@@ -1187,7 +1191,7 @@ static void MyFunTest()
 //	FindDuplicateColumns(importedEntries);
 
 	// Write it out
-	FILE *expF = fopen(va("%s\\doom32x.wad", basePath), "wb");
+	FILE *expF = fopen(va("%s\\doom32x.wad", outputPath), "wb");
 	Exporter_Jaguar *ex = new Exporter_Jaguar(importedEntries, expF, WADPTRSTART);
 	// Set masked bit in TEXTURE1 lump if necessary.
 	ex->SetMaskedInTexture1();
@@ -1203,7 +1207,7 @@ static void MyFunTest()
 	printf("Masked Graphics: %0.2fkb\n", sizeMaskedGraphics / 1024.0f);
 	printf("Compressed Masked Graphics: %0.2fkb\n", sizeCompMaskedGraphics / 1024.0f);
 
-	expF = fopen(va("%s\\doom32x.wad", basePath), "rb");
+	expF = fopen(va("%s\\doom32x.wad", outputPath), "rb");
 	fseek(expF, 0, SEEK_END);
 	printf("Total file size: %02fkb\n", ftell(expF) / 1024.0f);
 	fclose(expF);
@@ -1211,9 +1215,18 @@ static void MyFunTest()
 	return;
 }
 
+
 int main(int argc, char *argv[])
 {
-	if (argc > 1)
+	if (argc < 3)
+	{
+		printf("usage: wad32x \"D:\\MyBasePath\" \"D:\\MyOutputPath\"");
+		return 0;
+	}
+
+	basePath = argv[1];
+	outputPath = argv[2];
+/*	if (argc > 1)
 	{
 		// PNG -> flat conversion mode
 		char newfileName[2048];
@@ -1235,7 +1248,7 @@ int main(int argc, char *argv[])
 
 		printf("Converted %s to flat graphic.\n", argv[1]);
 		return 0;
-	}
+	}*/
 //	ChibiMaps();
 	MyFunTest();
 
