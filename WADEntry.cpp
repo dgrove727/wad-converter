@@ -50,6 +50,13 @@ void WADEntry::SetData(const byte *value, size_t length)
 {
 	int32_t filesize = (int32_t)length;
 
+	if (length == 0 || value == NULL)
+	{
+		this->SetIsCompressed(false);
+		SetDataInternal(NULL, 0);
+		return;
+	}
+
 	if (this->IsCompressed())
 	{
 		int32_t compressedSize = 0;
