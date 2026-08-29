@@ -1443,7 +1443,11 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 	entry->SetName("REJECT");
 	entry->SetIsCompressed(loadFlags & LOADFLAGS_REJECT);
 
-	if (this->rejectSize > 0)	
+	// Full REJECT is a bit matrix of numsectors * numsectors
+	const size_t requiredRejectSize =
+		(numsectors > 0) ? ((size_t)numsectors * (size_t)numsectors + 7) / 8 : 0;
+
+	if (this->rejectSize > 0 && (size_t)this->rejectSize >= requiredRejectSize)
 	{ // Vic's 50% compression of the REJECT table technique
 		int i, j;
 		uint8_t *out;
@@ -1456,45 +1460,59 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 		outsize = (outsize + 7) / 8;
 
 		byte *rejectmatrix = (byte *)malloc(outsize);
+		if (!rejectmatrix)
+		{
+			printf("Failed to allocate %d bytes for packed REJECT; writing empty REJECT.\n", outsize);
+			entry->SetIsCompressed(false);
+			entry->SetData(NULL, 0);
+		}
+		else
+		{
+			memset(rejectmatrix, 0, outsize);
 
-		memset(rejectmatrix, 0, outsize);
-		
-		outbit = 1;
-		outbyte = 0;
-		out = rejectmatrix;
+			outbit = 1;
+			outbyte = 0;
+			out = rejectmatrix;
 
-		for (i = 0; i < numsectors; i++) {
-			unsigned k = i * numsectors;
-			unsigned bit = 1 << ((k + i) & 7);
-			for (j = i; j < numsectors; j++) {
-				unsigned bytenum = (k + j) / 8;
+			for (i = 0; i < numsectors; i++) {
+				unsigned k = i * numsectors;
+				unsigned bit = 1 << ((k + i) & 7);
+				for (j = i; j < numsectors; j++) {
+					unsigned bytenum = (k + j) / 8;
 
-				if (data[bytenum] & bit)
-				{
-					out[outbyte] |= outbit;
-				}
+					// bytenum is in [0, requiredRejectSize); guarded by outer check
+					if (data[bytenum] & bit)
+					{
+						out[outbyte] |= outbit;
+					}
 
-				bit <<= 1;
-				if (bit > 0xff) {
-					bit = 1;
-				}
+					bit <<= 1;
+					if (bit > 0xff) {
+						bit = 1;
+					}
 
-				outbit <<= 1;
-				if (outbit > 0xff) {
-					outbyte++;
-					outbit = 1;
+					outbit <<= 1;
+					if (outbit > 0xff) {
+						outbyte++;
+						outbit = 1;
+					}
 				}
 			}
-		}
 
-		entry->SetData(rejectmatrix, outsize);
-		free(rejectmatrix);
+			entry->SetData(rejectmatrix, outsize);
+			free(rejectmatrix);
+		}
 	}
 	else
 	{
-		byte empty[1];
+		if (this->rejectSize > 0 && (size_t)this->rejectSize < requiredRejectSize)
+		{
+			printf("REJECT lump too small for pack (%d bytes, need %zu for %d sectors); writing empty REJECT.\n",
+				this->rejectSize, requiredRejectSize, numsectors);
+		}
+
 		entry->SetIsCompressed(false);
-		entry->SetData(empty, 0);
+		entry->SetData(NULL, 0);
 	}
 
 	// BLOCKMAP
