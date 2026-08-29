@@ -66,6 +66,9 @@
     <ClCompile Include="..\kosinski.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\PathParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Listable.h">
@@ -154,6 +157,9 @@
     </ClInclude>
     <ClInclude Include="..\nanosvg.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\PathParser.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

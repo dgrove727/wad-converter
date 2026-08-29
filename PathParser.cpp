@@ -76,6 +76,13 @@ void PathParser::ParsePath(const char *svgFile)
     }
 }
 
+typedef struct
+{
+    int16_t id;
+    int16_t numSegments;
+    int16_t startAddr;
+} bezier_header_t;
+
 byte *PathParser::CreateLump(size_t *lumpSize)
 {
     if (!outputPaths)
@@ -87,10 +94,10 @@ byte *PathParser::CreateLump(size_t *lumpSize)
     for (pathNode = outputPaths; pathNode; pathNode = (BezierPath *)pathNode->next)
         pointCount += Listable::GetCount(pathNode->segments);
 
-    size_t headerSize = Listable::GetCount(outputPaths) * 2; // One for ID, another for Start Address
+    size_t headerSize = Listable::GetCount(outputPaths) * sizeof(bezier_header_t); // One for ID, another for Start Address
 
     *lumpSize = sizeof(int16_t); // # of paths
-    *lumpSize += sizeof(int16_t) * headerSize;
+    *lumpSize += headerSize;
     *lumpSize += sizeof(int16_t) * pointCount * 8;
 
     byte *lump = (byte *)malloc(*lumpSize);
@@ -102,6 +109,7 @@ byte *PathParser::CreateLump(size_t *lumpSize)
     for (pathNode = outputPaths; pathNode; pathNode = (BezierPath *)pathNode->next)
     {
         *cursor++ = pathNode->id;
+        *cursor++ = (int16_t)Listable::GetCount(pathNode->segments);
         *cursor++ = 0;
     }
 
@@ -125,10 +133,12 @@ byte *PathParser::CreateLump(size_t *lumpSize)
 
     // Write out path addresses
     cursor = (int16_t*)lump;
+    cursor++;
+    bezier_header_t *headerCursor = (bezier_header_t *)cursor;
     for (pathNode = outputPaths; pathNode; pathNode = (BezierPath *)pathNode->next)
     {
-        cursor++;
-        *cursor++ = pathNode->writingAddress - (uint8_t*)lump;
+        headerCursor->startAddr = pathNode->writingAddress - (uint8_t*)lump;
+        headerCursor++;
     }
 
     return lump;
