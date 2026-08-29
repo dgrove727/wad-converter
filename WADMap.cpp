@@ -620,6 +620,12 @@ uint8_t FindSidetexIndex(sidetex_t *sidetexes, int *numsidetexes, sidetex_t find
 		}
 	}
 
+	if (*numsidetexes >= 255)
+	{
+		printf("WARNING: Sidedefs exceed 256\n");
+		return 0;
+	}
+
 	// If we got here, we didn't find it. So make a new one!
 	sidetexes[*numsidetexes].top = findSidetex.top;
 	sidetexes[*numsidetexes].mid = findSidetex.mid;
