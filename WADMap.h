@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <stddef.h>
 #include "WADEntry.h"
 #include "Texture1.h"
 #include "FlatList.h"
@@ -173,6 +174,9 @@ public:
 
 	WADEntry *CreateJaguar(const char *mapname, int loadFlags, bool srb32xsegs = false, Texture1 *t1 = NULL, FlatList *fList = NULL);
 	WADEntry *CreatePC(const char *mapname);
+
+	void *operator new(size_t size);
+	void operator delete(void *p);
 
 	WADMap(WADEntry *head);
 	virtual ~WADMap();

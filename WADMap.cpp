@@ -203,27 +203,37 @@ void SortAndRemapSectors(staticsector_t *sectors, size_t num_sectors,
 
 	if (rejectSize > 0)
 	{
-		unsigned char *new_reject = (unsigned char *)calloc(rejectSize, sizeof(unsigned char));  /* zero-init */
+		// REJECT is a bit matrix of num_sectors x num_sectors
+		const size_t requiredRejectSize = (num_sectors * num_sectors + 7) / 8;
 
-		for (size_t new_i = 0; new_i < num_sectors; ++new_i) {
-			for (size_t new_j = 0; new_j < num_sectors; ++new_j) {
-				size_t old_i = (size_t)new_to_old[new_i];
-				size_t old_j = (size_t)new_to_old[new_j];
-
-				/* Old bit index: (old_i * num_sectors + old_j) */
-				size_t old_bit_idx = old_i * num_sectors + old_j;
-				int bit_value = get_bit(reject, old_bit_idx);
-
-				/* New bit index: (new_i * num_sectors + new_j) */
-				size_t new_bit_idx = new_i * num_sectors + new_j;
-				set_bit(new_reject, new_bit_idx, bit_value);
-			}
+		if (rejectSize < requiredRejectSize)
+		{
+			printf("REJECT lump too small for sector remap (%zu bytes, need %zu for %zu sectors); skipping REJECT remap.\n",
+				rejectSize, requiredRejectSize, num_sectors);
 		}
+		else
+		{
+			unsigned char *new_reject = (unsigned char *)calloc(rejectSize, sizeof(unsigned char));  /* zero-init */
+			for (size_t new_i = 0; new_i < num_sectors; ++new_i) {
+				for (size_t new_j = 0; new_j < num_sectors; ++new_j) {
+					size_t old_i = (size_t)new_to_old[new_i];
+					size_t old_j = (size_t)new_to_old[new_j];
 
-		// Copy new_reject back into original reject (in-place reorder)
-		memcpy(reject, new_reject, rejectSize);
+					/* Old bit index: (old_i * num_sectors + old_j) */
+					size_t old_bit_idx = old_i * num_sectors + old_j;
+					int bit_value = get_bit(reject, old_bit_idx);
 
-		free(new_reject);
+					/* New bit index: (new_i * num_sectors + new_j) */
+					size_t new_bit_idx = new_i * num_sectors + new_j;
+					set_bit(new_reject, new_bit_idx, bit_value);
+				}
+			}
+
+			// Copy new_reject back into original reject (in-place reorder)
+			memcpy(reject, new_reject, rejectSize);
+
+			free(new_reject);
+		}
 	}
 	free(reordered);
 	free(old_to_new);
@@ -1610,6 +1620,16 @@ WADEntry *WADMap::CreatePC(const char *mapname)
 	return head;
 }
 
+void *WADMap::operator new(size_t size)
+{
+	return calloc(size, 1);
+}
+
+void WADMap::operator delete(void *p)
+{
+	free(p);
+}
+
 WADMap::WADMap(WADEntry *head)
 {
 	things = NULL;
@@ -1623,6 +1643,7 @@ WADMap::WADMap(WADEntry *head)
 	sectors = NULL;
 	reject = NULL;
 	blockmap = NULL;
+	srb32xnodes = NULL;
 
 	numthings = 0;
 	numlinedefs = 0;
@@ -1845,4 +1866,7 @@ WADMap::~WADMap()
 
 	if (blockmap)
 		free(blockmap);
+
+	if (srb32xnodes)
+		free(srb32xnodes);
 }

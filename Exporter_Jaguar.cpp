@@ -54,7 +54,7 @@ MapTexture *FindTexture(Texture1 *t1, const char *name)
 	return NULL;
 }
 
-#define PADDING_SIZE(x) (((x->GetDataLength() - 1) & 3) ^ 3)
+#define PADDING_SIZE(x) ((x)->GetDataLength() ? (((x)->GetDataLength() - 1) & 3) ^ 3 : 0)
 
 void Exporter_Jaguar::Execute()
 {

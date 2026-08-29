@@ -529,7 +529,7 @@ void CleanupLevelInsertStuff()
 	delete t1;
 }
 
-#define PADDING_SIZE(x) (((x->GetDataLength() - 1) & 3) ^ 3)
+#define PADDING_SIZE(x) ((x)->GetDataLength() ? (((x)->GetDataLength() - 1) & 3) ^ 3 : 0)
 size_t InsertPCLevelFromWAD(const char* wadfile, WADEntry* entries, int loadFlags, bool skipReject)
 {
 	FILE *f = fopen(wadfile, "rb");
@@ -632,7 +632,7 @@ size_t InsertPCLevelFromWAD(const char* wadfile, WADEntry* entries, int loadFlag
 	jagEntries->next = itemNext; // Restore next link
 
 	delete map;
-	delete mapEntries;
+	Listable::RemoveAll((Listable **)&mapEntries);
 
 	return alignedTotalSize;
 }
