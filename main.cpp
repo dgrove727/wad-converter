@@ -637,6 +637,20 @@ size_t InsertPCLevelFromWAD(const char* wadfile, WADEntry* entries, int loadFlag
 	return alignedTotalSize;
 }
 
+size_t InsertCurveData(const char *svgFile, const char *entryName, WADEntry *entries)
+{
+	size_t pathSize;
+	PathParser *pathParser = new PathParser();
+	pathParser->ParsePath(svgFile);
+	byte *pathLump = pathParser->CreateLump(&pathSize);
+
+	WADEntry *newEntry = new WADEntry(entryName, pathLump, pathSize);
+	Listable::Add(newEntry, (Listable **)&entries);
+	delete pathParser;
+
+	return pathSize;
+}
+
 static void FindDuplicateColumns(WADEntry *entries)
 {
 	size_t savedBytes = 0;
@@ -1121,23 +1135,14 @@ static void MyFunTest()
 			sizeGraphics += node->GetDataLength();
 		}
 	}
-	/*
-	{
-		size_t pathSize;
-		PathParser *pathParser = new PathParser();
-		pathParser->ParsePath(va("%s\\Levels\\Nights\\polytest.svg", basePath));
-		byte *pathLump = pathParser->CreateLump(&pathSize);
-		entry->SetData(pathLump, pathSize);
-		delete pathParser;
-	}*/
 	
 	size_t extraSpace = 0;
 	WADEntry *startMarker;
 	InitLevelInsertStuff(importedEntries);
 	printf("---------------------Page 8:\n");
 	startMarker = (WADEntry*)Listable::GetLast(importedEntries);
-	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\polytesta.wad", basePath), importedEntries, 255, false);
-//	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP01a.wad", basePath), importedEntries, 255, false);
+//	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\polytesta.wad", basePath), importedEntries, 255, false);
+	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP01a.wad", basePath), importedEntries, 255, false);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP02a.wad", basePath), importedEntries, 47, false);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP03a.wad", basePath), importedEntries, 255, true);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP04b.wad", basePath), importedEntries, 0, false);
@@ -1162,6 +1167,7 @@ static void MyFunTest()
 	printf("---------------------Page 11:\n");
 	startMarker = (WADEntry *)Listable::GetLast(importedEntries);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP11a.wad", basePath), importedEntries, 256, true);
+	extraSpace += InsertCurveData(va("%s\\Levels\\MAP11.svg", basePath), "MAP11C", importedEntries);
 	printf("*********************Space used: %0.2fkb\n", CalculatePageSize(startMarker, (WADEntry *)Listable::GetLast(startMarker)) / 1024.0f);
 	AddEmptyEntry(importedEntries);
 	extraSpace = 0;

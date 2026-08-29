@@ -18,6 +18,8 @@ struct BezierPoint : Listable
 struct BezierPath : Listable
 {
 	BezierPoint *segments;
+	int16_t id;
+	uint8_t *writingAddress; // Only used during saving
 
 	BezierPath() {}
 	virtual ~BezierPath()
@@ -36,7 +38,7 @@ public:
 	float offsetX;
 	float offsetY;
 
-	BezierPath *outputPath;
+	BezierPath *outputPaths;
 
 	int16_t toDoom(float v, bool is_y);
 	void ParsePath(const char *svgFile);
@@ -48,7 +50,7 @@ public:
 		offsetX = 0.0f;
 		offsetY = 0.0f;
 		image = NULL;
-		outputPath = NULL;
+		outputPaths = NULL;
 	}
 
 	virtual ~PathParser();

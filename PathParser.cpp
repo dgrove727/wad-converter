@@ -40,13 +40,16 @@ void PathParser::ParsePath(const char *svgFile)
     if (!image)
         return;
 
-    outputPath = new BezierPath();
     NSVGimage *nImage = (NSVGimage *)image;
 
     // Iterate the points in the path
     for (NSVGshape *shape = nImage->shapes; shape; shape = shape->next) {
         for (NSVGpath *path = shape->paths; path; path = path->next) {
             float *p = path->pts;
+
+            BezierPath *outputPath = new BezierPath();
+            outputPath->id = (int16_t)atoi(shape->id);
+            
             for (int i = 0; i < path->npts - 1; i += 3) {
                 // p[0],p[1] = start
                 // p[2],p[3] = control 1
@@ -67,32 +70,65 @@ void PathParser::ParsePath(const char *svgFile)
 
                 p += 6;   // advance to next cubic (the end point becomes the next start)
             }
+
+            Listable::Add(outputPath, (Listable **)&outputPaths);
         }
     }
 }
 
 byte *PathParser::CreateLump(size_t *lumpSize)
 {
-    if (!outputPath)
+    if (!outputPaths)
         return NULL;
 
-    size_t count = Listable::GetCount(outputPath->segments);
-    *lumpSize = sizeof(int16_t) * 8 * count;
+    size_t pointCount = 0;
+
+    BezierPath *pathNode;
+    for (pathNode = outputPaths; pathNode; pathNode = (BezierPath *)pathNode->next)
+        pointCount += Listable::GetCount(pathNode->segments);
+
+    size_t headerSize = Listable::GetCount(outputPaths) * 2; // One for ID, another for Start Address
+
+    *lumpSize = sizeof(int16_t); // # of paths
+    *lumpSize += sizeof(int16_t) * headerSize;
+    *lumpSize += sizeof(int16_t) * pointCount * 8;
 
     byte *lump = (byte *)malloc(*lumpSize);
     int16_t *cursor = (int16_t*)lump;
 
-    BezierPoint *node;
-    for (node = outputPath->segments; node; node = (BezierPoint *)node->next)
+    // Write out header:
+    *cursor++ = (int16_t)Listable::GetCount(outputPaths); // # paths
+
+    for (pathNode = outputPaths; pathNode; pathNode = (BezierPath *)pathNode->next)
     {
-        *cursor++ = node->x0;
-        *cursor++ = node->y0;
-        *cursor++ = node->x1;
-        *cursor++ = node->y1;
-        *cursor++ = node->x2;
-        *cursor++ = node->y2;
-        *cursor++ = node->x3;
-        *cursor++ = node->y3;
+        *cursor++ = pathNode->id;
+        *cursor++ = 0;
+    }
+
+    for (pathNode = outputPaths; pathNode; pathNode = (BezierPath *)pathNode->next)
+    {
+        pathNode->writingAddress = (uint8_t*)cursor;
+
+        BezierPoint *node;
+        for (node = pathNode->segments; node; node = (BezierPoint *)node->next)
+        {
+            *cursor++ = node->x0;
+            *cursor++ = node->y0;
+            *cursor++ = node->x1;
+            *cursor++ = node->y1;
+            *cursor++ = node->x2;
+            *cursor++ = node->y2;
+            *cursor++ = node->x3;
+            *cursor++ = node->y3;
+        }
+    }
+
+    // Write out path addresses
+    cursor = (int16_t*)lump;
+    for (pathNode = outputPaths; pathNode; pathNode = (BezierPath *)pathNode->next)
+    {
+        cursor++;
+        *cursor++ = pathNode->writingAddress - (uint8_t*)lump;
     }
 
     return lump;
