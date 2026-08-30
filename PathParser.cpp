@@ -104,12 +104,12 @@ byte *PathParser::CreateLump(size_t *lumpSize)
     int16_t *cursor = (int16_t*)lump;
 
     // Write out header:
-    *cursor++ = (int16_t)Listable::GetCount(outputPaths); // # paths
+    *cursor++ = swap_endian16((int16_t)Listable::GetCount(outputPaths)); // # paths
 
     for (pathNode = outputPaths; pathNode; pathNode = (BezierPath *)pathNode->next)
     {
-        *cursor++ = pathNode->id;
-        *cursor++ = (int16_t)Listable::GetCount(pathNode->segments);
+        *cursor++ = swap_endian16(pathNode->id);
+        *cursor++ = swap_endian16((int16_t)Listable::GetCount(pathNode->segments));
         *cursor++ = 0;
     }
 
@@ -120,14 +120,14 @@ byte *PathParser::CreateLump(size_t *lumpSize)
         BezierPoint *node;
         for (node = pathNode->segments; node; node = (BezierPoint *)node->next)
         {
-            *cursor++ = node->x0;
-            *cursor++ = node->y0;
-            *cursor++ = node->x1;
-            *cursor++ = node->y1;
-            *cursor++ = node->x2;
-            *cursor++ = node->y2;
-            *cursor++ = node->x3;
-            *cursor++ = node->y3;
+            *cursor++ = swap_endian16(node->x0);
+            *cursor++ = swap_endian16(node->y0);
+            *cursor++ = swap_endian16(node->x1);
+            *cursor++ = swap_endian16(node->y1);
+            *cursor++ = swap_endian16(node->x2);
+            *cursor++ = swap_endian16(node->y2);
+            *cursor++ = swap_endian16(node->x3);
+            *cursor++ = swap_endian16(node->y3);
         }
     }
 
@@ -137,7 +137,7 @@ byte *PathParser::CreateLump(size_t *lumpSize)
     bezier_header_t *headerCursor = (bezier_header_t *)cursor;
     for (pathNode = outputPaths; pathNode; pathNode = (BezierPath *)pathNode->next)
     {
-        headerCursor->startAddr = pathNode->writingAddress - (uint8_t*)lump;
+        headerCursor->startAddr = swap_endian16(pathNode->writingAddress - (uint8_t*)lump);
         headerCursor++;
     }
 
