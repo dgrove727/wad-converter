@@ -19,16 +19,16 @@
 #define MAKE_WALL_MIPMAPS
 //#define MAKE_FLAT_MIPMAPS
 #define MIPLEVELS 4
-#define WADPTRSTART 0x3AD00
+#define WADPTRSTART 0x3B200
 
 #define		VERSION			1.10
 #define		WAD_FORMAT		1
 
-const char *outputPath = NULL;
-const char *basePath = "D:\\32xrb2";
+const char* outputPath = NULL;
+const char* basePath = "D:\\32xrb2";
 //const char* basePath = "E:\\wad32x\\wad-converter\\bin\\Release";
 
-char *va(const char *format, ...)
+char* va(const char* format, ...)
 {
 	va_list      argptr;
 	static char  string[1024];
@@ -40,15 +40,15 @@ char *va(const char *format, ...)
 	return string;
 }
 
-static void ConvertPCSpriteEntryToJagSpriteChibi(WADEntry *entry, WADEntry **list)
+static void ConvertPCSpriteEntryToJagSpriteChibi(WADEntry* entry, WADEntry** list)
 {
 	// First, let's shrink it
 	int outputLen;
-	const patchHeader_t *header = (patchHeader_t *)entry->GetData();
-	byte *rawData = PatchToRaw(entry->GetData(), entry->GetUnCompressedDataLength(), &outputLen, 0);
+	const patchHeader_t* header = (patchHeader_t*)entry->GetData();
+	byte* rawData = PatchToRaw(entry->GetData(), entry->GetUnCompressedDataLength(), &outputLen, 0);
 	short newWidth = header->width / 2;
 	short newHeight = header->height / 2;
-	byte *shrunkRaw = (byte *)malloc((newWidth) * (newHeight));
+	byte* shrunkRaw = (byte*)malloc((newWidth) * (newHeight));
 
 	for (int x = 0, xd = 0; x < header->width && xd < newWidth; x += 2, xd++)
 	{
@@ -61,11 +61,11 @@ static void ConvertPCSpriteEntryToJagSpriteChibi(WADEntry *entry, WADEntry **lis
 		}
 	}
 
-//	int pngOutputLen;
-//	byte *pngData = RawToPNG(shrunkRaw, newWidth, newHeight, &pngOutputLen);
-//	WriteAllBytes("D:\\32xrb2\\chibi\\test.png", pngData, pngOutputLen);
+	//	int pngOutputLen;
+	//	byte *pngData = RawToPNG(shrunkRaw, newWidth, newHeight, &pngOutputLen);
+	//	WriteAllBytes("D:\\32xrb2\\chibi\\test.png", pngData, pngOutputLen);
 
-	byte *dataToUse = shrunkRaw;
+	byte* dataToUse = shrunkRaw;
 	if (newWidth == 0 || newHeight == 0)
 	{
 		dataToUse = rawData;
@@ -73,27 +73,27 @@ static void ConvertPCSpriteEntryToJagSpriteChibi(WADEntry *entry, WADEntry **lis
 		newHeight = header->height;
 	}
 
-	byte *pcData = RawToPatch(dataToUse, newWidth, newHeight, &outputLen, 0);
-	patchHeader_t *pcDataHeader = (patchHeader_t *)pcData;
+	byte* pcData = RawToPatch(dataToUse, newWidth, newHeight, &outputLen, 0);
+	patchHeader_t* pcDataHeader = (patchHeader_t*)pcData;
 	pcDataHeader->leftoffset = header->leftoffset / 2;
 	pcDataHeader->topoffset = header->topoffset / 2;
 
-	byte *jagHeader = (byte *)malloc(8 * 1024); // 8k
-	byte *jagData = (byte *)malloc(65 * 1024); // 65k (impossible to be bigger than this)
+	byte* jagHeader = (byte*)malloc(8 * 1024); // 8k
+	byte* jagData = (byte*)malloc(65 * 1024); // 65k (impossible to be bigger than this)
 	int jagHeaderSize, jagDataSize;
 
 	PCSpriteToJag(pcData, outputLen, jagHeader, &jagHeaderSize, jagData, &jagDataSize);
 
 	entry->SetData(jagHeader, jagHeaderSize);
 
-	WADEntry *dotEntry = new WADEntry(".", jagData, jagDataSize);
-	Listable::AddAfter(dotEntry, entry, (Listable **)&list);
+	WADEntry* dotEntry = new WADEntry(".", jagData, jagDataSize);
+	Listable::AddAfter(dotEntry, entry, (Listable**)&list);
 
 	free(jagHeader);
 	free(jagData);
 }
 
-const char *halfSprites[] = {
+const char* halfSprites[] = {
 	// R_PrepScenery items
 	"CORL",
 	"SEWE",
@@ -144,10 +144,10 @@ const char *halfSprites[] = {
 	NULL,
 };
 
-static bool IsHalfSprite(const char *name)
+static bool IsHalfSprite(const char* name)
 {
 	int i = 0;
-	const char *check = halfSprites[0];
+	const char* check = halfSprites[0];
 	while (check)
 	{
 		if (strstr(name, check) == name)
@@ -171,8 +171,8 @@ static size_t ConvertStandardGraphicToMaskedGraphic(WADEntry* entry)
 	rawData += 16;
 
 	int buffer_size = (320 * height) + 2;
-	byte* source = (byte *)calloc(buffer_size, 1);
-	for (int rowStart = 0; rowStart < height*320; rowStart += 320) {
+	byte* source = (byte*)calloc(buffer_size, 1);
+	for (int rowStart = 0; rowStart < height * 320; rowStart += 320) {
 		for (int column = 0; column < width; column++) {
 			source[rowStart + column] = *rawData++;	// Expand each row to 320 pixels.
 		}
@@ -223,7 +223,7 @@ static size_t ConvertStandardGraphicToMaskedGraphic(WADEntry* entry)
 			*dest_bytes++ = write_count;
 			for (int i = 0; i < write_count; i++) {
 				*dest_bytes++ = (byte)source_words[i];
-				*dest_bytes++ = (byte)(source_words[i]>>8);
+				*dest_bytes++ = (byte)(source_words[i] >> 8);
 			}
 			source_words += write_count;
 		}
@@ -240,10 +240,10 @@ static size_t ConvertStandardGraphicToMaskedGraphic(WADEntry* entry)
 	return outputSize;
 }
 
-static size_t ConvertPCSpriteEntryToJagSprite(WADEntry *entry, WADEntry **list)
+static size_t ConvertPCSpriteEntryToJagSprite(WADEntry* entry, WADEntry** list)
 {
-	byte *jagHeader = (byte *)malloc(8 * 1024); // 8k
-	byte *jagData = (byte *)malloc(65 * 1024); // 65k (impossible to be bigger than this)
+	byte* jagHeader = (byte*)malloc(8 * 1024); // 8k
+	byte* jagData = (byte*)malloc(65 * 1024); // 65k (impossible to be bigger than this)
 	int jagHeaderSize, jagDataSize;
 
 	if (strcmp(entry->GetName(), "GFZGATE") && strcmp(entry->GetName(), "GFZRAIL")
@@ -251,7 +251,7 @@ static size_t ConvertPCSpriteEntryToJagSprite(WADEntry *entry, WADEntry **list)
 		&& strcmp(entry->GetName(), "CEZFNC0"))
 	{
 		int32_t outputLen;
-		byte *cropData = CropPCPatch(entry->GetData(), entry->GetDataLength(), &outputLen, 0);
+		byte* cropData = CropPCPatch(entry->GetData(), entry->GetDataLength(), &outputLen, 0);
 		if (cropData)
 			entry->SetData(cropData, outputLen);
 	}
@@ -263,7 +263,7 @@ static size_t ConvertPCSpriteEntryToJagSprite(WADEntry *entry, WADEntry **list)
 
 	entry->SetData(jagHeader, jagHeaderSize);
 
-	WADEntry *dotEntry = new WADEntry(".", jagData, jagDataSize);
+	WADEntry* dotEntry = new WADEntry(".", jagData, jagDataSize);
 	Listable::AddAfter(dotEntry, entry, (Listable**)&list);
 
 	free(jagHeader);
@@ -272,19 +272,19 @@ static size_t ConvertPCSpriteEntryToJagSprite(WADEntry *entry, WADEntry **list)
 	return jagHeaderSize + jagDataSize;
 }
 
-static void InsertLevelFromFolder(WADEntry *list, const char *levelname, const char *folder)
+static void InsertLevelFromFolder(WADEntry* list, const char* levelname, const char* folder)
 {
 	char fullPath[2048]; // 2k ought to be enough for anybody...
 
 	// Header
-	WADEntry *entry = new WADEntry();
+	WADEntry* entry = new WADEntry();
 	entry->SetName(levelname);
-	Listable::Add(entry, (Listable **)&list);
+	Listable::Add(entry, (Listable**)&list);
 
 	// THINGS (compressed)
 	sprintf(fullPath, "%s/THINGS.lmp", folder);
 	entry = new WADEntry();
-	Listable::Add(entry, (Listable **)&list);
+	Listable::Add(entry, (Listable**)&list);
 	entry->SetName("THINGS");
 	entry->SetIsCompressed(false);
 	entry->ReplaceWithFile(fullPath);
@@ -292,7 +292,7 @@ static void InsertLevelFromFolder(WADEntry *list, const char *levelname, const c
 	// LINEDEFS (compressed)
 	sprintf(fullPath, "%s/LINEDEFS.lmp", folder);
 	entry = new WADEntry();
-	Listable::Add(entry, (Listable **)&list);
+	Listable::Add(entry, (Listable**)&list);
 	entry->SetName("LINEDEFS");
 	entry->SetIsCompressed(true);
 	entry->ReplaceWithFile(fullPath);
@@ -300,7 +300,7 @@ static void InsertLevelFromFolder(WADEntry *list, const char *levelname, const c
 	// SIDEDEFS (compressed)
 	sprintf(fullPath, "%s/SIDEDEFS.lmp", folder);
 	entry = new WADEntry();
-	Listable::Add(entry, (Listable **)&list);
+	Listable::Add(entry, (Listable**)&list);
 	entry->SetName("SIDEDEFS");
 	entry->SetIsCompressed(true);
 	entry->ReplaceWithFile(fullPath);
@@ -308,7 +308,7 @@ static void InsertLevelFromFolder(WADEntry *list, const char *levelname, const c
 	// VERTEXES
 	sprintf(fullPath, "%s/VERTEXES.lmp", folder);
 	entry = new WADEntry();
-	Listable::Add(entry, (Listable **)&list);
+	Listable::Add(entry, (Listable**)&list);
 	entry->SetName("VERTEXES");
 	entry->SetIsCompressed(false);
 	entry->ReplaceWithFile(fullPath);
@@ -316,7 +316,7 @@ static void InsertLevelFromFolder(WADEntry *list, const char *levelname, const c
 	// SEGS (compressed)
 	sprintf(fullPath, "%s/SEGS.lmp", folder);
 	entry = new WADEntry();
-	Listable::Add(entry, (Listable **)&list);
+	Listable::Add(entry, (Listable**)&list);
 	entry->SetName("SEGS");
 	entry->SetIsCompressed(true);
 	entry->ReplaceWithFile(fullPath);
@@ -324,7 +324,7 @@ static void InsertLevelFromFolder(WADEntry *list, const char *levelname, const c
 	// SSECTORS (compressed)
 	sprintf(fullPath, "%s/SSECTORS.lmp", folder);
 	entry = new WADEntry();
-	Listable::Add(entry, (Listable **)&list);
+	Listable::Add(entry, (Listable**)&list);
 	entry->SetName("SSECTORS");
 	entry->SetIsCompressed(false);
 	entry->ReplaceWithFile(fullPath);
@@ -332,7 +332,7 @@ static void InsertLevelFromFolder(WADEntry *list, const char *levelname, const c
 	// NODES
 	sprintf(fullPath, "%s/NODES.lmp", folder);
 	entry = new WADEntry();
-	Listable::Add(entry, (Listable **)&list);
+	Listable::Add(entry, (Listable**)&list);
 	entry->SetName("NODES");
 	entry->SetIsCompressed(false);
 	entry->ReplaceWithFile(fullPath);
@@ -340,7 +340,7 @@ static void InsertLevelFromFolder(WADEntry *list, const char *levelname, const c
 	// SECTORS (compressed)
 	sprintf(fullPath, "%s/SECTORS.lmp", folder);
 	entry = new WADEntry();
-	Listable::Add(entry, (Listable **)&list);
+	Listable::Add(entry, (Listable**)&list);
 	entry->SetName("SECTORS");
 	entry->SetIsCompressed(true);
 	entry->ReplaceWithFile(fullPath);
@@ -348,7 +348,7 @@ static void InsertLevelFromFolder(WADEntry *list, const char *levelname, const c
 	// REJECT
 	sprintf(fullPath, "%s/REJECT.lmp", folder);
 	entry = new WADEntry();
-	Listable::Add(entry, (Listable **)&list);
+	Listable::Add(entry, (Listable**)&list);
 	entry->SetName("REJECT");
 	entry->SetIsCompressed(false);
 	entry->ReplaceWithFile(fullPath);
@@ -356,7 +356,7 @@ static void InsertLevelFromFolder(WADEntry *list, const char *levelname, const c
 	// BLOCKMAP
 	sprintf(fullPath, "%s/BLOCKMAP.lmp", folder);
 	entry = new WADEntry();
-	Listable::Add(entry, (Listable **)&list);
+	Listable::Add(entry, (Listable**)&list);
 	entry->SetName("BLOCKMAP");
 	entry->SetIsCompressed(false);
 	entry->ReplaceWithFile(fullPath);
@@ -365,18 +365,18 @@ static void InsertLevelFromFolder(WADEntry *list, const char *levelname, const c
 // Sample function on how you can crop the unused space from all of the sprites in your WAD.
 static void CropSprites()
 {
-	FILE *f = fopen("myFile.wad", "rb");
+	FILE* f = fopen("myFile.wad", "rb");
 
-	Importer_PC *importer = new Importer_PC(f);
-	WADEntry *importedEntries = importer->Execute();
+	Importer_PC* importer = new Importer_PC(f);
+	WADEntry* importedEntries = importer->Execute();
 	delete importer;
 
 	bool insideSprites = false;
-	WADEntry *node;
-	WADEntry *next;
+	WADEntry* node;
+	WADEntry* next;
 	for (node = importedEntries; node; node = next)
 	{
-		next = (WADEntry *)node->next;
+		next = (WADEntry*)node->next;
 
 		if (!strcmp(node->GetName(), "S1_START") || !strcmp(node->GetName(), "S2_START") || !strcmp(node->GetName(), "S3_START") || !strcmp(node->GetName(), "S4_START") || !strcmp(node->GetName(), "S5_START") || !strcmp(node->GetName(), "S6_START") || !strcmp(node->GetName(), "S7_START") || !strcmp(node->GetName(), "S8_START") || !strcmp(node->GetName(), "S9_START"))
 		{
@@ -390,7 +390,7 @@ static void CropSprites()
 		if (insideSprites)
 		{
 			int outputLen;
-			byte *newPatch = CropPCPatch(node->GetData(), node->GetDataLength(), &outputLen, 0);
+			byte* newPatch = CropPCPatch(node->GetData(), node->GetDataLength(), &outputLen, 0);
 
 			if (newPatch) // Something was cropped
 				node->SetData(newPatch, outputLen);
@@ -399,22 +399,22 @@ static void CropSprites()
 		}
 	}
 
-	FILE *expF = fopen("myFile-cropped.wad", "wb");
-	Exporter_PC *exporter = new Exporter_PC(importedEntries, expF);
+	FILE* expF = fopen("myFile-cropped.wad", "wb");
+	Exporter_PC* exporter = new Exporter_PC(importedEntries, expF);
 	exporter->Execute();
 	delete exporter;
 }
 
-static void DumpJagMap(const char *wadFile)
+static void DumpJagMap(const char* wadFile)
 {
-	FILE *f = fopen(wadFile, "rb");
-	Importer_Jaguar *ij = new Importer_Jaguar(f);
-	WADEntry *importedEntries = ij->Execute();
+	FILE* f = fopen(wadFile, "rb");
+	Importer_Jaguar* ij = new Importer_Jaguar(f);
+	WADEntry* importedEntries = ij->Execute();
 	delete ij;
 
 	int i = 0;
-	WADEntry *node;
-	for (node = importedEntries; node; node = (WADEntry *)node->next)
+	WADEntry* node;
+	for (node = importedEntries; node; node = (WADEntry*)node->next)
 	{
 		if (!strcmp(node->GetName(), "MAP01"))
 		{
@@ -433,69 +433,69 @@ static void DumpJagMap(const char *wadFile)
 	}
 }
 
-static void ConvertMapToJaguar(const char *filename, const char *exportFilename)
+static void ConvertMapToJaguar(const char* filename, const char* exportFilename)
 {
-	FILE *f = fopen(filename, "rb");
-	Importer_PC *ipc = new Importer_PC(f);
-	WADEntry *entries = ipc->Execute();
+	FILE* f = fopen(filename, "rb");
+	Importer_PC* ipc = new Importer_PC(f);
+	WADEntry* entries = ipc->Execute();
 	delete ipc;
 	fclose(f);
 
-	WADMap *map = new WADMap(entries);
-	WADEntry *converted = map->CreateJaguar(map->name, 0);
+	WADMap* map = new WADMap(entries);
+	WADEntry* converted = map->CreateJaguar(map->name, 0);
 
 	f = fopen(exportFilename, "wb");
-	Exporter_PC *epc = new Exporter_PC(converted, f);
+	Exporter_PC* epc = new Exporter_PC(converted, f);
 	epc->Execute();
 	fclose(f);
 
 	delete map;
-	Listable::RemoveAll((Listable **)&entries);
-	Listable::RemoveAll((Listable **)&converted);
+	Listable::RemoveAll((Listable**)&entries);
+	Listable::RemoveAll((Listable**)&converted);
 }
 
-static void SRB2MapConv(const char *filename, const char *exportFilename)
+static void SRB2MapConv(const char* filename, const char* exportFilename)
 {
-	FILE *f = fopen(filename, "rb");
-	Importer_PC *ipc = new Importer_PC(f);
-	WADEntry *entries = ipc->Execute();
+	FILE* f = fopen(filename, "rb");
+	Importer_PC* ipc = new Importer_PC(f);
+	WADEntry* entries = ipc->Execute();
 	delete ipc;
 	fclose(f);
 
-	WADMap *map = new WADMap(entries);
-	WADEntry *converted = ConvertSRB2Map(map);
+	WADMap* map = new WADMap(entries);
+	WADEntry* converted = ConvertSRB2Map(map);
 
 	f = fopen(exportFilename, "wb");
-	Exporter_PC *epc = new Exporter_PC(converted, f);
+	Exporter_PC* epc = new Exporter_PC(converted, f);
 	epc->Execute();
 	fclose(f);
 
 	delete map;
-	Listable::RemoveAll((Listable **)&entries);
-	Listable::RemoveAll((Listable **)&converted);
+	Listable::RemoveAll((Listable**)&entries);
+	Listable::RemoveAll((Listable**)&converted);
 }
 
-void AddSingularItemRow(MapThing *list, const mapthing_t *origin, int16_t type, int count, int16_t horizontalspacing, int16_t verticalspacing, int16_t fixedangle)
+void AddSingularItemRow(MapThing* list, const mapthing_t* origin, int16_t type, int count, int16_t horizontalspacing, int16_t verticalspacing, int16_t fixedangle)
 {
 
 }
 
-void AddEmptyEntry(WADEntry *entries)
+void AddEmptyEntry(WADEntry* entries)
 {
-	WADEntry *entry = new WADEntry("NEWPAGE", NULL, 0);
+	WADEntry* entry = new WADEntry("NEWPAGE", NULL, 0);
 	Listable::Add(entry, (Listable**)&entries);
 }
 
-Texture1 *t1;
-FlatList *fList = NULL;
+Texture1* t1;
+FlatList* fList = NULL;
 
-void InitLevelInsertStuff(WADEntry *entries)
+void InitLevelInsertStuff(WADEntry* entries)
 {
-	WADEntry *texture1 = WADEntry::FindEntry(entries, "TEXTURE1");
+	WADEntry* texture1 = WADEntry::FindEntry(entries, "TEXTURE1");
 
 	if (texture1->IsCompressed())
 	{
-		byte *decomp = texture1->Decompress();
+		byte* decomp = texture1->Decompress();
 		t1 = new Texture1(decomp, texture1->GetUnCompressedDataLength());
 		free(decomp);
 	}
@@ -503,9 +503,9 @@ void InitLevelInsertStuff(WADEntry *entries)
 		t1 = new Texture1(texture1->GetData(), texture1->GetUnCompressedDataLength());
 
 	fList = NULL;
-	WADEntry *flatNode;
+	WADEntry* flatNode;
 	bool inFlats = false;
-	for (flatNode = entries; flatNode; flatNode = (WADEntry *)flatNode->next)
+	for (flatNode = entries; flatNode; flatNode = (WADEntry*)flatNode->next)
 	{
 		if (!strcmp(flatNode->GetName(), "F_START"))
 		{
@@ -517,8 +517,8 @@ void InitLevelInsertStuff(WADEntry *entries)
 
 		if (inFlats)
 		{
-			FlatList *fi = new FlatList(flatNode->GetName(), flatNode->GetUnCompressedDataLength());
-			Listable::Add(fi, (Listable **)&fList);
+			FlatList* fi = new FlatList(flatNode->GetName(), flatNode->GetUnCompressedDataLength());
+			Listable::Add(fi, (Listable**)&fList);
 		}
 	}
 }
@@ -532,12 +532,12 @@ void CleanupLevelInsertStuff()
 #define PADDING_SIZE(x) ((x)->GetDataLength() ? (((x)->GetDataLength() - 1) & 3) ^ 3 : 0)
 size_t InsertPCLevelFromWAD(const char* wadfile, WADEntry* entries, int loadFlags, bool skipReject)
 {
-	FILE *f = fopen(wadfile, "rb");
-	Importer_PC *ipc = new Importer_PC(f);
-	WADEntry *mapEntries = ipc->Execute();
+	FILE* f = fopen(wadfile, "rb");
+	Importer_PC* ipc = new Importer_PC(f);
+	WADEntry* mapEntries = ipc->Execute();
 	delete ipc;
 
-	WADMap *map = new WADMap(mapEntries);
+	WADMap* map = new WADMap(mapEntries);
 	/*
 	// Check for special items, like vertical lines of rings, etc. and generate new mapthings in their place
 	MapThing *things = NULL;
@@ -594,13 +594,13 @@ size_t InsertPCLevelFromWAD(const char* wadfile, WADEntry* entries, int loadFlag
 		map->numthings++;
 	}
 	*/
-	WADEntry *jagEntries = map->CreateJaguar(map->name, loadFlags, true, t1, fList);
+	WADEntry* jagEntries = map->CreateJaguar(map->name, loadFlags, true, t1, fList);
 
 	printf("%s breakdown:\n", wadfile);
-	WADEntry *node;
+	WADEntry* node;
 	size_t alignedTotalSize = 0;
 	size_t totalSize = 0;
-	for (node = jagEntries; node; node = (WADEntry *)node->next)
+	for (node = jagEntries; node; node = (WADEntry*)node->next)
 	{
 		if (skipReject && !strcmp(node->GetName(), "REJECT"))
 			continue;
@@ -627,39 +627,39 @@ size_t InsertPCLevelFromWAD(const char* wadfile, WADEntry* entries, int loadFlag
 	printf("Total size: %0.2fkb\n", totalSize / 1024.0f);
 
 	// Don't need to look for L_START, just put it at the end of the WAD
-	Listable *itemNext = jagEntries->next;
-	Listable::Add(jagEntries, (Listable **)&entries);
+	Listable* itemNext = jagEntries->next;
+	Listable::Add(jagEntries, (Listable**)&entries);
 	jagEntries->next = itemNext; // Restore next link
 
 	delete map;
-	Listable::RemoveAll((Listable **)&mapEntries);
+	Listable::RemoveAll((Listable**)&mapEntries);
 
 	return alignedTotalSize;
 }
 
-size_t InsertCurveData(const char *svgFile, const char *entryName, WADEntry *entries)
+size_t InsertCurveData(const char* svgFile, const char* entryName, WADEntry* entries)
 {
 	size_t pathSize;
-	PathParser *pathParser = new PathParser();
+	PathParser* pathParser = new PathParser();
 	pathParser->ParsePath(svgFile);
-	byte *pathLump = pathParser->CreateLump(&pathSize);
+	byte* pathLump = pathParser->CreateLump(&pathSize);
 
-	WADEntry *newEntry = new WADEntry(entryName, pathLump, pathSize);
-	Listable::Add(newEntry, (Listable **)&entries);
+	WADEntry* newEntry = new WADEntry(entryName, pathLump, pathSize);
+	Listable::Add(newEntry, (Listable**)&entries);
 	delete pathParser;
 
 	return pathSize;
 }
 
-static void FindDuplicateColumns(WADEntry *entries)
+static void FindDuplicateColumns(WADEntry* entries)
 {
 	size_t savedBytes = 0;
 
-	SpriteColumn *columns = NULL;
+	SpriteColumn* columns = NULL;
 
 	bool insideSprites = false;
-	WADEntry *node;
-	for (node = entries; node; node = (WADEntry *)node->next)
+	WADEntry* node;
+	for (node = entries; node; node = (WADEntry*)node->next)
 	{
 		if (!strcmp(node->GetName(), "S1_START") || !strcmp(node->GetName(), "S2_START") || !strcmp(node->GetName(), "S3_START") || !strcmp(node->GetName(), "S4_START") || !strcmp(node->GetName(), "S5_START") || !strcmp(node->GetName(), "S6_START") || !strcmp(node->GetName(), "S7_START") || !strcmp(node->GetName(), "S8_START") || !strcmp(node->GetName(), "S9_START"))
 		{
@@ -674,9 +674,9 @@ static void FindDuplicateColumns(WADEntry *entries)
 
 		if (strcmp(node->GetName(), "."))
 		{
-			WADEntry *postData = (WADEntry*)node->next;
+			WADEntry* postData = (WADEntry*)node->next;
 
-			jagPatchHeader_t *header = (jagPatchHeader_t *)node->GetData();
+			jagPatchHeader_t* header = (jagPatchHeader_t*)node->GetData();
 			uint16_t width = swap_endian16(header->width);
 			uint16_t height = swap_endian16(header->height);
 			uint16_t leftOffset = swap_endian16(header->leftoffset);
@@ -685,9 +685,9 @@ static void FindDuplicateColumns(WADEntry *entries)
 			for (int i = 0; i < width; i++)
 			{
 				uint16_t colOffset = swap_endian16(header->columnofs[i]);
-				const jagPost_t *post = (jagPost_t *)(node->GetData() + colOffset);
+				const jagPost_t* post = (jagPost_t*)(node->GetData() + colOffset);
 				uint16_t dataOffset = swap_endian16(post->dataofs);
-				const byte *pixel = &postData->GetData()[dataOffset];
+				const byte* pixel = &postData->GetData()[dataOffset];
 
 				if (post->topdelta == 255 && post->length == 255)
 					continue;
@@ -698,8 +698,8 @@ static void FindDuplicateColumns(WADEntry *entries)
 					z += pixel[i];
 				}
 
-				SpriteColumn *sCol = new SpriteColumn(pixel, post->length);
-				Listable::Add(sCol, (Listable **)&columns);
+				SpriteColumn* sCol = new SpriteColumn(pixel, post->length);
+				Listable::Add(sCol, (Listable**)&columns);
 			}
 
 			node = postData;
@@ -708,16 +708,16 @@ static void FindDuplicateColumns(WADEntry *entries)
 
 	printf("There are %d sprite columns.\n", Listable::GetCount(columns));
 
-	SpriteColumn *colNode;
+	SpriteColumn* colNode;
 	int nodeIndex = 0;
-	for (colNode = columns; colNode; colNode = (SpriteColumn *)colNode->next, nodeIndex++)
+	for (colNode = columns; colNode; colNode = (SpriteColumn*)colNode->next, nodeIndex++)
 	{
 		if (colNode->duplicate)
 			continue;
 
-		SpriteColumn *checkNode;
+		SpriteColumn* checkNode;
 		int checkIndex = 0;
-		for (checkNode = (SpriteColumn*)colNode->next; checkNode; checkNode = (SpriteColumn *)checkNode->next, checkIndex++)
+		for (checkNode = (SpriteColumn*)colNode->next; checkNode; checkNode = (SpriteColumn*)checkNode->next, checkIndex++)
 		{
 			if (checkNode->duplicate)
 				continue;
@@ -745,12 +745,12 @@ static void WADMapEdits()
 
 	for (int i = 0; i < map->numlinedefs; i++)
 	{
-		linedef_t *line = &map->linedefs[i];
+		linedef_t* line = &map->linedefs[i];
 
 		if (line->special == 0 && line->sidenum[1] != -1)
 		{
-			sidedef_t *side1 = &map->sidedefs[line->sidenum[0]];
-			sidedef_t *side2 = &map->sidedefs[line->sidenum[1]];
+			sidedef_t* side1 = &map->sidedefs[line->sidenum[0]];
+			sidedef_t* side2 = &map->sidedefs[line->sidenum[1]];
 
 			if (side1->midtexture[0] == '-' && side2->midtexture[0] == '-')
 			{
@@ -775,11 +775,11 @@ static void WADMapEdits()
 	delete map;
 }
 
-size_t CalculatePageSize(WADEntry *start, WADEntry *end)
+size_t CalculatePageSize(WADEntry* start, WADEntry* end)
 {
 	size_t total = 0;
 
-	WADEntry *node = start;
+	WADEntry* node = start;
 	do
 	{
 		total += node->GetDataLength();
@@ -787,7 +787,7 @@ size_t CalculatePageSize(WADEntry *start, WADEntry *end)
 		if (node == end)
 			break;
 
-		node = (WADEntry *)node->next;
+		node = (WADEntry*)node->next;
 	} while (true);
 
 	return total;
@@ -798,7 +798,7 @@ static const uint8_t PNG_SIGNATURE[8] = {
 	0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A
 };
 
-bool is_png_header(const uint8_t *buffer, size_t size) {
+bool is_png_header(const uint8_t* buffer, size_t size) {
 	// Ensure buffer has at least 8 bytes
 	if (size < 8) {
 		return false;
@@ -824,23 +824,23 @@ int get_exponent_portable(unsigned int n)
 
 static void MyFunTest()
 {
-//		WADMapEdits();
-//		return;
+	//		WADMapEdits();
+	//		return;
 
-	FILE *f = fopen(va("%s\\srb32x-edit.wad", basePath), "rb");
+	FILE* f = fopen(va("%s\\srb32x-edit.wad", basePath), "rb");
 
-	Importer_PC *ipc = new Importer_PC(f);
-	WADEntry *importedEntries = ipc->Execute();
+	Importer_PC* ipc = new Importer_PC(f);
+	WADEntry* importedEntries = ipc->Execute();
 	delete ipc;
 
 	f = fopen(va("%s\\leveleditor.wad", basePath), "rb"); // Where to get textures/flats/TEXTURE1
 	ipc = new Importer_PC(f);
-	WADEntry *lvleditorEntries = ipc->Execute();
+	WADEntry* lvleditorEntries = ipc->Execute();
 	delete ipc;
 
 	f = fopen(va("%s\\68k.wad", basePath), "rb"); // Where to get 68k entries (first bank)
 	ipc = new Importer_PC(f);
-	WADEntry *M68kEntries = ipc->Execute();
+	WADEntry* M68kEntries = ipc->Execute();
 	delete ipc;
 
 	size_t sizeSprites = 0;
@@ -863,12 +863,12 @@ static void MyFunTest()
 	bool insideCompressedGraphics = false;
 	bool insideRegularGraphics = false;
 
-	WADEntry *node;
-	WADEntry *next;
+	WADEntry* node;
+	WADEntry* next;
 	for (node = importedEntries; node; node = next)
 	{
 		printf("%s\n", node->GetName());
-		next = (WADEntry *)node->next;
+		next = (WADEntry*)node->next;
 
 		if (!strcmp(node->GetName(), "F_SKY1"))
 			continue;
@@ -903,7 +903,7 @@ static void MyFunTest()
 			// Scan for the MEGADRIVE_THRU_COLOR and replace it 
 			const byte MEGADRIVE_THRU_COLOR = 0xff;
 
-			byte *newData = (byte *)memdup(node->GetData(), node->GetDataLength());
+			byte* newData = (byte*)memdup(node->GetData(), node->GetDataLength());
 
 			if (
 				strcmp(node->GetName(), "CHEVBLK")// &&
@@ -947,7 +947,7 @@ static void MyFunTest()
 
 		if (insideCompressedGraphics)
 		{
-			byte *data = (byte *)memdup(node->GetData(), node->GetDataLength());
+			byte* data = (byte*)memdup(node->GetData(), node->GetDataLength());
 			node->SetIsCompressed(true);
 			node->SetData(data, node->GetDataLength());
 			free(data);
@@ -957,15 +957,15 @@ static void MyFunTest()
 		if (!strcmp(node->GetName(), "68_START"))
 		{
 			inside68k = true;
-			WADEntry *M68Next;
-			WADEntry *lastAdded = node;
-			for (WADEntry *M68Node = M68kEntries; M68Node; M68Node = M68Next)
+			WADEntry* M68Next;
+			WADEntry* lastAdded = node;
+			for (WADEntry* M68Node = M68kEntries; M68Node; M68Node = M68Next)
 			{
-				M68Next = (WADEntry *)M68Node->next;
+				M68Next = (WADEntry*)M68Node->next;
 
 				// Just straight-up steal 'em, since we're working with RAM copies.
-				Listable::RemoveNoFree(M68Node, (Listable **)&M68kEntries);
-				Listable::AddAfter(M68Node, lastAdded, (Listable **)&importedEntries);
+				Listable::RemoveNoFree(M68Node, (Listable**)&M68kEntries);
+				Listable::AddAfter(M68Node, lastAdded, (Listable**)&importedEntries);
 				lastAdded = M68Node;
 			}
 		}
@@ -984,27 +984,27 @@ static void MyFunTest()
 			insideTextures = true;
 
 			// Copy in the textures
-			WADEntry *lvlTextures = (WADEntry *)WADEntry::FindEntry(lvleditorEntries, "P_START")->next;
-			WADEntry *lastAdded = node;
+			WADEntry* lvlTextures = (WADEntry*)WADEntry::FindEntry(lvleditorEntries, "P_START")->next;
+			WADEntry* lastAdded = node;
 			while (strcmp(lvlTextures->GetName(), "P_END"))
 			{
-				WADEntry *next = (WADEntry *)lvlTextures->next;
+				WADEntry* next = (WADEntry*)lvlTextures->next;
 
 				// Just straight-up steal 'em, since we're working with RAM copies.
-				Listable::RemoveNoFree(lvlTextures, (Listable **)&lvleditorEntries);
-				Listable::AddAfter(lvlTextures, lastAdded, (Listable **)&importedEntries);
+				Listable::RemoveNoFree(lvlTextures, (Listable**)&lvleditorEntries);
+				Listable::AddAfter(lvlTextures, lastAdded, (Listable**)&importedEntries);
 
 				// Convert to everyone's favorite lovable col-major Jaguar format
 				int texLen;
-				byte *texData = PatchToJagTexture(lvlTextures->GetData(), lvlTextures->GetDataLength(), &texLen);
+				byte* texData = PatchToJagTexture(lvlTextures->GetData(), lvlTextures->GetDataLength(), &texLen);
 
 #ifdef MAKE_WALL_MIPMAPS
 				if (strcmp(lvlTextures->GetName(), "SLROPE1A") && strcmp(lvlTextures->GetName(), "SLROPE1B"))
 				{
-					const patchHeader_t *header = (patchHeader_t *)lvlTextures->GetData(); // Need width/height info
+					const patchHeader_t* header = (patchHeader_t*)lvlTextures->GetData(); // Need width/height info
 
 					int dataLen;
-					byte *mipData = PatchMipmaps(texData, header->height, header->width, MIPLEVELS, &dataLen);
+					byte* mipData = PatchMipmaps(texData, header->height, header->width, MIPLEVELS, &dataLen);
 					free(texData);
 
 					lvlTextures->SetData(mipData, dataLen);
@@ -1030,23 +1030,23 @@ static void MyFunTest()
 			insideFlats = true;
 
 			// Copy in the flats
-			WADEntry *lvlFlats = (WADEntry *)WADEntry::FindEntry(lvleditorEntries, "F_START")->next;
-			WADEntry *lastAdded = node;
+			WADEntry* lvlFlats = (WADEntry*)WADEntry::FindEntry(lvleditorEntries, "F_START")->next;
+			WADEntry* lastAdded = node;
 			while (strcmp(lvlFlats->GetName(), "F_END"))
 			{
-				WADEntry *next = (WADEntry *)lvlFlats->next;
+				WADEntry* next = (WADEntry*)lvlFlats->next;
 
 				// Just straight-up steal 'em, since we're working with RAM copies.
-				Listable::RemoveNoFree(lvlFlats, (Listable **)&lvleditorEntries);
-				Listable::AddAfter(lvlFlats, lastAdded, (Listable **)&importedEntries);
+				Listable::RemoveNoFree(lvlFlats, (Listable**)&lvleditorEntries);
+				Listable::AddAfter(lvlFlats, lastAdded, (Listable**)&importedEntries);
 
 				/*				const byte* flatData = lvlFlats->GetData();
 								lvlFlats->SetIsCompressed(true);
 								lvlFlats->SetData(flatData, lvlFlats->GetDataLength());*/
 
-				// Convert from PNG to row-major raw
+								// Convert from PNG to row-major raw
 				int32_t flatWidth, flatHeight;
-				byte *flatData = PNGToFlat(lvlFlats->GetData(), lvlFlats->GetDataLength(), &flatWidth, &flatHeight);
+				byte* flatData = PNGToFlat(lvlFlats->GetData(), lvlFlats->GetDataLength(), &flatWidth, &flatHeight);
 				lvlFlats->SetData(flatData, flatWidth * flatHeight);
 				free(flatData);
 
@@ -1056,7 +1056,7 @@ static void MyFunTest()
 
 #ifdef MAKE_FLAT_MIPMAPS
 				int dataLen;
-				byte *mipData = FlatMipmaps(lvlFlats->GetData(), lvlFlats->GetUnCompressedDataLength(), MIPLEVELS, &dataLen);
+				byte* mipData = FlatMipmaps(lvlFlats->GetData(), lvlFlats->GetUnCompressedDataLength(), MIPLEVELS, &dataLen);
 				lvlFlats->SetData(mipData, dataLen);
 				free(mipData);
 #endif
@@ -1069,8 +1069,8 @@ static void MyFunTest()
 		if (!strcmp(node->GetName(), "F_END"))
 		{
 			insideFlats = false;
-			WADEntry *flatInfo = new WADEntry("FLATINFO", (const byte *)flatSizes, numFlats * 2);
-			Listable::AddAfter(flatInfo, node, (Listable **)&importedEntries);
+			WADEntry* flatInfo = new WADEntry("FLATINFO", (const byte*)flatSizes, numFlats * 2);
+			Listable::AddAfter(flatInfo, node, (Listable**)&importedEntries);
 		}
 		if (!strcmp(node->GetName(), "DS_START"))
 		{
@@ -1083,7 +1083,7 @@ static void MyFunTest()
 
 		if (!strcmp(node->GetName(), "TEXTURE1"))
 		{
-			WADEntry *texture1lump = WADEntry::FindEntry(lvleditorEntries, "TEXTURE1");
+			WADEntry* texture1lump = WADEntry::FindEntry(lvleditorEntries, "TEXTURE1");
 			node->SetData(texture1lump->GetData(), texture1lump->GetDataLength());
 		}
 
@@ -1135,13 +1135,13 @@ static void MyFunTest()
 			sizeGraphics += node->GetDataLength();
 		}
 	}
-	
+
 	size_t extraSpace = 0;
-	WADEntry *startMarker;
+	WADEntry* startMarker;
 	InitLevelInsertStuff(importedEntries);
 	printf("---------------------Page 8:\n");
 	startMarker = (WADEntry*)Listable::GetLast(importedEntries);
-//	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\polytesta.wad", basePath), importedEntries, 255, false);
+	//	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\polytesta.wad", basePath), importedEntries, 255, false);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP01a.wad", basePath), importedEntries, 255, false);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP02a.wad", basePath), importedEntries, 47, false);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP03a.wad", basePath), importedEntries, 255, true);
@@ -1150,29 +1150,29 @@ static void MyFunTest()
 	AddEmptyEntry(importedEntries);
 	extraSpace = 0;
 	printf("---------------------Page 9:\n");
-	startMarker = (WADEntry *)Listable::GetLast(importedEntries);
+	startMarker = (WADEntry*)Listable::GetLast(importedEntries);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP05a.wad", basePath), importedEntries, 0, false);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP06a.wad", basePath), importedEntries, 255, true);
-	printf("*********************Space used: %0.2fkb\n", CalculatePageSize(startMarker, (WADEntry *)Listable::GetLast(startMarker)) / 1024.0f);
+	printf("*********************Space used: %0.2fkb\n", CalculatePageSize(startMarker, (WADEntry*)Listable::GetLast(startMarker)) / 1024.0f);
 	AddEmptyEntry(importedEntries);
 	extraSpace = 0;
 	printf("---------------------Page 10:\n");
-	startMarker = (WADEntry *)Listable::GetLast(importedEntries);
+	startMarker = (WADEntry*)Listable::GetLast(importedEntries);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP07b.wad", basePath), importedEntries, 0, false);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP10a.wad", basePath), importedEntries, 0, false);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP12a.wad", basePath), importedEntries, 255, true);
-	printf("*********************Space used: %0.2fkb\n", CalculatePageSize(startMarker, (WADEntry *)Listable::GetLast(startMarker)) / 1024.0f);
+	printf("*********************Space used: %0.2fkb\n", CalculatePageSize(startMarker, (WADEntry*)Listable::GetLast(startMarker)) / 1024.0f);
 	AddEmptyEntry(importedEntries);
 	extraSpace = 0;
 	printf("---------------------Page 11:\n");
-	startMarker = (WADEntry *)Listable::GetLast(importedEntries);
+	startMarker = (WADEntry*)Listable::GetLast(importedEntries);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP11a.wad", basePath), importedEntries, 256, true);
 	extraSpace += InsertCurveData(va("%s\\Levels\\MAP11.svg", basePath), "MAP11C", importedEntries);
-	printf("*********************Space used: %0.2fkb\n", CalculatePageSize(startMarker, (WADEntry *)Listable::GetLast(startMarker)) / 1024.0f);
+	printf("*********************Space used: %0.2fkb\n", CalculatePageSize(startMarker, (WADEntry*)Listable::GetLast(startMarker)) / 1024.0f);
 	AddEmptyEntry(importedEntries);
 	extraSpace = 0;
 	printf("---------------------Page 12:\n");
-	startMarker = (WADEntry *)Listable::GetLast(importedEntries);
+	startMarker = (WADEntry*)Listable::GetLast(importedEntries);
 	//	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP16a.wad", basePath), importedEntries);
 //	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP17.wad", basePath), importedEntries);
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP30a.wad", basePath), importedEntries, 255, true);
@@ -1186,19 +1186,25 @@ static void MyFunTest()
 	//	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\FOF.wad", basePath), importedEntries, 255);
 	//	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP65.wad", basePath), importedEntries);
 	//	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP66.wad", basePath), importedEntries);
-	printf("*********************Space used: %0.2fkb\n", CalculatePageSize(startMarker, (WADEntry *)Listable::GetLast(startMarker)) / 1024.0f);
+	printf("*********************Space used: %0.2fkb\n", CalculatePageSize(startMarker, (WADEntry*)Listable::GetLast(startMarker)) / 1024.0f);
 	CleanupLevelInsertStuff();
 
 	int dummySize = 4;
 	byte dummy[] = { 0xaf, 0xaf, 0xaf, 0xaf };
-	WADEntry *dummyEntry = new WADEntry("DUMMY", dummy, dummySize);
-	Listable::Add(dummyEntry, (Listable **)&importedEntries);
+	WADEntry* dummyEntry = new WADEntry("DUMMY", dummy, dummySize);
+	Listable::Add(dummyEntry, (Listable**)&importedEntries);
 
-//	FindDuplicateColumns(importedEntries);
+	//	FindDuplicateColumns(importedEntries);
 
-	// Write it out
-	FILE *expF = fopen(va("%s\\doom32x.wad", outputPath), "wb");
-	Exporter_Jaguar *ex = new Exporter_Jaguar(importedEntries, expF, WADPTRSTART);
+		// Write it out
+	char* outputFile = va("%s\\doom32x.wad", outputPath);
+	FILE* expF = fopen(outputFile, "wb");
+	if (expF == NULL) {
+		printf("ERROR: Could not create file '%s'.", outputFile);
+		return;
+	}
+
+	Exporter_Jaguar* ex = new Exporter_Jaguar(importedEntries, expF, WADPTRSTART);
 	// Set masked bit in TEXTURE1 lump if necessary.
 	ex->SetMaskedInTexture1();
 	ex->Execute();
@@ -1213,7 +1219,11 @@ static void MyFunTest()
 	printf("Masked Graphics: %0.2fkb\n", sizeMaskedGraphics / 1024.0f);
 	printf("Compressed Masked Graphics: %0.2fkb\n", sizeCompMaskedGraphics / 1024.0f);
 
-	expF = fopen(va("%s\\doom32x.wad", outputPath), "rb");
+	expF = fopen(outputFile, "rb");
+	if (expF == NULL) {
+		printf("ERROR: Could not open file '%s'.", outputFile);
+		return;
+	}
 	fseek(expF, 0, SEEK_END);
 	printf("Total file size: %02fkb\n", ftell(expF) / 1024.0f);
 	fclose(expF);
@@ -1222,7 +1232,7 @@ static void MyFunTest()
 }
 
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
 	if (argc < 3)
 	{
@@ -1232,30 +1242,30 @@ int main(int argc, char *argv[])
 
 	basePath = argv[1];
 	outputPath = argv[2];
-/*	if (argc > 1)
-	{
-		// PNG -> flat conversion mode
-		char newfileName[2048];
-		strcpy(newfileName, argv[1]);
-		int len = strlen(newfileName);
-		newfileName[len - 1] = 'p';
-		newfileName[len - 2] = 'm';
-		newfileName[len - 3] = 'l';
+	/*	if (argc > 1)
+		{
+			// PNG -> flat conversion mode
+			char newfileName[2048];
+			strcpy(newfileName, argv[1]);
+			int len = strlen(newfileName);
+			newfileName[len - 1] = 'p';
+			newfileName[len - 2] = 'm';
+			newfileName[len - 3] = 'l';
 
-		int32_t pngSize;
-		byte *png = ReadAllBytes(argv[1], &pngSize);
+			int32_t pngSize;
+			byte *png = ReadAllBytes(argv[1], &pngSize);
 
-		int32_t flatWidth, flatHeight;
-		byte *flat = PNGToFlat(png, pngSize, &flatWidth, &flatHeight);
+			int32_t flatWidth, flatHeight;
+			byte *flat = PNGToFlat(png, pngSize, &flatWidth, &flatHeight);
 
-		WriteAllBytes(newfileName, flat, flatWidth * flatHeight);
-		free(flat);
-		free(png);
+			WriteAllBytes(newfileName, flat, flatWidth * flatHeight);
+			free(flat);
+			free(png);
 
-		printf("Converted %s to flat graphic.\n", argv[1]);
-		return 0;
-	}*/
-//	ChibiMaps();
+			printf("Converted %s to flat graphic.\n", argv[1]);
+			return 0;
+		}*/
+		//	ChibiMaps();
 	MyFunTest();
 
 	return 0;
