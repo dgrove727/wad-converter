@@ -108,9 +108,9 @@ byte *PathParser::CreateLump(size_t *lumpSize)
 
     for (pathNode = outputPaths; pathNode; pathNode = (BezierPath *)pathNode->next)
     {
-        *cursor++ = swap_endian16(pathNode->id);
-        *cursor++ = swap_endian16((int16_t)Listable::GetCount(pathNode->segments));
-        *cursor++ = 0;
+        cursor++;
+        cursor++;
+        cursor++;
     }
 
     for (pathNode = outputPaths; pathNode; pathNode = (BezierPath *)pathNode->next)
@@ -134,11 +134,12 @@ byte *PathParser::CreateLump(size_t *lumpSize)
     // Write out path addresses
     cursor = (int16_t*)lump;
     cursor++;
-    bezier_header_t *headerCursor = (bezier_header_t *)cursor;
     for (pathNode = outputPaths; pathNode; pathNode = (BezierPath *)pathNode->next)
     {
-        headerCursor->startAddr = swap_endian16(pathNode->writingAddress - (uint8_t*)lump);
-        headerCursor++;
+        *cursor++ = swap_endian16(pathNode->id);
+        *cursor++ = swap_endian16((int16_t)Listable::GetCount(pathNode->segments));
+        int16_t addr = pathNode->writingAddress - (uint8_t *)lump;
+        *cursor++ = swap_endian16(addr);
     }
 
     return lump;
