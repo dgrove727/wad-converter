@@ -19,7 +19,8 @@
 #define MAKE_WALL_MIPMAPS
 //#define MAKE_FLAT_MIPMAPS
 #define MIPLEVELS 4
-#define WADPTRSTART 0x3B200
+//#define WADPTRSTART 0x3B200
+#define WADPTRSTART 0
 
 #define		VERSION			1.10
 #define		WAD_FORMAT		1
