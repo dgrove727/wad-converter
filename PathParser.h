@@ -42,7 +42,7 @@ public:
 
 	int16_t toDoom(float v, bool is_y);
 	void ParsePath(const char *svgFile);
-	byte *CreateLump(size_t *lumpSize);
+	uint8_t *CreateLump(size_t *lumpSize);
 
 	PathParser()
 	{

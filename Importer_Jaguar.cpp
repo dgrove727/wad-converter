@@ -10,7 +10,7 @@ typedef struct
 	char name[8];
 } directory_t;
 
-static void DumpData(const char *filename, const byte *data, size_t length)
+static void DumpData(const char *filename, const uint8_t *data, size_t length)
 {
 	char path[2048];
 	sprintf(path, "./dump/%s", filename);
@@ -59,7 +59,7 @@ WADEntry *Importer_Jaguar::Execute()
 	WADEntry *wadEntries = NULL;
 
 	// Buffer the entire file into RAM
-	byte *data = (byte *)malloc(file_size);
+	uint8_t *data = (uint8_t *)malloc(file_size);
 	fseek(in_file, 0, SEEK_SET);
 	fread(data, file_size, 1, in_file);
 
@@ -94,7 +94,7 @@ WADEntry *Importer_Jaguar::Execute()
 
 		strncpy(entryName, directory[i].name, 8);
 
-		byte *entryData = &data[ptr]; // data
+		uint8_t *entryData = &data[ptr]; // data
 
 		WADEntry *entry = new WADEntry();
 		entry->SetIsCompressed(SetEntryName(entryName, entryName));

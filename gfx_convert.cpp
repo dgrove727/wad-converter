@@ -10,7 +10,7 @@
 
 typedef struct
 {
-	byte r, g, b;
+	uint8_t r, g, b;
 } palentry_t;
 
 // SRB 32X palette
@@ -794,14 +794,14 @@ palentry_t palette[256] = {
 	{167, 107, 107},
 };*/
 
-byte GetIndexFromRGB(byte r, byte g, byte b)
+uint8_t GetIndexFromRGB(uint8_t r, uint8_t g, uint8_t b)
 {
 	for (int i = 0; i < 256; i++)
 	{
 		const palentry_t *palEntry = &palette[i];
 
 		if (palEntry->r == r && palEntry->g == g && palEntry->b == b)
-			return (byte)i;
+			return (uint8_t)i;
 	}
 
 	// If we got here, no entry matched. Try to find the closest match.
@@ -833,20 +833,20 @@ byte GetIndexFromRGB(byte r, byte g, byte b)
 	if (closestIndex == 0x00) // Don't choose cyan
 		closestIndex = 121;
 
-	return (byte)closestIndex;
+	return (uint8_t)closestIndex;
 }
 
-byte *RGBToIndexed(const byte *rgbData, int32_t length)
+uint8_t *RGBToIndexed(const uint8_t *rgbData, int32_t length)
 {
-	byte *indexedImage = (byte *)malloc(length / 3);
+	uint8_t *indexedImage = (uint8_t *)malloc(length / 3);
 	int32_t z = 0;
 	for (int32_t i = 0; i < length; i += 3)
 	{
-		byte r = rgbData[i];
-		byte g = rgbData[i + 1];
-		byte b = rgbData[i + 2];
+		uint8_t r = rgbData[i];
+		uint8_t g = rgbData[i + 1];
+		uint8_t b = rgbData[i + 2];
 
-		byte palIndex = GetIndexFromRGB(r, g, b);
+		uint8_t palIndex = GetIndexFromRGB(r, g, b);
 
 		indexedImage[z++] = palIndex;
 	}
@@ -854,15 +854,15 @@ byte *RGBToIndexed(const byte *rgbData, int32_t length)
 	return indexedImage;
 }
 
-byte *RGBToIndexed(const byte *rgbData, int32_t width, int32_t height)
+uint8_t *RGBToIndexed(const uint8_t *rgbData, int32_t width, int32_t height)
 {
 	return RGBToIndexed(rgbData, width * height * 3);
 }
 
-byte *IndexedToRGB(const byte *indData, int32_t width, int32_t height)
+uint8_t *IndexedToRGB(const uint8_t *indData, int32_t width, int32_t height)
 {
-	byte *rgbImage = (byte *)malloc(width * height * 3);
-	byte *cursor = rgbImage;
+	uint8_t *rgbImage = (uint8_t *)malloc(width * height * 3);
+	uint8_t *cursor = rgbImage;
 	int32_t z = 0;
 	for (int32_t i = 0; i < width * height; i++)
 	{
@@ -876,7 +876,7 @@ byte *IndexedToRGB(const byte *indData, int32_t width, int32_t height)
 	return rgbImage;
 }
 
-byte GetPixel(const byte *rawData, int32_t width, int32_t x, int32_t y)
+uint8_t GetPixel(const uint8_t *rawData, int32_t width, int32_t x, int32_t y)
 {
 	size_t pixelLocation = (y * width) + x;
 
@@ -888,21 +888,21 @@ byte GetPixel(const byte *rawData, int32_t width, int32_t x, int32_t y)
 	return rawData[pixelLocation];
 }
 
-void SetPixel(byte *rawData, int32_t width, int32_t x, int32_t y, byte pixel)
+void SetPixel(uint8_t *rawData, int32_t width, int32_t x, int32_t y, uint8_t pixel)
 {
 	size_t pixelLocation = (y * width) + x;
 
 	rawData[pixelLocation] = pixel;
 }
 
-byte *FlatMipmaps(const byte *data, int dataLen, int numlevels, int *outputLen)
+uint8_t *FlatMipmaps(const uint8_t *data, int dataLen, int numlevels, int *outputLen)
 {
 	int flatSize = (int)sqrt(dataLen);
 
-	byte *rgbImage = IndexedToRGB(data, flatSize, flatSize);
+	uint8_t *rgbImage = IndexedToRGB(data, flatSize, flatSize);
 	int fullSize = flatSize;
 
-	byte *totalBuffer = (byte *)malloc(1024 * 1024); // Will never be this big
+	uint8_t *totalBuffer = (uint8_t *)malloc(1024 * 1024); // Will never be this big
 	int dataSize = 0;
 
 	memcpy(totalBuffer, rgbImage, flatSize * flatSize * 3);
@@ -914,7 +914,7 @@ byte *FlatMipmaps(const byte *data, int dataLen, int numlevels, int *outputLen)
 
 	for (int i = 0; i < numlevels-1; i++)
 	{
-		byte *resized = stbir_resize_uint8_linear(rgbImage, fullSize, fullSize, 0, NULL, flatSize, flatSize, 0, STBIR_RGB);
+		uint8_t *resized = stbir_resize_uint8_linear(rgbImage, fullSize, fullSize, 0, NULL, flatSize, flatSize, 0, STBIR_RGB);
 
 		memcpy(&totalBuffer[dataSize], resized, flatSize * flatSize * 3);
 		dataSize += flatSize * flatSize * 3;
@@ -928,7 +928,7 @@ byte *FlatMipmaps(const byte *data, int dataLen, int numlevels, int *outputLen)
 	}
 
 	// Convert back to indexed graphic
-	byte *indexedFinal = RGBToIndexed(totalBuffer, dataSize);
+	uint8_t *indexedFinal = RGBToIndexed(totalBuffer, dataSize);
 	free(totalBuffer);
 
 	free(rgbImage);
@@ -938,13 +938,13 @@ byte *FlatMipmaps(const byte *data, int dataLen, int numlevels, int *outputLen)
 	return indexedFinal;
 }
 
-byte *PatchMipmaps(const byte *data, int width, int height, int numlevels, int *outputLen)
+uint8_t *PatchMipmaps(const uint8_t *data, int width, int height, int numlevels, int *outputLen)
 {
-	byte *rgbImage = IndexedToRGB(data, width, height);
+	uint8_t *rgbImage = IndexedToRGB(data, width, height);
 	int mipWidth = width;
 	int mipHeight = height;
 
-	byte *totalBuffer = (byte *)malloc(1024 * 1024); // Will never be this big
+	uint8_t *totalBuffer = (uint8_t *)malloc(1024 * 1024); // Will never be this big
 	int dataSize = 0;
 
 	memcpy(totalBuffer, rgbImage, mipWidth * mipHeight * 3);
@@ -960,7 +960,7 @@ byte *PatchMipmaps(const byte *data, int width, int height, int numlevels, int *
 
 	for (int i = 0; i < numlevels - 1; i++)
 	{
-		byte *resized = stbir_resize_uint8_linear(rgbImage, width, height, 0, NULL, mipWidth, mipHeight, 0, STBIR_RGB);
+		uint8_t *resized = stbir_resize_uint8_linear(rgbImage, width, height, 0, NULL, mipWidth, mipHeight, 0, STBIR_RGB);
 
 		memcpy(&totalBuffer[dataSize], resized, mipWidth * mipHeight * 3);
 		dataSize += mipWidth * mipHeight * 3;
@@ -977,7 +977,7 @@ byte *PatchMipmaps(const byte *data, int width, int height, int numlevels, int *
 	}
 
 	// Convert back to indexed graphic
-	byte *indexedFinal = RGBToIndexed(totalBuffer, dataSize);
+	uint8_t *indexedFinal = RGBToIndexed(totalBuffer, dataSize);
 	free(totalBuffer);
 
 	free(rgbImage);
@@ -988,22 +988,22 @@ byte *PatchMipmaps(const byte *data, int width, int height, int numlevels, int *
 	return indexedFinal;
 }
 
-byte *FlatToPNG(const byte *flatData, int32_t width, int32_t height, int32_t *outputLen)
+uint8_t *FlatToPNG(const uint8_t *flatData, int32_t width, int32_t height, int32_t *outputLen)
 {
 	return stbi_write_png_to_mem(flatData, 0, width, height, 1, outputLen);
 }
 
-byte *RawToPNG(const byte *rawData, int32_t width, int32_t height, int32_t *outputLen)
+uint8_t *RawToPNG(const uint8_t *rawData, int32_t width, int32_t height, int32_t *outputLen)
 {
 	return stbi_write_png_to_mem(rawData, 0, width, height, 1, outputLen);
 }
 
-byte *PNGToFlat(const byte *pngData, int32_t pngLength, int32_t *width, int32_t *height)
+uint8_t *PNGToFlat(const uint8_t *pngData, int32_t pngLength, int32_t *width, int32_t *height)
 {
 	int32_t channels;
 
-	byte *rawImage = stbi_load_from_memory(pngData, pngLength, width, height, &channels, 3);
-	byte *indexedImage = RGBToIndexed(rawImage, *width, *height);
+	uint8_t *rawImage = stbi_load_from_memory(pngData, pngLength, width, height, &channels, 3);
+	uint8_t *indexedImage = RGBToIndexed(rawImage, *width, *height);
 
 	free(rawImage);
 
@@ -1011,11 +1011,11 @@ byte *PNGToFlat(const byte *pngData, int32_t pngLength, int32_t *width, int32_t 
 }
 
 // PC patch to a raw image
-byte *PatchToRaw(const byte *patchData, size_t dataLen, int32_t *outputLen, byte transparentIndex)
+uint8_t *PatchToRaw(const uint8_t *patchData, size_t dataLen, int32_t *outputLen, uint8_t transparentIndex)
 {
 	const patchHeader_t *header = (patchHeader_t *)patchData;
 
-	byte *rawImage = (byte *)malloc(header->width * header->height * 1);
+	uint8_t *rawImage = (uint8_t *)malloc(header->width * header->height * 1);
 	memset(rawImage, transparentIndex, header->width * header->height * 1); // Transparent value
 
 	// TODO: support > 255 height
@@ -1029,7 +1029,7 @@ byte *PatchToRaw(const byte *patchData, size_t dataLen, int32_t *outputLen, byte
 		while (post->topdelta != 255)
 		{
 			yPos = accumTopDelta + post->topdelta;
-			const byte *pixel = post->data;
+			const uint8_t *pixel = post->data;
 
 			for (int32_t j = 0; j < post->length; j++)
 			{
@@ -1065,7 +1065,7 @@ byte *PatchToRaw(const byte *patchData, size_t dataLen, int32_t *outputLen, byte
 //
 // bpp - BYTES per pixel
 //
-void VerticalFlip(const byte *srcImage, byte *destImage, const int16_t width, const int16_t height, const byte bpp)
+void VerticalFlip(const uint8_t *srcImage, uint8_t *destImage, const int16_t width, const int16_t height, const uint8_t bpp)
 {
 	destImage += width * height * bpp;
 	destImage -= width * bpp;
@@ -1079,7 +1079,7 @@ void VerticalFlip(const byte *srcImage, byte *destImage, const int16_t width, co
 	}
 }
 
-bool ContainsPixel(const byte *rawImage, uint16_t width, uint16_t height, byte index)
+bool ContainsPixel(const uint8_t *rawImage, uint16_t width, uint16_t height, uint8_t index)
 {
 	for (int32_t i = 0; i < width * height; i++)
 	{
@@ -1090,13 +1090,13 @@ bool ContainsPixel(const byte *rawImage, uint16_t width, uint16_t height, byte i
 	return false;
 }
 
-byte *RawToJagTexture(const byte *rawImage, uint16_t width, uint16_t height)
+uint8_t *RawToJagTexture(const uint8_t *rawImage, uint16_t width, uint16_t height)
 {
 	// Now we have to flip it.. ugh
-	byte *flippedImage = (byte *)malloc(width * height);
+	uint8_t *flippedImage = (uint8_t *)malloc(width * height);
 	VerticalFlip(rawImage, flippedImage, width, height, 1);
 
-	byte *rotatedImage = (byte *)malloc(width * height);
+	uint8_t *rotatedImage = (uint8_t *)malloc(width * height);
 
 	// Re-draw the raw image as row-major
 	for (int32_t y = 0, destinationColumn = height - 1; y < height; y++, --destinationColumn)
@@ -1112,14 +1112,14 @@ byte *RawToJagTexture(const byte *rawImage, uint16_t width, uint16_t height)
 	return rotatedImage;
 }
 
-byte *PatchToJagTexture(const byte *patchData, size_t dataLen, int32_t *outputLen)
+uint8_t *PatchToJagTexture(const uint8_t *patchData, size_t dataLen, int32_t *outputLen)
 {
 	const patchHeader_t *header = (patchHeader_t *)patchData;
 
 	// I'm lazy... convert to a regular raw image first.
-	byte *rawImage = PatchToRaw(patchData, dataLen, outputLen, 0);
+	uint8_t *rawImage = PatchToRaw(patchData, dataLen, outputLen, 0);
 
-	byte *jagTexture = RawToJagTexture(rawImage, header->width, header->height);
+	uint8_t *jagTexture = RawToJagTexture(rawImage, header->width, header->height);
 
 	free(rawImage);
 
@@ -1128,7 +1128,7 @@ byte *PatchToJagTexture(const byte *patchData, size_t dataLen, int32_t *outputLe
 }
 
 // Careful! Returns NULL if nothing was cropped!
-byte *CropPCPatch(const byte *patchData, size_t dataLen, int32_t *outputLen, byte transparentIndex)
+uint8_t *CropPCPatch(const uint8_t *patchData, size_t dataLen, int32_t *outputLen, uint8_t transparentIndex)
 {
 	const patchHeader_t *header = (patchHeader_t *)patchData;
 	int32_t cropTop = 0; // heh...
@@ -1137,7 +1137,7 @@ byte *CropPCPatch(const byte *patchData, size_t dataLen, int32_t *outputLen, byt
 	int32_t cropBottom = 0;
 
 	// First, convert it to a raw image
-	byte *rawImage = PatchToRaw(patchData, dataLen, outputLen, transparentIndex);
+	uint8_t *rawImage = PatchToRaw(patchData, dataLen, outputLen, transparentIndex);
 
 	// Check if we should crop anything from the top
 	for (int32_t y = 0; y < header->height; y++)
@@ -1145,7 +1145,7 @@ byte *CropPCPatch(const byte *patchData, size_t dataLen, int32_t *outputLen, byt
 		bool keep = false;
 		for (int32_t x = 0; x < header->width; x++)
 		{
-			byte pixel = GetPixel(rawImage, header->width, x, y);
+			uint8_t pixel = GetPixel(rawImage, header->width, x, y);
 			if (pixel != transparentIndex)
 			{
 				keep = true;
@@ -1165,7 +1165,7 @@ byte *CropPCPatch(const byte *patchData, size_t dataLen, int32_t *outputLen, byt
 		bool keep = false;
 		for (int32_t x = 0; x < header->width; x++)
 		{
-			byte pixel = GetPixel(rawImage, header->width, x, y);
+			uint8_t pixel = GetPixel(rawImage, header->width, x, y);
 			if (pixel != transparentIndex)
 			{
 				keep = true;
@@ -1185,7 +1185,7 @@ byte *CropPCPatch(const byte *patchData, size_t dataLen, int32_t *outputLen, byt
 		bool keep = false;
 		for (int32_t y = 0; y < header->height; y++)
 		{
-			byte pixel = GetPixel(rawImage, header->width, x, y);
+			uint8_t pixel = GetPixel(rawImage, header->width, x, y);
 			if (pixel != transparentIndex)
 			{
 				keep = true;
@@ -1205,7 +1205,7 @@ byte *CropPCPatch(const byte *patchData, size_t dataLen, int32_t *outputLen, byt
 		bool keep = false;
 		for (int32_t y = 0; y < header->height; y++)
 		{
-			byte pixel = GetPixel(rawImage, header->width, x, y);
+			uint8_t pixel = GetPixel(rawImage, header->width, x, y);
 			if (pixel != transparentIndex)
 			{
 				keep = true;
@@ -1228,7 +1228,7 @@ byte *CropPCPatch(const byte *patchData, size_t dataLen, int32_t *outputLen, byt
 	newWidth -= cropRight;
 	int16_t newHeight = header->height - cropTop;
 	newHeight -= cropBottom;
-	byte *newImage = (byte*)malloc(newWidth * newHeight);
+	uint8_t *newImage = (uint8_t*)malloc(newWidth * newHeight);
 	memset(newImage, transparentIndex, newWidth * newHeight);
 
 	int newX = 0;
@@ -1238,7 +1238,7 @@ byte *CropPCPatch(const byte *patchData, size_t dataLen, int32_t *outputLen, byt
 		newY = 0;
 		for (int32_t y = cropTop; y < header->height - cropBottom; y++)
 		{
-			byte srcPixel = GetPixel(rawImage, header->width, x, y);
+			uint8_t srcPixel = GetPixel(rawImage, header->width, x, y);
 
 			SetPixel(newImage, newWidth, newX, newY, srcPixel);
 			newY++;
@@ -1249,7 +1249,7 @@ byte *CropPCPatch(const byte *patchData, size_t dataLen, int32_t *outputLen, byt
 	free(rawImage);
 
 	// Convert back to PC patch, adjust offsets
-	byte *newPatch = RawToPatch(newImage, newWidth, newHeight, outputLen, transparentIndex);
+	uint8_t *newPatch = RawToPatch(newImage, newWidth, newHeight, outputLen, transparentIndex);
 	patchHeader_t *newHeader = (patchHeader_t *)newPatch;
 	newHeader->leftoffset = header->leftoffset;
 	newHeader->topoffset = header->topoffset;
@@ -1262,13 +1262,13 @@ byte *CropPCPatch(const byte *patchData, size_t dataLen, int32_t *outputLen, byt
 // Works for patches, sprites, all of the transparency-format Doom graphics
 // Returns an allocated representation of the 8-bit PNG data (albeit without palette information).
 // Up to you to manage the memory lifetime of it!
-byte *PatchToPNG(const byte *patchData, size_t dataLen, int32_t *outputLen, byte transparentIndex)
+uint8_t *PatchToPNG(const uint8_t *patchData, size_t dataLen, int32_t *outputLen, uint8_t transparentIndex)
 {
 	const patchHeader_t *header = (patchHeader_t *)patchData;
-	byte *rawImage = PatchToRaw(patchData, dataLen, outputLen, transparentIndex);
+	uint8_t *rawImage = PatchToRaw(patchData, dataLen, outputLen, transparentIndex);
 
 
-	byte *pngData = stbi_write_png_to_mem(rawImage, 0, header->width, header->height, 1, outputLen);
+	uint8_t *pngData = stbi_write_png_to_mem(rawImage, 0, header->width, header->height, 1, outputLen);
 	free(rawImage);
 
 	return pngData;
@@ -1278,13 +1278,13 @@ typedef struct
 {
 	uint16_t address; // We keep this un-swapped for easier debugging
 	int32_t length;
-	byte data[512]; // Because memory is cheap now
+	uint8_t data[512]; // Because memory is cheap now
 } jagPostCache_t;
 
 //
 // Allocate sufficient space in 'jagHeader' and 'jagData' before calling.
 //
-void PCSpriteToJag(const byte *lumpData, int32_t lumpSize, byte *jagHeader, int32_t *jagHeaderLen, byte *jagData, int32_t *jagDataLen)
+void PCSpriteToJag(const uint8_t *lumpData, int32_t lumpSize, uint8_t *jagHeader, int32_t *jagHeaderLen, uint8_t *jagData, int32_t *jagDataLen)
 {
 	// Casting to a structure makes it easier to read
 	patchHeader_t *header = (patchHeader_t *)lumpData;
@@ -1310,9 +1310,9 @@ void PCSpriteToJag(const byte *lumpData, int32_t lumpSize, byte *jagHeader, int3
 	if (addAColumn)
 		jagPatchHeader->columnofs[header->width] = 0; // TODO: errgg
 
-	byte *dataPtr = jagData;
+	uint8_t *dataPtr = jagData;
 	uint16_t headerSize = 8 + (headerWidth * 2);
-	byte *headerPtr = jagHeader + headerSize;
+	uint8_t *headerPtr = jagHeader + headerSize;
 
 	// Keep a cache of posts already drawn. If we come across one that matches one of the previous, re-use it.
 	// This can make a file size significantly smaller if there are lots of repeating posts.
@@ -1330,16 +1330,16 @@ void PCSpriteToJag(const byte *lumpData, int32_t lumpSize, byte *jagHeader, int3
 
 		while (post->topdelta != 255)
 		{
-			byte len = post->length;
+			uint8_t len = post->length;
 			jagPost_t *jagPost = (jagPost_t *)headerPtr;
 			jagPost->topdelta = post->topdelta;
 			jagPost->length = len;
 			jagPost->dataofs = swap_endian16(dataPtr - jagData);
 
-			const byte *pixel = post->data;
+			const uint8_t *pixel = post->data;
 
 			// First, draw into a temporary buffer. See if we already have this data previously
-			byte tempBuffer[2048];
+			uint8_t tempBuffer[2048];
 			for (int32_t j = 0; j < post->length; j++)
 				tempBuffer[j] = *pixel++;
 
@@ -1412,7 +1412,7 @@ void PCSpriteToJag(const byte *lumpData, int32_t lumpSize, byte *jagHeader, int3
 		printf("Reused %d posts!\n", numReusedPosts);
 }
 
-void PCSpriteToJagNarrow(const byte *lumpData, int32_t lumpSize, byte *jagHeader, int32_t *jagHeaderLen, byte *jagData, int32_t *jagDataLen)
+void PCSpriteToJagNarrow(const uint8_t *lumpData, int32_t lumpSize, uint8_t *jagHeader, int32_t *jagHeaderLen, uint8_t *jagData, int32_t *jagDataLen)
 {
 	// Casting to a structure makes it easier to read
 	patchHeader_t *header = (patchHeader_t *)lumpData;
@@ -1428,9 +1428,9 @@ void PCSpriteToJagNarrow(const byte *lumpData, int32_t lumpSize, byte *jagHeader
 	for (int32_t i = 0; column < headerWidth; i += 2)
 		jagPatchHeader->columnofs[column++] = swap_endian16((uint16_t)header->columnofs[i]);
 
-	byte *dataPtr = jagData;
+	uint8_t *dataPtr = jagData;
 	uint16_t headerSize = 8 + (headerWidth * 2);
-	byte *headerPtr = jagHeader + headerSize;
+	uint8_t *headerPtr = jagHeader + headerSize;
 
 	// Keep a cache of posts already drawn. If we come across one that matches one of the previous, re-use it.
 	// This can make a file size significantly smaller if there are lots of repeating posts.
@@ -1448,16 +1448,16 @@ void PCSpriteToJagNarrow(const byte *lumpData, int32_t lumpSize, byte *jagHeader
 
 		while (post->topdelta != 255)
 		{
-			byte len = post->length;
+			uint8_t len = post->length;
 			jagPost_t *jagPost = (jagPost_t *)headerPtr;
 			jagPost->topdelta = post->topdelta;
 			jagPost->length = len;
 			jagPost->dataofs = swap_endian16(dataPtr - jagData);
 
-			const byte *pixel = post->data;
+			const uint8_t *pixel = post->data;
 
 			// First, draw into a temporary buffer. See if we already have this data previously
-			byte tempBuffer[2048];
+			uint8_t tempBuffer[2048];
 			for (int32_t j = 0; j < post->length; j++)
 				tempBuffer[j] = *pixel++;
 
@@ -1515,7 +1515,7 @@ void PCSpriteToJagNarrow(const byte *lumpData, int32_t lumpSize, byte *jagHeader
 	*jagDataLen = dataPtr - jagData;
 }
 
-byte *JagSpriteToPNG(byte *jagHeader, byte *jagData, size_t headerLen, size_t dataLen, int32_t *outputLen)
+uint8_t *JagSpriteToPNG(uint8_t *jagHeader, uint8_t *jagData, size_t headerLen, size_t dataLen, int32_t *outputLen)
 {
 	jagPatchHeader_t *header = (jagPatchHeader_t *)jagHeader;
 
@@ -1524,7 +1524,7 @@ byte *JagSpriteToPNG(byte *jagHeader, byte *jagData, size_t headerLen, size_t da
 	uint16_t leftOffset = swap_endian16(header->leftoffset);
 	uint16_t topOffset = swap_endian16(header->topoffset);
 
-	byte *rawImage = (byte *)malloc(width * height * 1);
+	uint8_t *rawImage = (uint8_t *)malloc(width * height * 1);
 	memset(rawImage, 247, width * height * 1); // Transparent value
 
 	for (int32_t i = 0; i < width; i++)
@@ -1536,10 +1536,10 @@ byte *JagSpriteToPNG(byte *jagHeader, byte *jagData, size_t headerLen, size_t da
 		while (post->topdelta != 255)
 		{
 			yPos = post->topdelta;
-			byte len = post->length;
+			uint8_t len = post->length;
 			uint16_t dataOffset = swap_endian16(post->dataofs);
 
-			const byte *pixel = &jagData[dataOffset];
+			const uint8_t *pixel = &jagData[dataOffset];
 
 			for (int32_t j = 0; j < post->length; j++)
 			{
@@ -1557,10 +1557,10 @@ byte *JagSpriteToPNG(byte *jagHeader, byte *jagData, size_t headerLen, size_t da
 	return stbi_write_png_to_mem(rawImage, 0, width, height, 1, outputLen);
 }
 
-byte *RawToPatch(byte *rawImage, int32_t width, int32_t height, int32_t *outputLen, byte transparentIndex)
+uint8_t *RawToPatch(uint8_t *rawImage, int32_t width, int32_t height, int32_t *outputLen, uint8_t transparentIndex)
 {
 	// Modern memory is cheap, so let's just allocate 1mb as workspace.
-	byte *postData = (byte *)malloc(1 * 1024 * 1024);
+	uint8_t *postData = (uint8_t *)malloc(1 * 1024 * 1024);
 	size_t postDataSize = 0;
 
 	patchHeader_t header;
@@ -1587,7 +1587,7 @@ byte *RawToPatch(byte *rawImage, int32_t width, int32_t height, int32_t *outputL
 		while (y < height)
 		{
 			// Get pixel value
-			byte pixel = GetPixel(rawImage, width, x, y);
+			uint8_t pixel = GetPixel(rawImage, width, x, y);
 
 			if (pixel == transparentIndex && !lookingForColStart)
 			{
@@ -1660,9 +1660,9 @@ byte *RawToPatch(byte *rawImage, int32_t width, int32_t height, int32_t *outputL
 
 	// Now put it all together
 	size_t lumpSize = 8 + (numColumnOfs * 4) + (postDataSize);
-	byte *patchImage = (byte *)malloc(lumpSize);
+	uint8_t *patchImage = (uint8_t *)malloc(lumpSize);
 
-	byte *cursor = patchImage;
+	uint8_t *cursor = patchImage;
 	// Write the header
 	memcpy(cursor, &header, 8); // Only first 8 bytes of header
 	cursor += 8;
@@ -1686,12 +1686,12 @@ byte *RawToPatch(byte *rawImage, int32_t width, int32_t height, int32_t *outputL
 	return patchImage;
 }
 
-byte *PNGToPatch(byte *pngData, size_t dataLen, int32_t *outputLen, byte transparentIndex)
+uint8_t *PNGToPatch(uint8_t *pngData, size_t dataLen, int32_t *outputLen, uint8_t transparentIndex)
 {
 	int32_t width, height;
-	byte *indexedImage = PNGToFlat(pngData, dataLen, &width, &height);
+	uint8_t *indexedImage = PNGToFlat(pngData, dataLen, &width, &height);
 
-	byte *png = RawToPatch(indexedImage, width, height, outputLen, transparentIndex);
+	uint8_t *png = RawToPatch(indexedImage, width, height, outputLen, transparentIndex);
 
 	free(indexedImage);
 
@@ -1716,7 +1716,7 @@ typedef struct
 pngresult_t PNGTo15Bit(const uint8_t *pngData, size_t dataLen)
 {
 	int width, height, channels;
-	byte *rgb888 = stbi_load_from_memory(pngData, dataLen, &width, &height, &channels, 3);
+	uint8_t *rgb888 = stbi_load_from_memory(pngData, dataLen, &width, &height, &channels, 3);
 	int num_pixels = width * height;
 
 	uint8_t *bgr555 = (uint8_t*)calloc(1, 16 + (width * height * 2));

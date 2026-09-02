@@ -39,7 +39,7 @@
 #define ML_ST_POSITIVE	 	16384
 #define ML_ST_NEGATIVE	 	32768
 
-typedef int fixed_t;
+typedef int32_t fixed_t;
 #define FRACUNIT (1<<16)
 fixed_t FixedDiv2(fixed_t a, fixed_t b)
 {
@@ -98,7 +98,7 @@ typedef struct
 {
 	staticsector_t *sector;
 	float sort_value;
-	int original_index;
+	int32_t original_index;
 } sortablesector_t;
 
 typedef struct
@@ -162,7 +162,7 @@ static void set_bit(unsigned char *data, size_t bit_index, int value)
 
 void SortAndRemapSectors(staticsector_t *sectors, size_t num_sectors,
 	sidedef_t *sides, size_t num_sides,
-	bool hasLightning, byte *reject, size_t rejectSize)
+	bool hasLightning, uint8_t *reject, size_t rejectSize)
 {
 	// Build temporary array with sort keys and original indices
 	sortablesector_t *temp = (sortablesector_t*)malloc(num_sectors * sizeof(sortablesector_t));
@@ -178,14 +178,14 @@ void SortAndRemapSectors(staticsector_t *sectors, size_t num_sectors,
 	insertion_sort_by_value(temp, num_sectors);
 
 	// Build old -> new mapping and reorder the sectors array
-	int *old_to_new = (int*)malloc(num_sectors * sizeof(int));
-	int *new_to_old = (int*)malloc(num_sectors * sizeof(int));
+	int32_t *old_to_new = (int*)malloc(num_sectors * sizeof(int32_t));
+	int32_t *new_to_old = (int*)malloc(num_sectors * sizeof(int32_t));
 	staticsector_t *reordered = (staticsector_t*)malloc(num_sectors * sizeof(staticsector_t));
 
 	for (size_t new_pos = 0; new_pos < num_sectors; ++new_pos)
 	{
-		int old_pos = temp[new_pos].original_index;
-		old_to_new[old_pos] = (int)new_pos;
+		int32_t old_pos = temp[new_pos].original_index;
+		old_to_new[old_pos] = (int32_t)new_pos;
 		new_to_old[new_pos] = old_pos;
 		reordered[new_pos] = *temp[new_pos].sector;  // copy full struct
 	}
@@ -1001,7 +1001,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 	// Order by mapnum
 	// Ideally, we want to order by MF_RINGMOBJ and then regular items.
 	qsort(things, numthings, sizeof(mapthing_t), compare_by_type);
-	entry->SetData((byte*)things, numthings * sizeof(mapthing_t));
+	entry->SetData((uint8_t*)things, numthings * sizeof(mapthing_t));
 
 	// LINEDEFS
 	entry = new WADEntry();
@@ -1099,12 +1099,12 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 			}
 		}
 
-		entry->SetData((byte *)compData, numlinedefs * sizeof(srb32xlinedef_t));
+		entry->SetData((uint8_t *)compData, numlinedefs * sizeof(srb32xlinedef_t));
 		free(compData);
 	}
 	else
 	{
-		entry->SetData((byte *)linedefs, numlinedefs * sizeof(linedef_t));
+		entry->SetData((uint8_t *)linedefs, numlinedefs * sizeof(linedef_t));
 	}
 
 	// LDFLAGS (compressed)
@@ -1122,7 +1122,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 			compData[i].tag = (uint8_t)linedefs[i].tag;
 		}
 
-		entry->SetData((byte *)compData, numlinedefs * sizeof(srb32xldflags_t));
+		entry->SetData((uint8_t *)compData, numlinedefs * sizeof(srb32xldflags_t));
 		free(compData);
 	}
 
@@ -1152,11 +1152,11 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 			compData[i].texIndex = FindSidetexIndex(sidetexes, &numsidetexes, sidetex);
 		}
 
-		entry->SetData((byte *)compData, numsidedefs * sizeof(srb32xsidedef_t));
+		entry->SetData((uint8_t *)compData, numsidedefs * sizeof(srb32xsidedef_t));
 		free(compData);
 	}
 	else
-		entry->SetData((byte *)sidedefs, numsidedefs * sizeof(sidedef_t));
+		entry->SetData((uint8_t *)sidedefs, numsidedefs * sizeof(sidedef_t));
 
 	if (srb32xsegs)
 	{
@@ -1166,7 +1166,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 		entry->SetName("SIDETEX");
 		entry->SetIsCompressed(true);
 
-		entry->SetData((byte*)sidetexes, sizeof(sidetex_t) * numsidetexes);
+		entry->SetData((uint8_t*)sidetexes, sizeof(sidetex_t) * numsidetexes);
 	}
 
 	// VERTEXES
@@ -1182,7 +1182,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 			temp[i].x = swap_endian16(vertexes[i].x);
 			temp[i].y = swap_endian16(vertexes[i].y);
 		}
-		entry->SetData((byte *)temp, sizeof(vertex_t) * numvertexes);
+		entry->SetData((uint8_t *)temp, sizeof(vertex_t) * numvertexes);
 		free(temp);
 	}
 	else
@@ -1197,7 +1197,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 			temp[i].x = swap_endian32(vertexes[i].x << FRACBITS);
 			temp[i].y = swap_endian32(vertexes[i].y << FRACBITS);
 		}
-		entry->SetData((byte *)temp, sizeof(jagVertex_t) * numvertexes);
+		entry->SetData((uint8_t *)temp, sizeof(jagVertex_t) * numvertexes);
 		free(temp);
 	}
 
@@ -1233,13 +1233,13 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 			newSegs[i].sideoffset = swap_endian16(newSegs[i].sideoffset);
 		}
 
-		entry->SetData((byte*)newSegs, numsegs * sizeof(srb32xseg_t));
+		entry->SetData((uint8_t*)newSegs, numsegs * sizeof(srb32xseg_t));
 		free(newSegs);
 	}
 	else
 	{
 		entry->SetIsCompressed(true);
-		entry->SetData((byte *)segs, numsegs * sizeof(seg_t));
+		entry->SetData((uint8_t *)segs, numsegs * sizeof(seg_t));
 	}
 
 	// SSECTORS
@@ -1261,12 +1261,12 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 		compData[i].firstline = swap_endian16(numsegs);
 		compData[i].isector = swap_endian16(GetSectorFromSeg(0));
 
-		entry->SetData((byte *)compData, (numsubsectors + 1) * sizeof(srb32xsubsector_t));
+		entry->SetData((uint8_t *)compData, (numsubsectors + 1) * sizeof(srb32xsubsector_t));
 		free(compData);
 	}
 	else
 	{
-		entry->SetData((byte *)subsectors, numsubsectors * sizeof(subsector_t));
+		entry->SetData((uint8_t *)subsectors, numsubsectors * sizeof(subsector_t));
 	}
 
 	// NODES
@@ -1275,7 +1275,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 	entry->SetName("NODES");
 	entry->SetIsCompressed(loadFlags & LOADFLAGS_NODES);
 	if (jagNodes)
-		entry->SetData((byte *)jagNodes, numnodes * sizeof(jagnode_t));
+		entry->SetData((uint8_t *)jagNodes, numnodes * sizeof(jagnode_t));
 	else if (srb32xsegs)
 	{
 /*		for (int i = 0; i < numnodes; i++)
@@ -1292,7 +1292,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 					nodes[i].bbox[x][y] = swap_endian16(nodes[i].bbox[x][y]);
 		}*/
 		srb32xnode_t *newNodes = CompressNodes(nodes, numnodes);
-		entry->SetData((byte *)newNodes, numnodes * sizeof(srb32xnode_t));
+		entry->SetData((uint8_t *)newNodes, numnodes * sizeof(srb32xnode_t));
 	}
 	else
 	{
@@ -1314,7 +1314,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 			temp[i].children[0] = swap_endian32(nodes[i].children[0]);
 			temp[i].children[1] = swap_endian32(nodes[i].children[1]);
 		}
-		entry->SetData((byte *)temp, numnodes * sizeof(jagnode_t));
+		entry->SetData((uint8_t *)temp, numnodes * sizeof(jagnode_t));
 		free(temp);
 	}
 
@@ -1359,7 +1359,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 				ci++;
 			}
 
-			entry->SetData((byte *)compData, numStatic * sizeof(staticsector_t));
+			entry->SetData((uint8_t *)compData, numStatic * sizeof(staticsector_t));
 			free(compData);
 		}
 
@@ -1389,11 +1389,11 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 				ci++;
 			}
 
-			entry->SetData((byte *)compData, numDynamic * sizeof(srb32xsector_t));
+			entry->SetData((uint8_t *)compData, numDynamic * sizeof(srb32xsector_t));
 			free(compData);
 		}
 		else
-			entry->SetData((byte *)sectors, numDynamic * sizeof(sector_t));
+			entry->SetData((uint8_t *)sectors, numDynamic * sizeof(sector_t));
 	}
 	else
 	{
@@ -1430,11 +1430,11 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 					compData[i].tag = (uint8_t)sectors[i].tag;
 			}
 
-			entry->SetData((byte *)compData, numsectors * sizeof(srb32xsector_t));
+			entry->SetData((uint8_t *)compData, numsectors * sizeof(srb32xsector_t));
 			free(compData);
 		}
 		else
-			entry->SetData((byte *)sectors, numsectors * sizeof(sector_t));
+			entry->SetData((uint8_t *)sectors, numsectors * sizeof(sector_t));
 	}
 
 	// REJECT
@@ -1459,7 +1459,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 		outsize = (numsectors + 1) * numsectors / 2;
 		outsize = (outsize + 7) / 8;
 
-		byte *rejectmatrix = (byte *)malloc(outsize);
+		uint8_t *rejectmatrix = (uint8_t *)malloc(outsize);
 		if (!rejectmatrix)
 		{
 			printf("Failed to allocate %d bytes for packed REJECT; writing empty REJECT.\n", outsize);
@@ -1528,7 +1528,7 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 		for (int32_t i = 0; i < blockmapSize / 2; i++)
 			temp[i] = swap_endian16(blockmapPtr[i]);
 
-		entry->SetData((byte*)temp, blockmapSize);
+		entry->SetData((uint8_t*)temp, blockmapSize);
 		free(temp);
 	}
 
@@ -1552,42 +1552,42 @@ WADEntry *WADMap::CreatePC(const char *mapname)
 	Listable::Add(entry, (Listable **)&head);
 	entry->SetName("THINGS");
 	entry->SetIsCompressed(false);
-	entry->SetData((byte *)things, numthings * sizeof(mapthing_t));
+	entry->SetData((uint8_t *)things, numthings * sizeof(mapthing_t));
 
 	// LINEDEFS
 	entry = new WADEntry();
 	Listable::Add(entry, (Listable **)&head);
 	entry->SetName("LINEDEFS");
 	entry->SetIsCompressed(false);
-	entry->SetData((byte *)linedefs, numlinedefs * sizeof(linedef_t));
+	entry->SetData((uint8_t *)linedefs, numlinedefs * sizeof(linedef_t));
 
 	// SIDEDEFS
 	entry = new WADEntry();
 	Listable::Add(entry, (Listable **)&head);
 	entry->SetName("SIDEDEFS");
 	entry->SetIsCompressed(false);
-	entry->SetData((byte *)sidedefs, numsidedefs * sizeof(sidedef_t));
+	entry->SetData((uint8_t *)sidedefs, numsidedefs * sizeof(sidedef_t));
 
 	// VERTEXES
 	entry = new WADEntry();
 	Listable::Add(entry, (Listable **)&head);
 	entry->SetName("VERTEXES");
 	entry->SetIsCompressed(false);
-	entry->SetData((byte *)vertexes, numvertexes * sizeof(vertex_t));
+	entry->SetData((uint8_t *)vertexes, numvertexes * sizeof(vertex_t));
 
 	// SEGS
 	entry = new WADEntry();
 	Listable::Add(entry, (Listable **)&head);
 	entry->SetName("SEGS");
 	entry->SetIsCompressed(false);
-	entry->SetData((byte *)segs, numsegs * sizeof(seg_t));
+	entry->SetData((uint8_t *)segs, numsegs * sizeof(seg_t));
 
 	// SSECTORS
 	entry = new WADEntry();
 	Listable::Add(entry, (Listable **)&head);
 	entry->SetName("SSECTORS");
 	entry->SetIsCompressed(false);
-	entry->SetData((byte *)subsectors, numsubsectors * sizeof(subsector_t));
+	entry->SetData((uint8_t *)subsectors, numsubsectors * sizeof(subsector_t));
 
 	// NODES
 	entry = new WADEntry();
@@ -1604,7 +1604,7 @@ WADEntry *WADMap::CreatePC(const char *mapname)
 			temp[i].y = (int16_t)(swap_endian32(jagNodes[i].y) >> FRACBITS);
 			temp[i].dx = (int16_t)(swap_endian32(jagNodes[i].dx) >> FRACBITS);
 			temp[i].dy = (int16_t)(swap_endian32(jagNodes[i].dy) >> FRACBITS);
-
+			
 			for (int32_t j = 0; j < 2; j++)
 			{
 				for (int32_t k = 0; k < 4; k++)
@@ -1614,18 +1614,18 @@ WADEntry *WADMap::CreatePC(const char *mapname)
 			temp[i].children[0] = (uint16_t)(swap_endian32(jagNodes[i].children[0]));
 			temp[i].children[1] = (uint16_t)(swap_endian32(jagNodes[i].children[1]));
 		}
-		entry->SetData((byte *)temp, numnodes * sizeof(node_t));
+		entry->SetData((uint8_t *)temp, numnodes * sizeof(node_t));
 		free(temp);
 	}
 	else
-		entry->SetData((byte *)nodes, numnodes * sizeof(node_t));
+		entry->SetData((uint8_t *)nodes, numnodes * sizeof(node_t));
 
 	// SECTORS
 	entry = new WADEntry();
 	Listable::Add(entry, (Listable **)&head);
 	entry->SetName("SECTORS");
 	entry->SetIsCompressed(false);
-	entry->SetData((byte *)sectors, numsectors * sizeof(sector_t));
+	entry->SetData((uint8_t *)sectors, numsectors * sizeof(sector_t));
 
 	// REJECT
 	entry = new WADEntry();
@@ -1804,14 +1804,14 @@ WADMap::WADMap(WADEntry *head)
 	if (entry && !strcmp(entry->GetName(), "REJECT"))
 	{
 		if (entry->IsCompressed())
-			reject = (byte *)entry->Decompress();
+			reject = (uint8_t *)entry->Decompress();
 		else
-			reject = (byte *)memdup(entry->GetData(), entry->GetDataLength());
+			reject = (uint8_t *)memdup(entry->GetData(), entry->GetDataLength());
 		rejectSize = entry->GetUnCompressedDataLength();
 	}
 	else
 	{
-		reject = (byte *)malloc(1);
+		reject = (uint8_t *)malloc(1);
 		rejectSize = 0;
 	}
 
@@ -1836,19 +1836,19 @@ WADMap::WADMap(WADEntry *head)
 			for (int i = 0; i < blockmapSize / 2; i++)
 				temp[i] = swap_endian16(temp[i]);
 
-			blockmap = (byte *)temp;
+			blockmap = (uint8_t *)temp;
 		}
 		else
 		{
 			if (entry->IsCompressed())
-				blockmap = (byte *)entry->Decompress();
+				blockmap = (uint8_t *)entry->Decompress();
 			else
-				blockmap = (byte *)memdup(entry->GetData(), entry->GetDataLength());
+				blockmap = (uint8_t *)memdup(entry->GetData(), entry->GetDataLength());
 		}
 	}
 	else
 	{
-		blockmap = (byte *)malloc(1);
+		blockmap = (uint8_t *)malloc(1);
 		blockmapSize = 0;
 	}
 }

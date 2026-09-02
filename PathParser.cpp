@@ -83,7 +83,7 @@ typedef struct
     int16_t startAddr;
 } bezier_header_t;
 
-byte *PathParser::CreateLump(size_t *lumpSize)
+uint8_t *PathParser::CreateLump(size_t *lumpSize)
 {
     if (!outputPaths)
         return NULL;
@@ -100,7 +100,7 @@ byte *PathParser::CreateLump(size_t *lumpSize)
     *lumpSize += headerSize;
     *lumpSize += sizeof(int16_t) * pointCount * 8;
 
-    byte *lump = (byte *)malloc(*lumpSize);
+    uint8_t *lump = (uint8_t *)malloc(*lumpSize);
     int16_t *cursor = (int16_t*)lump;
 
     // Write out header:

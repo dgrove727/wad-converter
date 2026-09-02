@@ -521,7 +521,7 @@ public:
     }
     // Puts a byte in the input buffer.
     uint8_t getbyte() noexcept {
-        return Read1(in);
+        return (uint8_t)Read1(in);
     }
 };
 

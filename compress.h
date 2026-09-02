@@ -1,11 +1,12 @@
 #pragma once
 
 #include <stddef.h>
+#include <stdint.h>
 
 typedef struct {
-	long destOffset;
-	long srcOffset;
-	char copyCount;
+	int32_t destOffset;
+	int32_t srcOffset;
+	int8_t copyCount;
 } COMPRESSION_KEY;
 
 enum
@@ -22,7 +23,6 @@ enum
 	REJECT,		// 8	(no differences)			compressed
 	BLOCKMAP	// 9	big-endian					compressed
 };
-
 
 // Make these public...
 byte *compress(byte *data, size_t inputLen, size_t *outputLen);

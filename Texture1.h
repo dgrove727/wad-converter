@@ -48,8 +48,8 @@ struct Texture1 : Listable
 
 	MapTexture *mapTextures;
 
-	byte *CreateLump(int32_t *lumpLength);
+	uint8_t *CreateLump(int32_t *lumpLength);
 
-	Texture1(const byte *lumpData, int32_t lumpLength);
+	Texture1(const uint8_t *lumpData, int32_t lumpLength);
 	virtual ~Texture1();
 };

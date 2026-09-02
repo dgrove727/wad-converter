@@ -10,9 +10,9 @@ typedef struct
 	int16_t patchCount;
 } maptexturedata_t;
 
-byte *Texture1::CreateLump(int32_t *lumpLength)
+uint8_t *Texture1::CreateLump(int32_t *lumpLength)
 {
-	byte *data = (byte *)malloc(64 * 1024); // 64k of working space for our lump
+	uint8_t *data = (uint8_t *)malloc(64 * 1024); // 64k of working space for our lump
 
 	int32_t *ptr32 = (int32_t *)data;
 
@@ -23,7 +23,7 @@ byte *Texture1::CreateLump(int32_t *lumpLength)
 	for (int32_t i = 0; i < numTextures; i++)
 		*ptr32++ = offsets[i];
 
-	byte *ptr8 = (byte *)ptr32;
+	uint8_t *ptr8 = (uint8_t *)ptr32;
 
 	for (const MapTexture *node = this->mapTextures; node; node = (const MapTexture *)node->next)
 	{
@@ -49,7 +49,7 @@ byte *Texture1::CreateLump(int32_t *lumpLength)
 	return data;
 }
 
-Texture1::Texture1(const byte *lumpData, int32_t lumpLength)
+Texture1::Texture1(const uint8_t *lumpData, int32_t lumpLength)
 {
 	const int32_t *ptr32 = (const int32_t *)lumpData;
 	numTextures = *ptr32++;
@@ -58,7 +58,7 @@ Texture1::Texture1(const byte *lumpData, int32_t lumpLength)
 	for (int32_t i = 0; i < numTextures; i++)
 		offsets[i] = *ptr32++;
 
-	byte *ptr8 = (byte *)ptr32;
+	uint8_t *ptr8 = (uint8_t *)ptr32;
 
 	for (int32_t i = 0; i < numTextures; i++)
 	{

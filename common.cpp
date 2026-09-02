@@ -53,14 +53,14 @@ bool SetEntryName(char *entryName, const char *data)
     return isCompressed;
 }
 
-byte *ReadAllBytes(const char *filename, int32_t *file_size)
+uint8_t *ReadAllBytes(const char *filename, int32_t *file_size)
 {
     FILE *f = fopen(filename, "rb");
     fseek(f, 0, SEEK_END);
     *file_size = (int)ftell(f);
     rewind(f);
 
-    byte *buffer = (byte *)malloc(*file_size);
+    uint8_t *buffer = (uint8_t *)malloc(*file_size);
     fread(buffer, *file_size, 1, f);
 
     fclose(f);
@@ -68,7 +68,7 @@ byte *ReadAllBytes(const char *filename, int32_t *file_size)
     return buffer;
 }
 
-void WriteAllBytes(const char *filename, const byte *data, size_t len)
+void WriteAllBytes(const char *filename, const uint8_t *data, size_t len)
 {
     FILE *f = fopen(filename, "wb");
     fwrite(data, len, 1, f);

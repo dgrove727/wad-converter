@@ -3,7 +3,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef uint8_t byte;
 #define FRACBITS 16
 
 // Doom GFX has a header, and then pieces of data called
@@ -21,10 +20,10 @@ typedef struct
 
 typedef struct
 {
-	byte topdelta;
-	byte length;
-	byte unused;
-	byte data[256];
+	uint8_t topdelta;
+	uint8_t length;
+	uint8_t unused;
+	uint8_t data[256];
 } post_t;
 
 typedef struct
@@ -38,8 +37,8 @@ typedef struct
 
 typedef struct
 {
-	byte topdelta;
-	byte length;
+	uint8_t topdelta;
+	uint8_t length;
 	uint16_t dataofs;
 } jagPost_t;
 
@@ -58,5 +57,5 @@ bool strEndsWith(const char *str, const char *suffix);
 
 bool SetEntryName(char *entryName, const char *data);
 
-byte *ReadAllBytes(const char *filename, int32_t *file_size);
-void WriteAllBytes(const char *filename, const byte *data, size_t len);
+uint8_t *ReadAllBytes(const char *filename, int32_t *file_size);
+void WriteAllBytes(const char *filename, const uint8_t *data, size_t len);

@@ -57,7 +57,7 @@ WADEntry *Importer_PC::Execute()
 	}
 
 	const size_t data_size = (size_t)table_ptr - 0xCu;
-	byte *data = (byte *)malloc(data_size);
+	uint8_t *data = (uint8_t *)malloc(data_size);
 	if (!data)
 	{
 		printf("ERROR: Failed to allocate %zu bytes for WAD lump data.\n", data_size);
@@ -123,7 +123,7 @@ WADEntry *Importer_PC::Execute()
 			return NULL;
 		}
 
-		byte *entryData = &data[ptr - 0xCu];
+		uint8_t *entryData = &data[ptr - 0xCu];
 
 		WADEntry *entry = new WADEntry();
 		entry->SetIsCompressed(SetEntryName(entryName, entryName));

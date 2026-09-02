@@ -116,7 +116,7 @@ private:
         return Endian::template ReadN<sizeof(T)>(src);
     }
     T read_bits() noexcept {
-        T bits = read();
+        T bits = (T)read();
         return LittleEndianBits ? detail::reverseBits(bits) : bits;
     }
     void check_buffer() noexcept {

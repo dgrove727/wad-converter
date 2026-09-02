@@ -226,7 +226,7 @@ void *CreateCompressedData(void *uncompressed, COMPRESSION_KEY *keys, byte *keyB
 		{
 			// The current bit is 1, meaning the data is compressed.
 			// Write the offset and copy count to the output.
-			unsigned short packedData = (unsigned short)(((keys[keyCursor].destOffset - keys[keyCursor].srcOffset) << 4) | (keys[keyCursor].copyCount - 1));
+			uint16_t packedData = (uint16_t)(((keys[keyCursor].destOffset - keys[keyCursor].srcOffset) << 4) | (keys[keyCursor].copyCount - 1));
 			compressed[compressedSize] = packedData >> 8;
 			compressed[compressedSize+1] = (byte)packedData;
 			compressedSize += 2;

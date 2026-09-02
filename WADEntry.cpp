@@ -25,12 +25,12 @@ void WADEntry::SetName(const char *value)
 	_name = strdup(value);
 }
 
-const byte *WADEntry::GetData() const
+const uint8_t *WADEntry::GetData() const
 {
 	return _data;
 }
 
-void WADEntry::SetDataInternal(const byte *value, size_t length)
+void WADEntry::SetDataInternal(const uint8_t *value, size_t length)
 {
 	if (_data)
 		free(_data);
@@ -38,7 +38,7 @@ void WADEntry::SetDataInternal(const byte *value, size_t length)
 	if (length == 0)
 		_data = NULL;
 	else
-		_data = (byte*)memdup(value, length);
+		_data = (uint8_t*)memdup(value, length);
 
 	_dataLength = length;
 	_uncompressedDataLength = length;
@@ -46,7 +46,7 @@ void WADEntry::SetDataInternal(const byte *value, size_t length)
 
 // Sets the data of this WAD entry. If IsCompressed(), then it will
 // automatically compress it for you.
-void WADEntry::SetData(const byte *value, size_t length)
+void WADEntry::SetData(const uint8_t *value, size_t length)
 {
 	int32_t filesize = (int32_t)length;
 
@@ -69,7 +69,7 @@ void WADEntry::SetData(const byte *value, size_t length)
 		std::vector<uint8_t> byteArray(result.begin(), result.end());
 
 		compressedSize = result.length();
-		byte *recompressFinal = (byte*)result.data();
+		uint8_t *recompressFinal = (uint8_t*)result.data();
 #else
 		byte *recompressFinal = encode(value, filesize, &compressedSize);
 #endif
@@ -118,12 +118,12 @@ const size_t WADEntry::GetUnCompressedDataLength() const
 	return _uncompressedDataLength;
 }
 
-byte *WADEntry::Decompress() const
+uint8_t *WADEntry::Decompress() const
 {
 #if defined(USE_LZEXE)
 	const uint32_t bufferSize = 0x2000;
 
-	byte* uncompressed = (byte*)malloc(bufferSize);
+	uint8_t* uncompressed = (uint8_t*)malloc(bufferSize);
 	lzexe_state_t lzexe;
 	lzexe_setup(&lzexe, (uint8_t*)this->GetData(), (uint8_t*)uncompressed, bufferSize);
 #else
@@ -136,8 +136,8 @@ byte *WADEntry::Decompress() const
 
 	int uncompSize = this->GetUnCompressedDataLength();
 
-	byte *finalUncompressed = (byte *)malloc(this->GetUnCompressedDataLength());
-	byte *writePtr = finalUncompressed;
+	uint8_t *finalUncompressed = (uint8_t *)malloc(this->GetUnCompressedDataLength());
+	uint8_t *writePtr = finalUncompressed;
 
 	while (uncompSize > 0)
 	{
@@ -163,7 +163,7 @@ byte *WADEntry::Decompress() const
 void WADEntry::ReplaceWithFile(const char *filename)
 {
 	int32_t filesize;
-	byte *newData = ReadAllBytes(filename, &filesize);
+	uint8_t *newData = ReadAllBytes(filename, &filesize);
 
 	if (this->IsCompressed())
 	{
@@ -176,7 +176,7 @@ void WADEntry::ReplaceWithFile(const char *filename)
 		std::vector<uint8_t> byteArray(result.begin(), result.end());
 
 		compressedSize = result.length();
-		byte *recompressFinal = (byte *)result.data();
+		uint8_t *recompressFinal = (uint8_t *)result.data();
 #else
 		byte* recompressFinal = encode(newData, filesize, &compressedSize);
 #endif
@@ -204,7 +204,7 @@ void WADEntry::ReplaceWithFile(const char *filename)
 
 void WADEntry::DumpToFile(const char *filename) const
 {
-	byte *uncompressed = NULL;
+	uint8_t *uncompressed = NULL;
 	if (this->IsCompressed())
 		uncompressed = Decompress();
 	WriteAllBytes(filename, uncompressed ? uncompressed : this->GetData(), this->GetUnCompressedDataLength());
@@ -217,7 +217,7 @@ WADEntry::WADEntry() : Listable()
 {
 }
 
-WADEntry::WADEntry(const char *name, const byte *data, size_t length)
+WADEntry::WADEntry(const char *name, const uint8_t *data, size_t length)
 {
 	SetName(name);
 	SetData(data, length);

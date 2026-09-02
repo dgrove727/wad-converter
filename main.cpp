@@ -46,10 +46,10 @@ static void ConvertPCSpriteEntryToJagSpriteChibi(WADEntry* entry, WADEntry** lis
 	// First, let's shrink it
 	int outputLen;
 	const patchHeader_t* header = (patchHeader_t*)entry->GetData();
-	byte* rawData = PatchToRaw(entry->GetData(), entry->GetUnCompressedDataLength(), &outputLen, 0);
+	uint8_t* rawData = PatchToRaw(entry->GetData(), entry->GetUnCompressedDataLength(), &outputLen, 0);
 	short newWidth = header->width / 2;
 	short newHeight = header->height / 2;
-	byte* shrunkRaw = (byte*)malloc((newWidth) * (newHeight));
+	uint8_t* shrunkRaw = (uint8_t*)malloc((newWidth) * (newHeight));
 
 	for (int x = 0, xd = 0; x < header->width && xd < newWidth; x += 2, xd++)
 	{
@@ -66,7 +66,7 @@ static void ConvertPCSpriteEntryToJagSpriteChibi(WADEntry* entry, WADEntry** lis
 	//	byte *pngData = RawToPNG(shrunkRaw, newWidth, newHeight, &pngOutputLen);
 	//	WriteAllBytes("D:\\32xrb2\\chibi\\test.png", pngData, pngOutputLen);
 
-	byte* dataToUse = shrunkRaw;
+	uint8_t* dataToUse = shrunkRaw;
 	if (newWidth == 0 || newHeight == 0)
 	{
 		dataToUse = rawData;
@@ -74,13 +74,13 @@ static void ConvertPCSpriteEntryToJagSpriteChibi(WADEntry* entry, WADEntry** lis
 		newHeight = header->height;
 	}
 
-	byte* pcData = RawToPatch(dataToUse, newWidth, newHeight, &outputLen, 0);
+	uint8_t* pcData = RawToPatch(dataToUse, newWidth, newHeight, &outputLen, 0);
 	patchHeader_t* pcDataHeader = (patchHeader_t*)pcData;
 	pcDataHeader->leftoffset = header->leftoffset / 2;
 	pcDataHeader->topoffset = header->topoffset / 2;
 
-	byte* jagHeader = (byte*)malloc(8 * 1024); // 8k
-	byte* jagData = (byte*)malloc(65 * 1024); // 65k (impossible to be bigger than this)
+	uint8_t* jagHeader = (uint8_t*)malloc(8 * 1024); // 8k
+	uint8_t* jagData = (uint8_t*)malloc(65 * 1024); // 65k (impossible to be bigger than this)
 	int jagHeaderSize, jagDataSize;
 
 	PCSpriteToJag(pcData, outputLen, jagHeader, &jagHeaderSize, jagData, &jagDataSize);
@@ -164,7 +164,7 @@ static size_t ConvertStandardGraphicToMaskedGraphic(WADEntry* entry)
 {
 	// Prepare buffer for reading and converting.
 
-	byte* rawData = (byte*)entry->GetData();
+	uint8_t* rawData = (uint8_t*)entry->GetData();
 
 	uint16_t width = swap_endian16(*(short*)&rawData[0]);
 	uint16_t height = swap_endian16(*(short*)&rawData[2]);
@@ -172,7 +172,7 @@ static size_t ConvertStandardGraphicToMaskedGraphic(WADEntry* entry)
 	rawData += 16;
 
 	int buffer_size = (320 * height) + 2;
-	byte* source = (byte*)calloc(buffer_size, 1);
+	uint8_t* source = (uint8_t*)calloc(buffer_size, 1);
 	for (int rowStart = 0; rowStart < height * 320; rowStart += 320) {
 		for (int column = 0; column < width; column++) {
 			source[rowStart + column] = *rawData++;	// Expand each row to 320 pixels.
@@ -184,8 +184,8 @@ static size_t ConvertStandardGraphicToMaskedGraphic(WADEntry* entry)
 
 	// Convert graphic to fast-mask format.
 
-	byte* dest = (byte*)malloc(65536); // 64 KB is more than enough to work with.
-	byte* dest_bytes = dest;
+	uint8_t* dest = (uint8_t*)malloc(65536); // 64 KB is more than enough to work with.
+	uint8_t* dest_bytes = dest;
 	uint16_t* source_words = (uint16_t*)source;
 	uint16_t skip_count;
 	uint8_t write_count;
@@ -202,7 +202,7 @@ static size_t ConvertStandardGraphicToMaskedGraphic(WADEntry* entry)
 		//printf("[A]    0x%02X : 0x%06X\n", skip_count, ((int)source_words - (int)source));
 		if (((int)source_words - (int)source) >= buffer_size - 2) {
 			skip_count = 0;
-			*dest_bytes++ = (byte)skip_count;	// EOF marker;
+			*dest_bytes++ = (uint8_t)skip_count;	// EOF marker;
 			eof = true;
 		}
 		else {
@@ -211,7 +211,7 @@ static size_t ConvertStandardGraphicToMaskedGraphic(WADEntry* entry)
 				*dest_bytes++ = 0x00;	// Write 0
 				skip_count -= 255;
 			}
-			*dest_bytes++ = (byte)skip_count;
+			*dest_bytes++ = (uint8_t)skip_count;
 			write_count = 0;
 			while (*source_words != 0x0000) {
 				source_words++;
@@ -223,8 +223,8 @@ static size_t ConvertStandardGraphicToMaskedGraphic(WADEntry* entry)
 			//fwrite(source_words, 1, write_count * 2, output_file);
 			*dest_bytes++ = write_count;
 			for (int i = 0; i < write_count; i++) {
-				*dest_bytes++ = (byte)source_words[i];
-				*dest_bytes++ = (byte)(source_words[i] >> 8);
+				*dest_bytes++ = (uint8_t)source_words[i];
+				*dest_bytes++ = (uint8_t)(source_words[i] >> 8);
 			}
 			source_words += write_count;
 		}
@@ -243,8 +243,8 @@ static size_t ConvertStandardGraphicToMaskedGraphic(WADEntry* entry)
 
 static size_t ConvertPCSpriteEntryToJagSprite(WADEntry* entry, WADEntry** list)
 {
-	byte* jagHeader = (byte*)malloc(8 * 1024); // 8k
-	byte* jagData = (byte*)malloc(65 * 1024); // 65k (impossible to be bigger than this)
+	uint8_t* jagHeader = (uint8_t*)malloc(8 * 1024); // 8k
+	uint8_t* jagData = (uint8_t*)malloc(65 * 1024); // 65k (impossible to be bigger than this)
 	int jagHeaderSize, jagDataSize;
 
 	if (strcmp(entry->GetName(), "GFZGATE") && strcmp(entry->GetName(), "GFZRAIL")
@@ -252,7 +252,7 @@ static size_t ConvertPCSpriteEntryToJagSprite(WADEntry* entry, WADEntry** list)
 		&& strcmp(entry->GetName(), "CEZFNC0"))
 	{
 		int32_t outputLen;
-		byte* cropData = CropPCPatch(entry->GetData(), entry->GetDataLength(), &outputLen, 0);
+		uint8_t* cropData = CropPCPatch(entry->GetData(), entry->GetDataLength(), &outputLen, 0);
 		if (cropData)
 			entry->SetData(cropData, outputLen);
 	}
@@ -391,7 +391,7 @@ static void CropSprites()
 		if (insideSprites)
 		{
 			int outputLen;
-			byte* newPatch = CropPCPatch(node->GetData(), node->GetDataLength(), &outputLen, 0);
+			uint8_t* newPatch = CropPCPatch(node->GetData(), node->GetDataLength(), &outputLen, 0);
 
 			if (newPatch) // Something was cropped
 				node->SetData(newPatch, outputLen);
@@ -496,7 +496,7 @@ void InitLevelInsertStuff(WADEntry* entries)
 
 	if (texture1->IsCompressed())
 	{
-		byte* decomp = texture1->Decompress();
+		uint8_t* decomp = texture1->Decompress();
 		t1 = new Texture1(decomp, texture1->GetUnCompressedDataLength());
 		free(decomp);
 	}
@@ -643,7 +643,7 @@ size_t InsertCurveData(const char* svgFile, const char* entryName, WADEntry* ent
 	size_t pathSize;
 	PathParser* pathParser = new PathParser();
 	pathParser->ParsePath(svgFile);
-	byte* pathLump = pathParser->CreateLump(&pathSize);
+	uint8_t* pathLump = pathParser->CreateLump(&pathSize);
 
 	WADEntry* newEntry = new WADEntry(entryName, pathLump, pathSize);
 	Listable::Add(newEntry, (Listable**)&entries);
@@ -688,7 +688,7 @@ static void FindDuplicateColumns(WADEntry* entries)
 				uint16_t colOffset = swap_endian16(header->columnofs[i]);
 				const jagPost_t* post = (jagPost_t*)(node->GetData() + colOffset);
 				uint16_t dataOffset = swap_endian16(post->dataofs);
-				const byte* pixel = &postData->GetData()[dataOffset];
+				const uint8_t* pixel = &postData->GetData()[dataOffset];
 
 				if (post->topdelta == 255 && post->length == 255)
 					continue;
@@ -902,9 +902,9 @@ static void MyFunTest()
 		if (insideRegularGraphics || insideCompressedGraphics)
 		{
 			// Scan for the MEGADRIVE_THRU_COLOR and replace it 
-			const byte MEGADRIVE_THRU_COLOR = 0xff;
+			const uint8_t MEGADRIVE_THRU_COLOR = 0xff;
 
-			byte* newData = (byte*)memdup(node->GetData(), node->GetDataLength());
+			uint8_t* newData = (uint8_t*)memdup(node->GetData(), node->GetDataLength());
 
 			if (
 				strcmp(node->GetName(), "CHEVBLK")// &&
@@ -948,7 +948,7 @@ static void MyFunTest()
 
 		if (insideCompressedGraphics)
 		{
-			byte* data = (byte*)memdup(node->GetData(), node->GetDataLength());
+			uint8_t* data = (uint8_t*)memdup(node->GetData(), node->GetDataLength());
 			node->SetIsCompressed(true);
 			node->SetData(data, node->GetDataLength());
 			free(data);
@@ -997,7 +997,7 @@ static void MyFunTest()
 
 				// Convert to everyone's favorite lovable col-major Jaguar format
 				int texLen;
-				byte* texData = PatchToJagTexture(lvlTextures->GetData(), lvlTextures->GetDataLength(), &texLen);
+				uint8_t* texData = PatchToJagTexture(lvlTextures->GetData(), lvlTextures->GetDataLength(), &texLen);
 
 #ifdef MAKE_WALL_MIPMAPS
 				if (strcmp(lvlTextures->GetName(), "SLROPE1A") && strcmp(lvlTextures->GetName(), "SLROPE1B"))
@@ -1005,7 +1005,7 @@ static void MyFunTest()
 					const patchHeader_t* header = (patchHeader_t*)lvlTextures->GetData(); // Need width/height info
 
 					int dataLen;
-					byte* mipData = PatchMipmaps(texData, header->height, header->width, MIPLEVELS, &dataLen);
+					uint8_t* mipData = PatchMipmaps(texData, header->height, header->width, MIPLEVELS, &dataLen);
 					free(texData);
 
 					lvlTextures->SetData(mipData, dataLen);
@@ -1047,7 +1047,7 @@ static void MyFunTest()
 
 								// Convert from PNG to row-major raw
 				int32_t flatWidth, flatHeight;
-				byte* flatData = PNGToFlat(lvlFlats->GetData(), lvlFlats->GetDataLength(), &flatWidth, &flatHeight);
+				uint8_t* flatData = PNGToFlat(lvlFlats->GetData(), lvlFlats->GetDataLength(), &flatWidth, &flatHeight);
 				lvlFlats->SetData(flatData, flatWidth * flatHeight);
 				free(flatData);
 
@@ -1070,7 +1070,7 @@ static void MyFunTest()
 		if (!strcmp(node->GetName(), "F_END"))
 		{
 			insideFlats = false;
-			WADEntry* flatInfo = new WADEntry("FLATINFO", (const byte*)flatSizes, numFlats * 2);
+			WADEntry* flatInfo = new WADEntry("FLATINFO", (const uint8_t*)flatSizes, numFlats * 2);
 			Listable::AddAfter(flatInfo, node, (Listable**)&importedEntries);
 		}
 		if (!strcmp(node->GetName(), "DS_START"))
@@ -1191,7 +1191,7 @@ static void MyFunTest()
 	CleanupLevelInsertStuff();
 
 	int dummySize = 4;
-	byte dummy[] = { 0xaf, 0xaf, 0xaf, 0xaf };
+	uint8_t dummy[] = { 0xaf, 0xaf, 0xaf, 0xaf };
 	WADEntry* dummyEntry = new WADEntry("DUMMY", dummy, dummySize);
 	Listable::Add(dummyEntry, (Listable**)&importedEntries);
 

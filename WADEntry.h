@@ -11,7 +11,7 @@ struct WADEntry : Listable
 {
 private:
 	char *_name;
-	byte *_data;
+	uint8_t *_data;
 	size_t _dataLength;
 	size_t _uncompressedDataLength;
 	bool _isCompressed;
@@ -20,11 +20,11 @@ public:
 	int32_t *dir_entry_filepos; // INTERNAL ONLY FOR USE DURING SAVE PROCESS
 	bool pointsToAnotherEntry; // INTERNAL ONY FOR USE DURING SAVE PROCESS
 
-	void SetDataInternal(const byte *value, size_t length);
+	void SetDataInternal(const uint8_t *value, size_t length);
 	const char *GetName() const;
 	void SetName(const char *value);
-	const byte *GetData() const;
-	void SetData(const byte *value, size_t length);
+	const uint8_t *GetData() const;
+	void SetData(const uint8_t *value, size_t length);
 	const size_t GetDataLength() const;
 	bool IsCompressed() const;
 	void SetIsCompressed(bool value);
@@ -32,12 +32,12 @@ public:
 	void SetUnCompressedDataLength(size_t value);
 	const size_t GetUnCompressedDataLength() const;
 
-	byte *Decompress() const;
+	uint8_t *Decompress() const;
 	void ReplaceWithFile(const char *filename);
 	void DumpToFile(const char *filename) const;
 
 	WADEntry();
-	WADEntry(const char *name, const byte *data, size_t length);
+	WADEntry(const char *name, const uint8_t *data, size_t length);
 	virtual ~WADEntry();
 
 	// Static functions

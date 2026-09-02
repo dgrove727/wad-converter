@@ -7,8 +7,8 @@
 
 struct SpriteColumn : Listable
 {
-	const byte *colStart;
-	byte length;
+	const uint8_t *colStart;
+	uint8_t length;
 	bool duplicate;
 
 	bool Equals(SpriteColumn *checkCol)
@@ -23,8 +23,8 @@ struct SpriteColumn : Listable
 
 		for (int i = 0; i < this->length; i++)
 		{
-			byte b1 = colStart[i];
-			byte b2 = checkCol->colStart[i];
+			uint8_t b1 = colStart[i];
+			uint8_t b2 = checkCol->colStart[i];
 
 			if (b1 != b2)
 				return false;
@@ -33,7 +33,7 @@ struct SpriteColumn : Listable
 		return true;
 	}
 
-	SpriteColumn(const byte *colStart, byte length)
+	SpriteColumn(const uint8_t *colStart, uint8_t length)
 	{
 		this->colStart = colStart;
 		this->length = length;

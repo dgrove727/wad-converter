@@ -199,9 +199,9 @@ public:
                 }
 
                 for (size_t i = 0; i < Count; i++) {
-                    size_t Pointer = Dst.tellp();
+                    std::streamoff Pointer = Dst.tellp();
                     Dst.seekg(Pointer - distance);
-                    uint8_t Byte = Read1(Dst);
+                    size_t Byte = Read1(Dst);
                     Dst.seekp(Pointer);
                     Write1(Dst, Byte);
                 }

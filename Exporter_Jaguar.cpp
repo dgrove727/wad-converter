@@ -105,7 +105,7 @@ void Exporter_Jaguar::Execute()
 			// Pad the rest of the ROM out to 3mb with zeroes
 			*node->dir_entry_filepos = swap_endian32(fauxPtr);
 			size_t blankLength = (3 * 1024 * 1024) - fauxPtr;
-			byte *blankData = (byte*)calloc(1, blankLength);
+			uint8_t *blankData = (uint8_t*)calloc(1, blankLength);
 			node->SetIsCompressed(false);
 			node->SetData(blankData, blankLength);
 			free(blankData);
@@ -122,7 +122,7 @@ void Exporter_Jaguar::Execute()
 				blankLength = INTERVAL;
 
 			*node->dir_entry_filepos = swap_endian32(fauxPtr);
-			byte *blankData = (byte *)calloc(1, blankLength);
+			uint8_t *blankData = (uint8_t *)calloc(1, blankLength);
 			node->SetIsCompressed(false);
 			node->SetData(blankData, blankLength);
 			free(blankData);
@@ -225,7 +225,7 @@ void Exporter_Jaguar::Execute()
 			Texture1 *t1;
 			if (texture1->IsCompressed())
 			{
-				byte *decomp = texture1->Decompress();
+				uint8_t *decomp = texture1->Decompress();
 				t1 = new Texture1(decomp, texture1->GetUnCompressedDataLength());
 				free(decomp);
 			}
@@ -262,7 +262,7 @@ void Exporter_Jaguar::Execute()
 					continue;
 
 				// Patches are rotated 90 degrees to the left, so we need to rotate the flat and see if it matches.
-				byte *compareData = RawToJagTexture(node->GetData(), mt->width, mt->height);
+				uint8_t *compareData = RawToJagTexture(node->GetData(), mt->width, mt->height);
 
 				int compareResult = memcmp(compareData, snode->GetData(), node->GetDataLength());
 
@@ -464,7 +464,7 @@ void Exporter_Jaguar::SetMaskedInTexture1()
 	Texture1 *t1;
 	if (texture1->IsCompressed())
 	{
-		byte *decomp = texture1->Decompress();
+		uint8_t *decomp = texture1->Decompress();
 		t1 = new Texture1(decomp, texture1->GetUnCompressedDataLength());
 		free(decomp);
 	}
@@ -500,7 +500,7 @@ void Exporter_Jaguar::SetMaskedInTexture1()
 					// If so, we need to set masked to 1.
 					if (node->IsCompressed())
 					{
-						byte *decomp = node->Decompress();
+						uint8_t *decomp = node->Decompress();
 						if (ContainsPixel(decomp, mt->width, mt->height, 0) || !strcmp(entryName, "GFZDOOR") || !strcmp(entryName, "GFZWINDP"))
 							mt->masked = 1;
 						free(decomp);
@@ -516,7 +516,7 @@ void Exporter_Jaguar::SetMaskedInTexture1()
 	}
 
 	int32_t newLumpLength;
-	byte *newLump = t1->CreateLump(&newLumpLength);
+	uint8_t *newLump = t1->CreateLump(&newLumpLength);
 	texture1->SetData(newLump, newLumpLength);
 }
 
