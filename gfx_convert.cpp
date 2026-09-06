@@ -1754,7 +1754,7 @@ pngresult_t PNGTo15Bit(const uint8_t *pngData, size_t dataLen)
 
 	pngresult_t ret;
 	ret.data = bgr555original;
-	ret.dataSize = width * height * 2;
+	ret.dataSize = 16 + (width * height * 2); // Don't forget to include header
 
 	return ret;
 }
