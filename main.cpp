@@ -898,8 +898,7 @@ static void MyFunTest()
 			node->SetData(result.data, result.dataSize);
 			printf("Converting %s to 15bpp graphic.\n", node->GetName());
 		}
-
-		if (insideRegularGraphics || insideCompressedGraphics)
+		else if (insideRegularGraphics || insideCompressedGraphics)
 		{
 			// Scan for the MEGADRIVE_THRU_COLOR and replace it 
 			const uint8_t MEGADRIVE_THRU_COLOR = 0xff;

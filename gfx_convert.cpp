@@ -1741,7 +1741,8 @@ pngresult_t PNGTo15Bit(const uint8_t *pngData, size_t dataLen)
 		uint8_t b5 = b >> 3;
 
 		/* Pack: 0 bbbbb ggggg rrrrr */
-		uint16_t word = ((uint16_t)b5 << 10) |
+		uint16_t word = 0x8000 |
+			((uint16_t)b5 << 10) |
 			((uint16_t)g5 << 5) |
 			r5;
 
