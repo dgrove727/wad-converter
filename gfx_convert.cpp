@@ -1740,11 +1740,16 @@ pngresult_t PNGTo15Bit(const uint8_t *pngData, size_t dataLen)
 		uint8_t g5 = g >> 3;
 		uint8_t b5 = b >> 3;
 
-		/* Pack: 0 bbbbb ggggg rrrrr */
-		uint16_t word = 0x8000 |
+		/* Pack: p bbbbb ggggg rrrrr */
+		uint16_t word =
 			((uint16_t)b5 << 10) |
 			((uint16_t)g5 << 5) |
 			r5;
+
+		// Non-cyan pixels should be marked high-priority.
+		if (!(b == 255 && g == 255 && r == 0)) {
+			word |= 0x8000;
+		}
 
 		/* Big-endian byte order */
 		bgr555[i * 2 + 0] = (uint8_t)(word >> 8);   /* high byte first */
