@@ -160,6 +160,35 @@ static bool IsHalfSprite(const char* name)
 	return false;
 }
 
+// PNG Magic Signature: 89 50 4E 47 0D 0A 1A 0A
+static const uint8_t PNG_SIGNATURE[8] = {
+	0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A
+};
+
+bool is_png_header(const uint8_t *buffer, size_t size) {
+	// Ensure buffer has at least 8 bytes
+	if (size < 8) {
+		return false;
+	}
+
+	// Compare the first 8 bytes directly
+	return memcmp(buffer, PNG_SIGNATURE, 8) == 0;
+}
+
+int get_exponent_portable(unsigned int n)
+{
+	if (n == 0)
+		return -1;
+
+	int exponent = 0;
+	while (n > 1)
+	{
+		n >>= 1; // Shift right by 1 (divide by 2)
+		exponent++;
+	}
+	return exponent;
+}
+
 static size_t ConvertStandardGraphicToMaskedGraphic(WADEntry* entry)
 {
 	// Prepare buffer for reading and converting.
@@ -531,6 +560,42 @@ void CleanupLevelInsertStuff()
 }
 
 #define PADDING_SIZE(x) ((x)->GetDataLength() ? (((x)->GetDataLength() - 1) & 3) ^ 3 : 0)
+size_t InsertWAD(const char *wadfile, WADEntry *entries)
+{
+	FILE *f = fopen(wadfile, "rb");
+	Importer_PC *ipc = new Importer_PC(f);
+	WADEntry *srcEntries = ipc->Execute();
+	delete ipc;
+
+	size_t alignedTotalSize = 0;
+	size_t totalSize = 0;
+	WADEntry *node;
+	WADEntry *next;
+	for (node = srcEntries; node; node = next)
+	{
+		next = (WADEntry *)node->next;
+
+		node->prev = node->next = NULL;
+		Listable::Add(node, (Listable **)&entries);
+
+		if (is_png_header(node->GetData(), node->GetDataLength()))
+		{
+			printf("Converting %s to 15bpp graphic.\n", node->GetName());
+			pngresult_t result = PNGTo15Bit(node->GetData(), node->GetDataLength());
+			node->SetIsCompressed(true);
+			node->SetData(result.data, result.dataSize);
+		}
+
+		totalSize += node->GetDataLength();
+		alignedTotalSize += node->GetDataLength();
+		alignedTotalSize += PADDING_SIZE(node);
+	}
+
+	printf("Total size: %0.2fkb\n", totalSize / 1024.0f);
+
+	return alignedTotalSize;
+}
+
 size_t InsertPCLevelFromWAD(const char* wadfile, WADEntry* entries, int loadFlags, bool skipReject)
 {
 	FILE* f = fopen(wadfile, "rb");
@@ -792,35 +857,6 @@ size_t CalculatePageSize(WADEntry* start, WADEntry* end)
 	} while (true);
 
 	return total;
-}
-
-// PNG Magic Signature: 89 50 4E 47 0D 0A 1A 0A
-static const uint8_t PNG_SIGNATURE[8] = {
-	0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A
-};
-
-bool is_png_header(const uint8_t* buffer, size_t size) {
-	// Ensure buffer has at least 8 bytes
-	if (size < 8) {
-		return false;
-	}
-
-	// Compare the first 8 bytes directly
-	return memcmp(buffer, PNG_SIGNATURE, 8) == 0;
-}
-
-int get_exponent_portable(unsigned int n)
-{
-	if (n == 0)
-		return -1;
-
-	int exponent = 0;
-	while (n > 1)
-	{
-		n >>= 1; // Shift right by 1 (divide by 2)
-		exponent++;
-	}
-	return exponent;
 }
 
 static void MyFunTest()
@@ -1176,6 +1212,19 @@ static void MyFunTest()
 	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP11a.wad", basePath), importedEntries, 256, true);
 	extraSpace += InsertCurveData(va("%s\\Levels\\MAP11.svg", basePath), "MAP11C", importedEntries);
 	printf("*********************Space used: %0.2fkb\n", CalculatePageSize(startMarker, (WADEntry*)Listable::GetLast(startMarker)) / 1024.0f);
+	AddEmptyEntry(importedEntries);
+	extraSpace = 0;
+	printf("---------------------Page 12:\n");
+	startMarker = (WADEntry *)Listable::GetLast(importedEntries);
+	extraSpace += InsertWAD(va("%s\\intropg1.wad", basePath), importedEntries);
+	printf("*********************Space used: %0.2fkb\n", CalculatePageSize(startMarker, (WADEntry *)Listable::GetLast(startMarker)) / 1024.0f);
+/*	AddEmptyEntry(importedEntries);
+	extraSpace = 0;
+	printf("---------------------Page 13:\n");
+	startMarker = (WADEntry *)Listable::GetLast(importedEntries);
+	extraSpace += InsertWAD(va("%s\\intropg2.wad", basePath), importedEntries);
+	printf("*********************Space used: %0.2fkb\n", CalculatePageSize(startMarker, (WADEntry *)Listable::GetLast(startMarker)) / 1024.0f);
+	*/
 //	AddEmptyEntry(importedEntries);
 //	extraSpace = 0;
 //	printf("---------------------Page 12:\n");
