@@ -1281,9 +1281,30 @@ static void MyFunTest()
 	return;
 }
 
+void RemoveLinesFromBlockmap(const char *wadfile, const char *exportFilename = NULL)
+{
+	FILE *f = fopen(wadfile, "rb");
+	Importer_PC *ipc = new Importer_PC(f);
+	WADEntry *mapEntries = ipc->Execute();
+	delete ipc;
+
+	WADMap *map = new WADMap(mapEntries);
+	WADEntry *converted = RemoveLinesFromBlockmap(map);
+
+	if (exportFilename == NULL)
+		exportFilename = wadfile;
+	f = fopen(exportFilename, "wb");
+	Exporter_PC *epc = new Exporter_PC(converted, f);
+	epc->Execute();
+	delete epc;
+
+	delete map;
+	Listable::RemoveAll((Listable **)&mapEntries);
+}
 
 int main(int argc, char* argv[])
 {
+//	RemoveLinesFromBlockmap(va("%s\\Levels\\MAP11.wad", basePath), "D:\\analyze.wad");
 	if (argc < 3)
 	{
 		printf("usage: wad32x \"D:\\MyBasePath\" \"D:\\MyOutputPath\"");

@@ -166,3 +166,42 @@ WADEntry *ConvertSRB2Map(WADMap *map)
 
 	return map->CreatePC(map->name);
 }
+
+WADEntry *RemoveLinesFromBlockmap(WADMap *map)
+{
+	int32_t numSet = 0;
+
+	for (int32_t i = 0; i < map->numlinedefs; i++)
+	{
+		linedef_t *line = &map->linedefs[i];
+
+		if (line->tag)
+			continue;
+
+		if (line->sidenum[1] < 0) // One-sided is always skipped
+			continue;
+
+		sidedef_t *frontDef = &map->sidedefs[line->sidenum[0]];
+		sidedef_t *backDef = line->sidenum[1] >= 0 ? &map->sidedefs[line->sidenum[1]] : NULL;
+
+		sector_t *frontsec = &map->sectors[frontDef->sector];
+		sector_t *backsec = backDef ? &map->sectors[backDef->sector] : NULL;
+
+		if (frontsec->ceilingheight != backsec->ceilingheight)
+			continue;
+
+		int floorDelta = abs(frontsec->floorheight - backsec->floorheight);
+		if (floorDelta > 24)
+			continue;
+
+		if (frontsec->tag || backsec->tag)
+			continue;
+
+		line->tag = 999;
+		numSet++;
+	}
+
+	printf("Number of lines added to blockmap exclusion: %d", numSet);
+
+	return map->CreatePC(map->name);
+}
