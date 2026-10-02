@@ -1046,14 +1046,14 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 		// Check linedefs with a special but no tag
 		for (int i = 0; i < numlinedefs; i++)
 		{
-			if (linedefs[i].special > 0 && linedefs[i].tag == 0)
+			if (linedefs[i].special > 0 && linedefs[i].tag == 0 && linedefs[i].special != 1084)
 				printf("Linedef %d has special (%d) but no tag.\n", i, linedefs[i].special);
 		}
 
 		// Check linedefs with a tag, but no special
 		for (int i = 0; i < numlinedefs; i++)
 		{
-			if (linedefs[i].special == 0 && linedefs[i].tag != 0)
+			if (linedefs[i].special == 0 && linedefs[i].tag != 0 && linedefs[i].tag != 999)
 				printf("Linedef %d has tag (%d) but no special.\n", i, linedefs[i].tag);
 		}
 
@@ -1125,7 +1125,8 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 
 			if (linedefs[i].tag > 255)
 			{
-				printf("Linedef %d has tag %d which is > 255.\n", i, linedefs[i].tag);
+				if (linedefs[i].tag != 999)
+					printf("Linedef %d has tag %d which is > 255.\n", i, linedefs[i].tag);
 				linedefs[i].special = 0;
 				linedefs[i].tag = 0;
 			}

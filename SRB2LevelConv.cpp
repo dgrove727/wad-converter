@@ -175,6 +175,9 @@ WADEntry *RemoveLinesFromBlockmap(WADMap *map)
 	{
 		linedef_t *line = &map->linedefs[i];
 
+		if (line->flags & 1) // Blocking
+			continue;
+
 		if (line->tag)
 			continue;
 
@@ -196,6 +199,12 @@ WADEntry *RemoveLinesFromBlockmap(WADMap *map)
 
 		if (frontsec->tag || backsec->tag)
 			continue;
+
+		if (line->flags & 512) // ML_MIDTEXTUREBLOCK
+		{
+			if (frontDef->midtexture[0] != '-' || backDef->midtexture[0] != '-')
+				continue;
+		}
 
 		line->tag = 999;
 		numSet++;
