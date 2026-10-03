@@ -1174,6 +1174,7 @@ static void MyFunTest()
 
 	size_t extraSpace = 0;
 	WADEntry* startMarker;
+	WADEntry *endOfMain = (WADEntry*)Listable::GetLast(importedEntries);
 	InitLevelInsertStuff(importedEntries);
 	printf("---------------------Page 8:\n");
 	startMarker = (WADEntry*)Listable::GetLast(importedEntries);
@@ -1209,8 +1210,27 @@ static void MyFunTest()
 	extraSpace = 0;
 	printf("---------------------Page 11:\n");
 	startMarker = (WADEntry*)Listable::GetLast(importedEntries);
-	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP11a.wad", basePath), importedEntries, 256, true);
+	extraSpace += InsertPCLevelFromWAD(va("%s\\Levels\\MAP11a.wad", basePath), importedEntries, 256, false);
 	extraSpace += InsertCurveData(va("%s\\Levels\\MAP11.svg", basePath), "MAP11C", importedEntries);
+	{
+		// Find THINGS
+		WADEntry *map11things = (WADEntry*)startMarker->next->next;
+		WADEntry *blank = new WADEntry("THINGS", NULL, 0);
+		Listable::AddAfter(blank, map11things, (Listable**)&importedEntries);
+		Listable::RemoveNoFree(map11things, (Listable **)&importedEntries);
+		map11things->SetName("MAP11T");
+
+		// Find S1_START
+		for (WADEntry *n = importedEntries; n; n = (WADEntry *)n->next)
+		{
+			if (!strcmp(n->GetName(), "S1_START"))
+			{
+				Listable::AddBefore(map11things, n, (Listable **)&importedEntries);
+				break;
+			}
+		}
+		extraSpace -= map11things->GetDataLength();
+	}
 	printf("*********************Space used: %0.2fkb\n", CalculatePageSize(startMarker, (WADEntry*)Listable::GetLast(startMarker)) / 1024.0f);
 	AddEmptyEntry(importedEntries);
 	extraSpace = 0;
