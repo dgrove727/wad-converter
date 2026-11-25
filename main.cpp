@@ -582,7 +582,13 @@ size_t InsertWAD(const char *wadfile, WADEntry *entries)
 		{
 			printf("Converting %s to 15bpp graphic.\n", node->GetName());
 			pngresult_t result = PNGTo15Bit(node->GetData(), node->GetDataLength());
-			node->SetIsCompressed(true);
+
+			bool compressed = true;
+			if (!strcmp(node->GetName(), "BRITEGG2") || !strcmp(node->GetName(), "BRITEGG3")
+				|| !strcmp(node->GetName(), "DARKEGG2") || !strcmp(node->GetName(), "DARKEGG3"))
+				compressed = false;
+
+			node->SetIsCompressed(compressed);
 			node->SetData(result.data, result.dataSize);
 		}
 

@@ -948,6 +948,19 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 				break;
 			}
 
+			case 160:
+			{
+				for (int s = -1; (s = GetSectorWithTag(fullSectors, s, tag)) >= 0;)
+				{
+					fullSectors[s].fofsec = front;
+					fullSectors[front].specline = i;
+					fullSectors[front].flags |= SF_FOF_CONTROLSECTOR;
+					fullSectors[s].flags |= SF_FOF_SWAPHEIGHTS;
+					fullSectors[s].flags |= SF_FLOATBOB;
+				}
+				break;
+			}
+
 			case 179:
 			{
 				for (int s = -1; (s = GetSectorWithTag(fullSectors, s, tag)) >= 0;)
@@ -997,6 +1010,19 @@ WADEntry *WADMap::CreateJaguar(const char *mapname, int loadFlags, bool srb32xse
 					fullSectors[s].heightsec = front;
 					fullSectors[s].specialdata = 1;
 					fullSectors[front].specline = i;
+				}
+				break;
+			}
+
+			case 160:
+			{
+				for (int s = -1; (s = GetSectorWithTag(fullSectors, s, tag)) >= 0;)
+				{
+					fullSectors[s].fofsec = front;
+					fullSectors[front].specline = i;
+					fullSectors[front].flags |= SF_FOF_CONTROLSECTOR;
+					fullSectors[s].flags |= SF_FOF_SWAPHEIGHTS;
+					fullSectors[s].flags |= SF_FLOATBOB;
 				}
 				break;
 			}
